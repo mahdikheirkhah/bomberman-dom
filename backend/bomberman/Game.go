@@ -8,7 +8,8 @@ const MinNumberOfPlayers = 2
 var Colors = []string{"G", "Y", "R", "B"}
 
 type GameBoard struct {
-	NumberOfPlayers int `json:"numberOfPlayers"`
+	NumberOfPlayers int                                     `json:"numberOfPlayers"`
+	Panel           [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
 }
 
 type GameCell struct {
@@ -40,4 +41,11 @@ func (g *GameBoard) FindStartColLocation() int {
 		return 0
 	}
 	return NumberOfColumns - 1
+}
+
+func (g *GameBoard) HasPlayerExploaded(row, col int) bool {
+	if g.Panel[row][col].IsExploaded {
+		return true
+	}
+	return false
 }

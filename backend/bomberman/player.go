@@ -26,3 +26,12 @@ func CreatePlayer(name string, gameboard *GameBoard) (Player, error) {
 
 	return player, nil
 }
+
+func CheckExplosion(player Player, gameboard *GameBoard) {
+	if gameboard.HasPlayerExploaded(player.Row, player.Column) {
+		player.Lives--
+	}
+	if player.Lives == 0 {
+		gameboard.NumberOfPlayers--
+	}
+}
