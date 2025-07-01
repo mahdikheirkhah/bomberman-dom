@@ -126,20 +126,31 @@ func (g *GameBoard) FindBombRange(bombIndex int) []Position {
 	return changedLocations
 }
 
-func (g *GameBoard) BombExplosion() {
+func (g *GameBoard) StartBombWatcher() {
+	go func() {
+		ticker := time.NewTicker(100 * time.Millisecond) // check every 100ms
+		defer ticker.Stop()
 
-	for true {
-		for i, bomb := range g.Bombs {
-			if time.Now().After(bomb.ExplosionTime) {
-				g.FindBombRange(i)
-				if i == len(g.Bombs)-1 {
-					g.Bombs = g.Bombs[:i]
-				} else {
-					g.Bombs = append(g.Bombs[:i], g.Bombs[i+1:]...)
-				}
-				break
-			}
+		for range ticker.C {
+			g.checkBombs()
+		}
+	}()
+}
+
+// internal logic
+func (g *GameBoard) checkBombs() {
+	now := time.Now()
+	var remainingBombs []Bomb
+
+	for i := 0; i < len(g.Bombs); i++ {
+		bomb := g.Bombs[i]
+		if now.After(bomb.ExplosionTime) {
+			// explode the bomb
+			g.FindBombRange(i)
+			// skip adding to remainingBombs
+		} else {
+			remainingBombs = append(remainingBombs, bomb)
 		}
 	}
-
+	g.Bombs = remainingBombs
 }
