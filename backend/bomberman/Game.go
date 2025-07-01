@@ -8,16 +8,17 @@ const MinNumberOfPlayers = 2
 var Colors = []string{"G", "Y", "R", "B"}
 
 type GameBoard struct {
-	Players []Player `json:"players"`
-	//Bombs           []Bomb                                 `json:"bombs"`
+	Players         []Player                                `json:"players"`
+	Bombs           []Bomb                                  `json:"bombs"`
 	NumberOfPlayers int                                     `json:"numberOfPlayers"`
 	Panel           [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
 }
 
 type GameCell struct {
-	IsOccupied  bool `json:"isOccupied"`
-	IsWall      bool `json:"isWall"`
-	IsExploaded bool `json:"isExploaded"`
+	IsOccupied     bool `json:"isOccupied"`
+	IsWall         bool `json:"isWall"`
+	IsDestructible bool `json:"isDestructible"`
+	IsExploaded    bool `json:"isExploaded"`
 }
 
 func (g *GameBoard) CanCreateNewPlayer() bool {
