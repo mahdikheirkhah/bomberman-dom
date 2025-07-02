@@ -8,7 +8,6 @@ const APIUrl = 'localhost:8080'
 
 // Initialize game status in the store
 store.setState({ gameStatus: 'waiting', currentView: Lobby });
-console.log('State after initial set:', store.getState());
 
 // Function to render a component by updating the store
 const renderComponent = (component) => {
@@ -23,30 +22,11 @@ router.addRoute('/game', () => renderComponent(Game));
 router.setDefaultHandler(() => renderComponent(Lobby));
 
 
-
 function App() {
-    const render = () => {
-        const state = store.getState();
-        return state.currentView();
-    };
-
-    let unsubscribe;
-    const setup = (element) => {
-        unsubscribe = store.subscribe(() => {
-            element.replaceWith(render());
-        });
-    };
-
-    const teardown = () => {
-        if (unsubscribe) {
-            unsubscribe();
-        }
-    };
-
-    return createApp(() => render(), document.getElementById('app'), setup, teardown);
+    const state = store.getState();
+    return state.currentView();
 }
 
-App();
-//router.init();
+createApp(App, document.getElementById('app'));
 
 export { APIUrl }
