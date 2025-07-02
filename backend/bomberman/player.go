@@ -2,8 +2,12 @@ package bomberman
 
 import (
 	"errors"
+	"math"
 	"time"
 )
+
+const StepSize = 0.5
+const MiliBombDelay = 500
 
 type Player struct {
 	Name              string        `json:"name"`
@@ -12,10 +16,14 @@ type Player struct {
 	Color             string        `json:"color"`
 	Row               int           `json:"row"`
 	Column            int           `json:"column"`
+	XLocation         float64       `json:"xlocation"`
+	YLocation         float64       `json:"yLocation"`
 	IsDead            bool          `json:"isDead"`
 	NumberOfBombs     int           `json:"numberOfBombs"`
 	NumberOfUsedBombs int           `json:"numberOfUsedBombs"`
 	BombDelay         time.Duration `json:"bombDelay"`
+	StepSize          float64       `json:"stepSize"`
+	DirectionFace     byte          `json:"DirectionFace"`
 }
 
 func (g *GameBoard) CreatePlayer(name string) error {
@@ -30,19 +38,26 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	player.Color = g.FindColor()
 	player.Row = g.FindStartRowLocation()
 	player.Column = g.FindStartColLocation()
+	player.StepSize = StepSize
+	player.BombDelay = MiliBombDelay * time.Millisecond
 	g.Players = append(g.Players, player)
+
 	g.NumberOfPlayers++
 
 	return nil
 }
 
 func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
+	player := &g.Players[playerIndex]
+	var destionation int
 	switch direction {
 	case "row-forward":
-		if len(g.Panel) <= g.Players[playerIndex].Row+1 || g.Panel[g.Players[playerIndex].Row+1][g.Players[playerIndex].Column].IsWall || g.Panel[g.Players[playerIndex].Row+1][g.Players[playerIndex].Column].IsDestructible {
+		destionation = int(math.Floor(float64(player.Row) + player.StepSize))
+		if len(g.Panel) <= destionation || g.Panel[destionation][player.Column].IsWall || g.Panel[destionation][player.Column].IsDestructible {
 			return false
 		}
-		g.Players[playerIndex].Row++
+		player.Row = destionation
+		player.XLocation += player.StepSize
 	case "row-backward":
 		if g.Players[playerIndex].Row-1 < 0 || g.Panel[g.Players[playerIndex].Row-1][g.Players[playerIndex].Column].IsWall || g.Panel[g.Players[playerIndex].Row-1][g.Players[playerIndex].Column].IsDestructible {
 			return false
