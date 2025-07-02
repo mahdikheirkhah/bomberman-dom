@@ -12,12 +12,21 @@ type Position struct {
 	Row int
 	Col int
 }
+
 type Bomb struct {
 	Row           int       `json:"row"`
 	Column        int       `json:"column"`
 	ExplosionTime time.Time `json:"explosionTime"`
 	// RowRange      int       `json:"rowRange"`
 	// ColRange      int       `json:"colRange"`
+}
+
+type Bounse struct {
+	Type     string `json:"type"`
+	Value    int    `json:"value"`
+	Row      int    `json:"row"`
+	Column   int    `json:"column"`
+	IsHidden bool   `json:"isHidden"`
 }
 
 func (g *GameBoard) CheckExplosion() {
