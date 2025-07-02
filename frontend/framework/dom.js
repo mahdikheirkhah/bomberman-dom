@@ -1,4 +1,3 @@
-
 /**
  * Creates a virtual DOM node
  * @param {string} tag - HTML tag name
@@ -114,6 +113,9 @@ function createDomElement(vnode) {
  */
 function mount(vnode, parentDomElement) {
     const domElement = createDomElement(vnode);
+    if (vnode) {
+        vnode.dom = domElement; // Store the DOM element reference
+    }
     if (!parentDomElement) {
         console.error('Mount failed: parentDomElement is null/undefined');
         return domElement;
@@ -122,7 +124,116 @@ function mount(vnode, parentDomElement) {
     return domElement;
 }
 
+/**
+ * Diffs attributes and applies them to the DOM element
+ * @param {HTMLElement} element - The DOM element
+ * @param {Object} oldAttrs - Old attributes
+ * @param {Object} newAttrs - New attributes
+ */
+function patchAttributes(element, oldAttrs, newAttrs) {
+    oldAttrs = oldAttrs || {};
+    newAttrs = newAttrs || {};
+
+    // Remove attributes that are no longer present
+    for (const key in oldAttrs) {
+        if (!(key in newAttrs)) {
+            if (key.startsWith('on')) {
+                element[key] = null;
+            } else {
+                element.removeAttribute(key);
+            }
+        }
+    }
+
+    // Set new and updated attributes
+    for (const key in newAttrs) {
+        if (oldAttrs[key] !== newAttrs[key]) {
+            if (key.startsWith('on')) {
+                element[key] = newAttrs[key];
+            } else if (key === 'ref') {
+                if (typeof newAttrs[key] === 'function') {
+                    newAttrs[key](element);
+                }
+            } else if (key === 'className') {
+                element.setAttribute('class', newAttrs[key]);
+            } else if (typeof newAttrs[key] === 'boolean') {
+                if (newAttrs[key]) {
+                    element.setAttribute(key, '');
+                } else {
+                    element.removeAttribute(key);
+                }
+            } else if (newAttrs[key] !== null && newAttrs[key] !== undefined) {
+                element.setAttribute(key, String(newAttrs[key]));
+            }
+        }
+    }
+}
+
+/**
+ * Diffs children and patches the parent DOM element
+ * @param {HTMLElement} parentDomElement - The parent DOM element
+ * @param {Array} oldChildren - Old child vnodes
+ * @param {Array} newChildren - New child vnodes
+ */
+function patchChildren(parentDomElement, oldChildren, newChildren) {
+    oldChildren = oldChildren || [];
+    newChildren = newChildren || [];
+    const maxLen = Math.max(oldChildren.length, newChildren.length);
+
+    for (let i = 0; i < maxLen; i++) {
+        const oldChild = oldChildren[i];
+        const newChild = newChildren[i];
+
+        if (!oldChild) {
+            mount(newChild, parentDomElement);
+        } else if (!newChild) {
+            parentDomElement.removeChild(oldChild.dom);
+        } else {
+            patch(oldChild, newChild);
+        }
+    }
+}
+
+/**
+ * Patches the DOM to reflect the new virtual DOM
+ * @param {Object} oldVNode - The old virtual DOM node
+ * @param {Object} newVNode - The new virtual DOM node
+ */
+function patch(oldVNode, newVNode) {
+    if (oldVNode === newVNode) {
+        return;
+    }
+
+    if (!newVNode) {
+        oldVNode.dom.parentNode.removeChild(oldVNode.dom);
+        return;
+    }
+
+    const domElement = oldVNode.dom;
+
+    // Optimization for text nodes
+    if (newVNode.tag === 'text' && oldVNode.tag === 'text') {
+        if (newVNode.text !== oldVNode.text) {
+            domElement.nodeValue = newVNode.text;
+        }
+        newVNode.dom = domElement; // Carry over dom reference
+        return;
+    }
+
+    if (newVNode.tag !== oldVNode.tag) {
+        const newDomElement = createDomElement(newVNode);
+        newVNode.dom = newDomElement;
+        domElement.parentNode.replaceChild(newDomElement, domElement);
+        return;
+    }
+
+    newVNode.dom = domElement;
+
+    patchAttributes(domElement, oldVNode.attrs, newVNode.attrs);
+    patchChildren(domElement, oldVNode.children, newVNode.children);
+}
+
 
 
 // Export the functions
-export { createElement, mount };
+export { createElement, mount, patch, patchChildren };
