@@ -49,32 +49,38 @@ func (g *GameBoard) CreatePlayer(name string) error {
 
 func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 	player := &g.Players[playerIndex]
-	var destionation int
-	switch direction {
-	case "row-forward":
-		destionation = int(math.Floor(float64(player.Row) + player.StepSize))
-		if len(g.Panel) <= destionation || g.Panel[destionation][player.Column].IsWall || g.Panel[destionation][player.Column].IsDestructible {
+	var destionation float64
+	if player.DirectionFace != byte(direction[0]) {
+		player.DirectionFace = byte(direction[0])
+	} else {
+		switch direction {
+		case "up":
+			destionation = player.YLocation + player.StepSize
+			if len(g.Panel) <= destionation || g.Panel[destionation][player.Column].IsWall || g.Panel[destionation][player.Column].IsDestructible {
+				return false
+			}
+			player.Row = destionation
+			player.XLocation += player.StepSize
+		case "down":
+			destionation = int(math.Floor(float64(player.Row) - player.StepSize))
+			if g.Players[playerIndex].Row-1 < 0 || g.Panel[g.Players[playerIndex].Row-1][g.Players[playerIndex].Column].IsWall || g.Panel[g.Players[playerIndex].Row-1][g.Players[playerIndex].Column].IsDestructible {
+				return false
+			}
+			g.Players[playerIndex].Row--
+		case "right":
+			if len(g.Panel[0]) <= g.Players[playerIndex].Column+1 || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column+1].IsWall || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column+1].IsDestructible {
+				return false
+			}
+			g.Players[playerIndex].Column++
+		case "left":
+			if g.Players[playerIndex].Column-1 < 0 || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column-1].IsWall || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column-1].IsDestructible {
+				return false
+			}
+			g.Players[playerIndex].Column--
+		default:
 			return false
 		}
-		player.Row = destionation
-		player.XLocation += player.StepSize
-	case "row-backward":
-		if g.Players[playerIndex].Row-1 < 0 || g.Panel[g.Players[playerIndex].Row-1][g.Players[playerIndex].Column].IsWall || g.Panel[g.Players[playerIndex].Row-1][g.Players[playerIndex].Column].IsDestructible {
-			return false
-		}
-		g.Players[playerIndex].Row--
-	case "col-upward":
-		if len(g.Panel[0]) <= g.Players[playerIndex].Column+1 || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column+1].IsWall || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column+1].IsDestructible {
-			return false
-		}
-		g.Players[playerIndex].Column++
-	case "col-downward":
-		if g.Players[playerIndex].Column-1 < 0 || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column-1].IsWall || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column-1].IsDestructible {
-			return false
-		}
-		g.Players[playerIndex].Column--
-	default:
-		return false
 	}
+
 	return true
 }

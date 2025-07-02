@@ -12,6 +12,7 @@ type GameBoard struct {
 	Bombs           []Bomb                                  `json:"bombs"`
 	NumberOfPlayers int                                     `json:"numberOfPlayers"`
 	Panel           [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
+	GridSize        int                                     `json:"gridSize"`
 }
 
 type GameCell struct {
@@ -48,4 +49,33 @@ func (g *GameBoard) FindStartColLocation() int {
 
 func (g *GameBoard) HasExploaded(row, col int) bool {
 	return g.Panel[row][col].IsExploaded
+}
+
+func (g *GameBoard) FindInnerCell(axis byte, location float64, playerIndex int) int {
+	if axis == 'x' {
+
+	} else if axis == 'y' {
+
+	}
+	return -1
+}
+
+func (g *GameBoard) FindGridBorderLocation(borderName byte, playerIndex int) int {
+	row := g.Players[playerIndex].Row
+	col := g.Players[playerIndex].Column
+	switch borderName {
+	case 'u':
+		return (col * g.GridSize) + g.GridSize
+	case 'd':
+		return col * g.GridSize
+	case 'l':
+		return (row * g.GridSize) + g.GridSize
+	case 'r':
+		return (row * g.GridSize)
+	}
+	return -100
+}
+
+func (g *GameBoard) FindGridCenterLocation(axis byte, cell int) int {
+
 }
