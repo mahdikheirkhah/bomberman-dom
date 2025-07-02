@@ -139,12 +139,11 @@ func (g *GameBoard) StartBombWatcher() {
 
 // internal logic
 func (g *GameBoard) checkBombs() {
-	now := time.Now()
 	var remainingBombs []Bomb
 
 	for i := 0; i < len(g.Bombs); i++ {
 		bomb := g.Bombs[i]
-		if now.After(bomb.ExplosionTime) {
+		if time.Now().After(bomb.ExplosionTime) {
 			// explode the bomb
 			g.FindBombRange(i)
 			// skip adding to remainingBombs
