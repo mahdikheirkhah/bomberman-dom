@@ -47,8 +47,5 @@ func (g *GameBoard) FindStartColLocation() int {
 }
 
 func (g *GameBoard) HasExploaded(row, col int) bool {
-	if g.Panel[row][col].IsExploaded {
-		return true
-	}
-	return false
+	return g.Panel[row][col].IsExploaded
 }

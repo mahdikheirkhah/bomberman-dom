@@ -21,7 +21,7 @@ type Bomb struct {
 	// ColRange      int       `json:"colRange"`
 }
 
-type Bounse struct {
+type Powerup struct {
 	Type     string `json:"type"`
 	Value    int    `json:"value"`
 	Row      int    `json:"row"`
@@ -34,25 +34,20 @@ func (g *GameBoard) CheckExplosion() {
 		if g.HasExploaded(player.Row, player.Column) {
 			g.Players[i].Lives--
 		}
-
 		if player.Lives == 0 {
 			g.NumberOfPlayers--
 			g.Players[i].IsDead = true
 		}
 	}
-
 }
 
 func (g *GameBoard) CanCreateBomb(playerIndex int) bool {
-	if g.Players[playerIndex].NumberOfUsedBombs >= g.Players[playerIndex].NumberOfBombs {
-		return false
-	}
-	return true
+	return g.Players[playerIndex].NumberOfUsedBombs < g.Players[playerIndex].NumberOfBombs
 }
 
 func (g *GameBoard) CreateBomb(playerIndex int) error {
 	if !g.CanCreateBomb(playerIndex) {
-		return errors.New("Can not create a new bomb")
+		return errors.New("can not create a new bomb")
 	}
 
 	g.Players[playerIndex].NumberOfUsedBombs++
@@ -131,7 +126,7 @@ func (g *GameBoard) FindBombRange(bombIndex int) []Position {
 	// Add the bomb's own position
 	g.Panel[bomb.Row][bomb.Column].IsExploaded = true
 	changedLocations = append(changedLocations, Position{Row: bomb.Row, Col: bomb.Column})
-
+	g.CheckExplosion()
 	return changedLocations
 }
 

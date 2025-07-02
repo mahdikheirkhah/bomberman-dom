@@ -21,7 +21,7 @@ type Player struct {
 func (g *GameBoard) CreatePlayer(name string) error {
 	var player Player
 	if !g.CanCreateNewPlayer() {
-		return errors.New("Max number of players of has been reached!")
+		return errors.New("max number of players of has been reached")
 	}
 
 	player.Name = name
