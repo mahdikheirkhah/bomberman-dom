@@ -1,4 +1,3 @@
-
 import { createApp } from '../framework/app.js';
 import { router } from '../framework/router.js';
 import { store } from '../framework/state.js';
@@ -8,11 +7,12 @@ import Game from './game.js';
 const APIUrl = 'localhost:8080'
 
 // Initialize game status in the store
-store.setState({ gameStatus: 'waiting', currentView: Lobby() });
+store.setState({ gameStatus: 'waiting', currentView: Lobby });
+console.log('State after initial set:', store.getState());
 
 // Function to render a component by updating the store
 const renderComponent = (component) => {
-    store.setState({ currentView: component() });
+    store.setState({ currentView: component });
 };
 
 // Add routes
@@ -22,13 +22,12 @@ router.addRoute('/game', () => renderComponent(Game));
 // Set default route handler
 router.setDefaultHandler(() => renderComponent(Lobby));
 
-// Initialize the router
-router.init();
+
 
 function App() {
     const render = () => {
         const state = store.getState();
-        return state.currentView;
+        return state.currentView();
     };
 
     let unsubscribe;
@@ -48,5 +47,6 @@ function App() {
 }
 
 App();
+//router.init();
 
 export { APIUrl }
