@@ -50,3 +50,39 @@ func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) 
 		}
 	}
 }
+
+// func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
+// 	// Step 1: Assert msg is a map[string]interface{}
+// 	msgMap, ok := msg.(map[string]interface{})
+// 	if !ok {
+// 		log.Println("Invalid message format")
+// 		return
+// 	}
+
+// 	// Step 2: Extract msgType
+// 	msgType, ok := msgMap["msgType"].(string)
+// 	if !ok {
+// 		log.Println("msgType not found or not a string")
+// 		return
+// 	}
+
+// 	// Step 3: Switch based on msgType
+// 	switch msgType {
+// 	//move
+// 	case "m":
+// 		g.HandleMoveMessage(msgMap)
+
+// 	//bomb
+// 	case "b":
+// 		g.HandleBombMessage(msgMap)
+
+// 	//chat
+// 	case "c":
+// 		g.HandleChatMessage(msgMap)
+
+// 	//power up
+// 	case "p":
+// 	default:
+// 		log.Println("Unknown msgType:", msgType)
+// 	}
+// }
