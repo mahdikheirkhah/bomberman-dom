@@ -16,7 +16,7 @@ class Store {
      * @returns {Object} Current state
      */
     getState() {
-        return JSON.parse(JSON.stringify(this.state));
+        return this.state;
     }
 
     /**

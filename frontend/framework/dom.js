@@ -5,7 +5,7 @@
  * @param {Array} children - Child elements
  * @returns {Object} Virtual DOM node
  */
-function createElement(tag, attrs = {}, children = []) {
+function createElement(tag, attrs = {}, ...children) {
     return {
         tag,
         attrs,
