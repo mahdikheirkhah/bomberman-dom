@@ -1,5 +1,10 @@
 package bomberman
 
+import (
+	"math/rand"
+	"time"
+)
+
 const NumberOfRows = 20
 const NumberOfColumns = 20
 const MaxNumberOfPlayers = 4
@@ -99,4 +104,53 @@ func (g *GameBoard) FindGridBorderLocation(borderName byte, playerIndex int) flo
 
 func (g *GameBoard) FindGridCenterLocation(row, col int) (float64, float64) {
 	return (float64(col) * g.GridSize) + (g.GridSize / 2), (float64(row) * g.GridSize) + (g.GridSize / 2)
+}
+
+func (g *GameBoard) RandomStart() {
+	rand.Seed(time.Now().UnixNano())
+
+	// Define safe zones around each player start (row, col) + adjacent cells
+	safeZones := map[int][][2]int{
+		0: {{0, 0}, {0, 1}, {1, 0}},                                                                                                    // Top-left
+		1: {{0, NumberOfColumns - 1}, {0, NumberOfColumns - 2}, {1, NumberOfColumns - 1}},                                              // Top-right
+		2: {{NumberOfRows - 1, 0}, {NumberOfRows - 2, 0}, {NumberOfRows - 1, 1}},                                                       // Bottom-left
+		3: {{NumberOfRows - 1, NumberOfColumns - 1}, {NumberOfRows - 2, NumberOfColumns - 1}, {NumberOfRows - 1, NumberOfColumns - 2}}, // Bottom-right
+	}
+
+	// Step 1: Fill grid with walls
+	for row := 0; row < NumberOfRows; row++ {
+		for col := 0; col < NumberOfColumns; col++ {
+			cell := GameCell{}
+
+			// Step 1.1: Place indestructible wall at even-even positions
+			if row%2 == 0 && col%2 == 0 {
+				cell.IsWall = true
+				cell.IsDestructible = false
+			} else {
+				// Step 1.2: Randomly place destructible walls (30% chance)
+				if rand.Float64() < 0.3 {
+					cell.IsWall = true
+					cell.IsDestructible = true
+				}
+			}
+
+			g.Panel[row][col] = cell
+		}
+	}
+
+	// Step 2: Clear player spawn zones
+	for i := 0; i < MaxNumberOfPlayers; i++ {
+		for _, pos := range safeZones[i] {
+			row, col := pos[0], pos[1]
+			g.Panel[row][col] = GameCell{} // empty cell
+		}
+	}
+}
+func InitGame() GameBoard {
+	var g GameBoard
+	g.GridSize = GridSize
+	g.NumberOfPlayers = 0
+	g.RandomStart()
+	return g
+
 }
