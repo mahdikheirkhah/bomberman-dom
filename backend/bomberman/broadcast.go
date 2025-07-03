@@ -71,7 +71,7 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 		NumberOfPlayers: g.NumberOfPlayers,
 		Panel:           g.Panel,
 	}
-
+	go g.HandlePlayerMessages(g.NumberOfPlayers-1, conn)
 	g.Mu.Unlock()
 
 	err = conn.WriteJSON(msg)

@@ -25,7 +25,7 @@ type GameBoard struct {
 
 	PlayersConnections map[int]*websocket.Conn
 
-	Broadcast chan []byte
+	BroadcastChannel chan interface{}
 
 	Mu sync.Mutex
 }
@@ -155,11 +155,13 @@ func (g *GameBoard) RandomStart() {
 		}
 	}
 }
-func InitGame() GameBoard {
-	var g GameBoard
-	g.GridSize = GridSize
-	g.NumberOfPlayers = 0
-	g.RandomStart()
-	return g
 
+func InitGame() *GameBoard {
+	g := &GameBoard{
+		GridSize:           GridSize,
+		NumberOfPlayers:    0,
+		PlayersConnections: make(map[int]*websocket.Conn),
+		BroadcastChannel:   make(chan interface{}),
+	}
+	return g
 }
