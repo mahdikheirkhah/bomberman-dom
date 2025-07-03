@@ -16,6 +16,8 @@ type Position struct {
 type Bomb struct {
 	Row           int       `json:"row"`
 	Column        int       `json:"column"`
+	XLocation     float64   `json:"xlocation"`
+	YLocation     float64   `json:"yLocation"`
 	ExplosionTime time.Time `json:"explosionTime"`
 	// RowRange      int       `json:"rowRange"`
 	// ColRange      int       `json:"colRange"`
@@ -54,6 +56,7 @@ func (g *GameBoard) CreateBomb(playerIndex int) error {
 	var bomb Bomb
 	bomb.Column = g.Players[playerIndex].Column
 	bomb.Row = g.Players[playerIndex].Row
+	bomb.XLocation, bomb.YLocation = g.FindGridCenterLocation(bomb.Row, bomb.Column)
 	bomb.ExplosionTime = time.Now().Add(g.Players[playerIndex].BombDelay)
 	g.Bombs = append(g.Bombs, bomb)
 	return nil
