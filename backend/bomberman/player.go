@@ -2,7 +2,6 @@ package bomberman
 
 import (
 	"errors"
-	"math"
 	"time"
 )
 
@@ -56,27 +55,32 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 		switch direction {
 		case "up":
 			destionation = player.YLocation + player.StepSize
-			if len(g.Panel) <= destionation || g.Panel[destionation][player.Column].IsWall || g.Panel[destionation][player.Column].IsDestructible {
+			player.Row = g.FindInnerCell('y', 'u', destionation, playerIndex)
+			if len(g.Panel) <= player.Row || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {
 				return false
 			}
-			player.Row = destionation
-			player.XLocation += player.StepSize
+			player.YLocation = destionation
 		case "down":
-			destionation = int(math.Floor(float64(player.Row) - player.StepSize))
-			if g.Players[playerIndex].Row-1 < 0 || g.Panel[g.Players[playerIndex].Row-1][g.Players[playerIndex].Column].IsWall || g.Panel[g.Players[playerIndex].Row-1][g.Players[playerIndex].Column].IsDestructible {
+			destionation = player.YLocation - player.StepSize
+			player.Row = g.FindInnerCell('y', 'd', destionation, playerIndex)
+			if player.Row < 0 || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {
 				return false
 			}
-			g.Players[playerIndex].Row--
+			player.YLocation = destionation
 		case "right":
-			if len(g.Panel[0]) <= g.Players[playerIndex].Column+1 || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column+1].IsWall || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column+1].IsDestructible {
+			destionation = player.XLocation + player.StepSize
+			player.Column = g.FindInnerCell('x', 'r', destionation, playerIndex)
+			if len(g.Panel[0]) <= player.Column || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {
 				return false
 			}
-			g.Players[playerIndex].Column++
+			player.XLocation = destionation
 		case "left":
-			if g.Players[playerIndex].Column-1 < 0 || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column-1].IsWall || g.Panel[g.Players[playerIndex].Row][g.Players[playerIndex].Column-1].IsDestructible {
+			destionation = player.XLocation - player.StepSize
+			player.Column = g.FindInnerCell('x', 'r', destionation, playerIndex)
+			if player.Column < 0 || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {
 				return false
 			}
-			g.Players[playerIndex].Column--
+			player.XLocation = destionation
 		default:
 			return false
 		}
