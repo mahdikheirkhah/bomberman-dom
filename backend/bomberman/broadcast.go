@@ -2,7 +2,6 @@ package bomberman
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -74,8 +73,10 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 	go g.HandlePlayerMessages(g.NumberOfPlayers-1, conn)
 	g.Mu.Unlock()
 
-	err = conn.WriteJSON(msg)
-	if err != nil {
-		fmt.Println("error at pong:", err)
+	select {
+	case g.BroadcastChannel <- msg:
+		// Successfully sent
+	default:
+		log.Println("Broadcast channel full, initial game state not sent")
 	}
 }

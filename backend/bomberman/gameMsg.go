@@ -42,7 +42,11 @@ func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) 
 		// Tag message with player index
 		msg["fromPlayer"] = playerIndex
 
-		// Send to broadcast channel
-		g.BroadcastChannel <- msg
+		select {
+		case g.BroadcastChannel <- msg:
+			// Message forwarded
+		default:
+			log.Printf("Broadcast channel full, dropped message from player %d\n", playerIndex)
+		}
 	}
 }
