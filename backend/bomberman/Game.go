@@ -2,7 +2,10 @@ package bomberman
 
 import (
 	"math/rand"
+	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 const NumberOfRows = 20
@@ -19,6 +22,12 @@ type GameBoard struct {
 	NumberOfPlayers int                                     `json:"numberOfPlayers"`
 	Panel           [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
 	GridSize        float64                                 `json:"gridSize"`
+
+	PlayersConnections map[int]*websocket.Conn
+
+	Broadcast chan []byte
+
+	Mu sync.Mutex
 }
 
 type GameCell struct {
