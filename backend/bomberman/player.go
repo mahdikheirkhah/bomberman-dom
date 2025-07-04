@@ -53,28 +53,35 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 		player.DirectionFace = byte(direction[0])
 	} else {
 		switch direction {
-		case "up":
+		//up
+		case "u":
 			destionation = player.YLocation + player.StepSize
 			player.Row = g.FindInnerCell('y', 'u', destionation, playerIndex)
 			if len(g.Panel) <= player.Row || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {
 				return false
 			}
 			player.YLocation = destionation
-		case "down":
+
+		//down
+		case "d":
 			destionation = player.YLocation - player.StepSize
 			player.Row = g.FindInnerCell('y', 'd', destionation, playerIndex)
 			if player.Row < 0 || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {
 				return false
 			}
 			player.YLocation = destionation
-		case "right":
+
+		//rigth
+		case "r":
 			destionation = player.XLocation + player.StepSize
 			player.Column = g.FindInnerCell('x', 'r', destionation, playerIndex)
 			if len(g.Panel[0]) <= player.Column || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {
 				return false
 			}
 			player.XLocation = destionation
-		case "left":
+
+		//left
+		case "l":
 			destionation = player.XLocation - player.StepSize
 			player.Column = g.FindInnerCell('x', 'r', destionation, playerIndex)
 			if player.Column < 0 || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {

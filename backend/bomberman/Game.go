@@ -8,11 +8,11 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const NumberOfRows = 20
-const NumberOfColumns = 20
+const NumberOfRows = 11
+const NumberOfColumns = 13
 const MaxNumberOfPlayers = 4
 const MinNumberOfPlayers = 2
-const GridSize = 20.00
+const CellSize = 64.00
 
 var Colors = []string{"G", "Y", "R", "B"}
 
@@ -21,7 +21,7 @@ type GameBoard struct {
 	Bombs           []Bomb                                  `json:"bombs"`
 	NumberOfPlayers int                                     `json:"numberOfPlayers"`
 	Panel           [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
-	GridSize        float64                                 `json:"gridSize"`
+	CellSize        float64                                 `json:"cellSize"`
 
 	PlayersConnections map[int]*websocket.Conn
 
@@ -100,19 +100,19 @@ func (g *GameBoard) FindGridBorderLocation(borderName byte, playerIndex int) flo
 	col := g.Players[playerIndex].Column
 	switch borderName {
 	case 'u':
-		return (float64(row) * g.GridSize) + g.GridSize
+		return (float64(row) * g.CellSize) + g.CellSize
 	case 'd':
-		return float64(row) * g.GridSize
+		return float64(row) * g.CellSize
 	case 'r':
-		return (float64(col) * g.GridSize) + g.GridSize
+		return (float64(col) * g.CellSize) + g.CellSize
 	case 'l':
-		return (float64(col) * g.GridSize)
+		return (float64(col) * g.CellSize)
 	}
 	return -1
 }
 
 func (g *GameBoard) FindGridCenterLocation(row, col int) (float64, float64) {
-	return (float64(col) * g.GridSize) + (g.GridSize / 2), (float64(row) * g.GridSize) + (g.GridSize / 2)
+	return (float64(col) * g.CellSize) + (g.CellSize / 2), (float64(row) * g.CellSize) + (g.CellSize / 2)
 }
 
 func (g *GameBoard) RandomStart() {
@@ -158,7 +158,7 @@ func (g *GameBoard) RandomStart() {
 
 func InitGame() *GameBoard {
 	g := &GameBoard{
-		GridSize:           GridSize,
+		CellSize:           CellSize,
 		NumberOfPlayers:    0,
 		PlayersConnections: make(map[int]*websocket.Conn),
 		BroadcastChannel:   make(chan interface{}),

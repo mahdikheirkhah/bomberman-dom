@@ -47,9 +47,9 @@ func (g *GameBoard) CanCreateBomb(playerIndex int) bool {
 	return g.Players[playerIndex].NumberOfUsedBombs < g.Players[playerIndex].NumberOfBombs
 }
 
-func (g *GameBoard) CreateBomb(playerIndex int) error {
+func (g *GameBoard) CreateBomb(playerIndex int) (error, int) {
 	if !g.CanCreateBomb(playerIndex) {
-		return errors.New("can not create a new bomb")
+		return errors.New("can not create a new bomb"), -1
 	}
 
 	g.Players[playerIndex].NumberOfUsedBombs++
@@ -58,8 +58,11 @@ func (g *GameBoard) CreateBomb(playerIndex int) error {
 	bomb.Row = g.Players[playerIndex].Row
 	bomb.XLocation, bomb.YLocation = g.FindGridCenterLocation(bomb.Row, bomb.Column)
 	bomb.ExplosionTime = time.Now().Add(g.Players[playerIndex].BombDelay)
+	g.Mu.Lock()
 	g.Bombs = append(g.Bombs, bomb)
-	return nil
+	bombIndex := len(g.Bombs) - 1
+	g.Mu.Unlock()
+	return nil, bombIndex
 }
 
 func (g *GameBoard) FindBombRange(bombIndex int) []Position {
