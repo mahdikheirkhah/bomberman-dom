@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bomberman Lobby</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: url('public/bg.jpeg') no-repeat  center fixed;
+      background-size: cover;
+      font-family: 'Press Start 2P', cursive;
+      color: white;
+      text-align: center;
+      padding: 50px;
+      margin: 0;
+
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    .lobby-box {
+      background: rgba(0, 0, 0, 0.7);
+      border: 4px dashed #fff;
+      padding: 30px;
+      border-radius: 20px;
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 15px red;
+      }
+      50% {
+        box-shadow: 0 0 25px yellow;
+      }
+    }
+
+    .waiting {
+      font-size: 20px;
+      margin-top: 20px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .player-list {
+      text-align: left;
+      margin-top: 30px;
+    }
+
+    .player {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="lobby-box">
+    <h1>💣 Bomberman Lobby 💣</h1>
+    <div class="waiting">Waiting for players to join...</div>
+    <div class="player-list">
+      <div class="player">🧍‍♂️ Player 1 (You)</div>
+      <div class="player">⏳ Player 2</div>
+      <div class="player">⏳ Player 3</div>
+      <div class="player">⏳ Player 4</div>
+    </div>
+  </div>
+</body>
+</html>
+<audio autoplay loop>
+  <source src="your-music-file.mp3" type="audio/mpeg">
+</audio>
+<button onclick="startGame()">Start Game</button>
+
+<script>
+  function startGame() {
+    window.location.href = 'game.html'; // Or actual game URL
+  }
+</script>
+<script>
+  // Simulate player joining
+  let players = ['Player 1 (You)', 'Player 2', 'Player 3', 'Player 4'];
+  let playerList = document.querySelector('.player-list');
+
+  function updatePlayerList() {
+    playerList.innerHTML = '';
+    players.forEach(player => {
+      let playerDiv = document.createElement('div');
+      playerDiv.className = 'player';
+      playerDiv.textContent = `🧍‍♂️ ${player}`;
+      playerList.appendChild(playerDiv);
+    });
+  }
+
+  // Simulate players joining every few seconds
+  setTimeout(() => {
+    players[1] = 'Player 2';
+    updatePlayerList();
+  }, 2000);
+
+  setTimeout(() => {
+    players[2] = 'Player 3';
+    updatePlayerList();
+  }, 4000);
+
+  setTimeout(() => {
+    players[3] = 'Player 4';
+    updatePlayerList();
+  }, 6000);
