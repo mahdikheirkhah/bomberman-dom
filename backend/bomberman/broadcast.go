@@ -118,10 +118,10 @@ func (g *GameBoard) forceStartGame() {
 	g.IsStarted = true
 
 	msg := struct {
-		Type            string                                  `json:"type"`
-		Players         []Player                                `json:"players"`
-		NumberOfPlayers int                                     `json:"numberOfPlayers"`
-		Panel           [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
+		Type            string                                `json:"type"`
+		Players         []Player                              `json:"players"`
+		NumberOfPlayers int                                   `json:"numberOfPlayers"`
+		Panel           [NumberOfRows][NumberOfColumns]string `json:"panel"`
 	}{
 		Type:            "gameStart",
 		Players:         g.Players,

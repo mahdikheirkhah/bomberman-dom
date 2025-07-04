@@ -17,11 +17,11 @@ const CellSize = 64
 var Colors = []string{"G", "Y", "R", "B"}
 
 type GameBoard struct {
-	Players            []Player                                `json:"players"`
-	Bombs              []Bomb                                  `json:"bombs"`
-	NumberOfPlayers    int                                     `json:"numberOfPlayers"`
-	Panel              [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
-	CellSize           int                                     `json:"cellSize"`
+	Players            []Player                              `json:"players"`
+	Bombs              []Bomb                                `json:"bombs"`
+	NumberOfPlayers    int                                   `json:"numberOfPlayers"`
+	Panel              [NumberOfRows][NumberOfColumns]string `json:"panel"` // Ex -> Exploade , W -> Wall, D -> Destructible, ""(empty) -> empty cell
+	CellSize           int                                   `json:"cellSize"`
 	IsStarted          bool
 	PlayersConnections map[int]*websocket.Conn
 
@@ -63,7 +63,7 @@ func (g *GameBoard) FindStartColLocation() int {
 }
 
 func (g *GameBoard) HasExploaded(row, col int) bool {
-	return g.Panel[row][col].IsExploaded
+	return g.Panel[row][col] == "Ex"
 }
 
 func (g *GameBoard) FindInnerCell(axis byte, direction byte, location int, playerIndex int) int {
@@ -128,17 +128,15 @@ func (g *GameBoard) RandomStart() {
 	// Step 1: Fill grid with walls
 	for row := 0; row < NumberOfRows; row++ {
 		for col := 0; col < NumberOfColumns; col++ {
-			cell := GameCell{}
+			var cell string
 
 			// Step 1.1: Place indestructible wall at even-even positions
 			if row%2 == 0 && col%2 == 0 {
-				cell.IsWall = true
-				cell.IsDestructible = false
+				cell = "W"
 			} else {
 				// Step 1.2: Randomly place destructible walls (30% chance)
 				if rand.Float64() < 0.3 {
-					cell.IsWall = true
-					cell.IsDestructible = true
+					cell = "D"
 				}
 			}
 
@@ -150,7 +148,7 @@ func (g *GameBoard) RandomStart() {
 	for i := 0; i < MaxNumberOfPlayers; i++ {
 		for _, pos := range safeZones[i] {
 			row, col := pos[0], pos[1]
-			g.Panel[row][col] = GameCell{} // empty cell
+			g.Panel[row][col] = "" // empty cell
 		}
 	}
 }
