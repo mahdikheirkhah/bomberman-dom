@@ -70,7 +70,8 @@ func (g *GameBoard) FindInnerCell(axis byte, direction byte, location int, playe
 	col := g.Players[playerIndex].Column
 	row := g.Players[playerIndex].Row
 
-	if axis == 'x' {
+	switch axis {
+	case 'x':
 		if direction == 'r' && location >= g.FindGridBorderLocation('r', playerIndex) {
 			return col + 1
 		}
@@ -78,7 +79,7 @@ func (g *GameBoard) FindInnerCell(axis byte, direction byte, location int, playe
 			return col - 1
 		}
 		return col
-	} else if axis == 'y' {
+	case 'y':
 		if direction == 'u' && location <= g.FindGridBorderLocation('u', playerIndex) {
 			return row - 1
 		}

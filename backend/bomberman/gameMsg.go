@@ -148,7 +148,7 @@ func (g *GameBoard) HandleBombMessage(msgMap map[string]interface{}) {
 	}
 
 	g.Mu.Lock()
-	err, bombIndex := g.CreateBomb(playerIndex)
+	bombIndex, err := g.CreateBomb(playerIndex)
 	if err != nil {
 		var msg PlantBomb
 		msg.MsgType = "BA" //Bomb Accepted

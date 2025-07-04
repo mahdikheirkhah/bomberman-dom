@@ -27,6 +27,11 @@ type JoinRequest struct {
 	Name string `json:"name"`
 }
 
+type StateMsg struct {
+	Type  string `json:"type"`
+	State string `json:"state"`
+}
+
 var once sync.Once
 var LobbyMsg bool
 
@@ -85,10 +90,11 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 		})
 	}
 	if LobbyMsg && !g.IsStarted && g.NumberOfPlayers != MaxNumberOfPlayers {
-		msg := map[string]interface{}{
-			"state": "LobbyCountdown",
+		stateMsg := StateMsg{
+			Type:  "GameState",
+			State: "LobbyCountdown",
 		}
-		g.SendMsgToChannel(msg, -1)
+		g.SendMsgToChannel(stateMsg, -1)
 	}
 
 	if g.NumberOfPlayers == MaxNumberOfPlayers {
@@ -125,16 +131,27 @@ func (g *GameBoard) forceStartGame() {
 	}
 	g.IsStarted = true
 
+	stateMsg := StateMsg{
+		Type:  "GameState",
+		State: "GameCountdown",
+	}
+	g.SendMsgToChannel(stateMsg, -1)
+
 	// 10 seconds to start
 	for i := 10; i > 0; i-- {
 		msg := map[string]interface{}{
-			"state":   "gameCountdown",
 			"type":    "countdown",
 			"seconds": i,
 		}
 		g.SendMsgToChannel(msg, -1)
 		time.Sleep(1 * time.Second)
 	}
+
+	stateMsg = StateMsg{
+		Type:  "GameState",
+		State: "GameStarted",
+	}
+	g.SendMsgToChannel(stateMsg, -1)
 
 	msg := struct {
 		Type            string                                `json:"type"`
