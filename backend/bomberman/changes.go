@@ -72,14 +72,14 @@ func (g *GameBoard) FindBombRange(bombIndex int) []Position {
 	// Up
 	for row := bomb.Row; row >= 0 && bomb.Row-row <= BombRowRange; row-- {
 		cell := &g.Panel[row][bomb.Column]
-		if cell.IsDestructible || cell.IsWall {
-			if cell.IsDestructible {
-				cell.IsDestructible = false
+		if *cell == "D" || *cell == "W" {
+			if *cell == "D" {
+				*cell = ""
 				changedLocations = append(changedLocations, Position{Row: row, Col: bomb.Column})
 			}
 			break
 		} else {
-			cell.IsExploaded = true
+			*cell = "Ex"
 			changedLocations = append(changedLocations, Position{Row: row, Col: bomb.Column})
 		}
 	}
@@ -87,14 +87,14 @@ func (g *GameBoard) FindBombRange(bombIndex int) []Position {
 	// Down
 	for row := bomb.Row + 1; row < len(g.Panel) && row-bomb.Row <= BombRowRange; row++ {
 		cell := &g.Panel[row][bomb.Column]
-		if cell.IsDestructible || cell.IsWall {
-			if cell.IsDestructible {
-				cell.IsDestructible = false
+		if *cell == "D" || *cell == "W" {
+			if *cell == "D" {
+				*cell = ""
 				changedLocations = append(changedLocations, Position{Row: row, Col: bomb.Column})
 			}
 			break
 		} else {
-			cell.IsExploaded = true
+			*cell = "Ex"
 			changedLocations = append(changedLocations, Position{Row: row, Col: bomb.Column})
 		}
 	}
@@ -102,14 +102,14 @@ func (g *GameBoard) FindBombRange(bombIndex int) []Position {
 	// Left
 	for col := bomb.Column - 1; col >= 0 && bomb.Column-col <= BombColRange; col-- {
 		cell := &g.Panel[bomb.Row][col]
-		if cell.IsDestructible || cell.IsWall {
-			if cell.IsDestructible {
-				cell.IsDestructible = false
+		if *cell == "D" || *cell == "W" {
+			if *cell == "D" {
+				*cell = ""
 				changedLocations = append(changedLocations, Position{Row: bomb.Row, Col: col})
 			}
 			break
 		} else {
-			cell.IsExploaded = true
+			*cell = "Ex"
 			changedLocations = append(changedLocations, Position{Row: bomb.Row, Col: col})
 		}
 	}
@@ -117,20 +117,20 @@ func (g *GameBoard) FindBombRange(bombIndex int) []Position {
 	// Right
 	for col := bomb.Column + 1; col < len(g.Panel[0]) && col-bomb.Column <= BombColRange; col++ {
 		cell := &g.Panel[bomb.Row][col]
-		if cell.IsDestructible || cell.IsWall {
-			if cell.IsDestructible {
-				cell.IsDestructible = false
+		if *cell == "D" || *cell == "W" {
+			if *cell == "D" {
+				*cell = ""
 				changedLocations = append(changedLocations, Position{Row: bomb.Row, Col: col})
 			}
 			break
 		} else {
-			cell.IsExploaded = true
+			*cell = "Ex"
 			changedLocations = append(changedLocations, Position{Row: bomb.Row, Col: col})
 		}
 	}
 
 	// Add the bomb's own position
-	g.Panel[bomb.Row][bomb.Column].IsExploaded = true
+	g.Panel[bomb.Row][bomb.Column] = "Ex"
 	changedLocations = append(changedLocations, Position{Row: bomb.Row, Col: bomb.Column})
 	g.CheckExplosion()
 	return changedLocations
