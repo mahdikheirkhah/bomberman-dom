@@ -1,56 +1,82 @@
 package bomberman
 
-// import (
-// 	"fmt"
-// 	"log"
-// 	"net/http"
-// 	"strings"
+import (
+	"encoding/json"
+	"io"
+	"log"
+	"net/http"
+	"strings"
 
-// 	"github.com/gorilla/websocket"
-// )
+	"github.com/gorilla/websocket"
+)
 
-// var Upgrader = websocket.Upgrader{
-// 	CheckOrigin: func(r *http.Request) bool {
-// 		origin := r.Header.Get("Origin")
-// 		// Allow any localhost origin (with or without port)
-// 		if strings.HasPrefix(origin, "http://localhost") {
-// 			return true
-// 		}
-// 		return false
-// 	},
-// }
+var Upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		// Allow any localhost origin (with or without port)
+		if strings.HasPrefix(origin, "http://localhost") {
+			return true
+		}
+		return false
+	},
+}
 
-// func HandleWSConnections(w http.ResponseWriter, r *http.Request) {
+type JoinRequest struct {
+	Name string `json:"name"`
+}
 
-// 	conn, err := Upgrader.Upgrade(w, r, nil)
-// 	if err != nil {
-// 		log.Println("Upgrade error:", err)
-// 		return
-// 	}
+func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	// Read the request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Can't read body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
 
-// 	client := &model.Client{
-// 		UserID: fmt.Sprint(userID),
-// 		Conn:   conn,
-// 		Send:   make(chan model.WSMessage, 10), // buffered send
-// 	}
+	// Parse JSON into struct
+	var req JoinRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+	g.Mu.Lock()
+	err = g.CreatePlayer(req.Name)
+	if err != nil {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	g.Mu.Unlock()
 
-// 	model.Mu.Lock()
-// 	model.Clients[client.UserID] = client
-// 	model.Mu.Unlock()
+	conn, err := Upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("Upgrade error:", err)
+		return
+	}
 
-// 	go service.ReadPump(client)
-// 	go service.WritePump(client)
+	g.Mu.Lock()
+	g.PlayersConnections[g.NumberOfPlayers-1] = conn
+	msg := struct {
+		Players         []Player                                `json:"players"`
+		NumberOfPlayers int                                     `json:"numberOfPlayers"`
+		Panel           [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
+	}{
+		Players:         g.Players,
+		NumberOfPlayers: g.NumberOfPlayers,
+		Panel:           g.Panel,
+	}
+	go g.HandlePlayerMessages(g.NumberOfPlayers-1, conn)
+	g.Mu.Unlock()
 
-// 	// send pong to test connection
-// 	msg := model.WSMessage{
-// 		Type:    "pong",
-// 		From:    "system_pong",
-// 		To:      client.UserID,
-// 		Content: "ensuring connection works",
-// 	}
-
-// 	err = client.Conn.WriteJSON(msg)
-// 	if err != nil {
-// 		fmt.Println("error at pong:", err)
-// 	}
-// }
+	select {
+	case g.BroadcastChannel <- msg:
+		// Successfully sent
+	default:
+		log.Println("Broadcast channel full, initial game state not sent")
+	}
+}

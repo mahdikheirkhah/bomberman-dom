@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const StepSize = 0.5
+const StepSize = 5
 const MiliBombDelay = 500
 
 type Player struct {
@@ -15,13 +15,13 @@ type Player struct {
 	Color             string        `json:"color"`
 	Row               int           `json:"row"`
 	Column            int           `json:"column"`
-	XLocation         float64       `json:"xlocation"`
-	YLocation         float64       `json:"yLocation"`
+	XLocation         int           `json:"xlocation"`
+	YLocation         int           `json:"yLocation"`
 	IsDead            bool          `json:"isDead"`
 	NumberOfBombs     int           `json:"numberOfBombs"`
 	NumberOfUsedBombs int           `json:"numberOfUsedBombs"`
 	BombDelay         time.Duration `json:"bombDelay"`
-	StepSize          float64       `json:"stepSize"`
+	StepSize          int           `json:"stepSize"`
 	DirectionFace     byte          `json:"DirectionFace"`
 }
 
@@ -48,43 +48,50 @@ func (g *GameBoard) CreatePlayer(name string) error {
 
 func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 	player := &g.Players[playerIndex]
-	var destionation float64
+	step := player.StepSize
+
 	if player.DirectionFace != byte(direction[0]) {
 		player.DirectionFace = byte(direction[0])
 	} else {
 		switch direction {
-		case "up":
-			destionation = player.YLocation + player.StepSize
-			player.Row = g.FindInnerCell('y', 'u', destionation, playerIndex)
-			if len(g.Panel) <= player.Row || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {
+		case "u":
+			dest := player.YLocation - step
+			newRow := g.FindInnerCell('y', 'u', dest, playerIndex)
+			if newRow < 0 || g.Panel[newRow][player.Column].IsWall || g.Panel[newRow][player.Column].IsDestructible {
 				return false
 			}
-			player.YLocation = destionation
-		case "down":
-			destionation = player.YLocation - player.StepSize
-			player.Row = g.FindInnerCell('y', 'd', destionation, playerIndex)
-			if player.Row < 0 || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {
+			player.Row = newRow
+			player.YLocation = dest
+
+		case "d":
+			dest := player.YLocation + step
+			newRow := g.FindInnerCell('y', 'd', dest, playerIndex)
+			if newRow >= NumberOfRows || g.Panel[newRow][player.Column].IsWall || g.Panel[newRow][player.Column].IsDestructible {
 				return false
 			}
-			player.YLocation = destionation
-		case "right":
-			destionation = player.XLocation + player.StepSize
-			player.Column = g.FindInnerCell('x', 'r', destionation, playerIndex)
-			if len(g.Panel[0]) <= player.Column || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {
+			player.Row = newRow
+			player.YLocation = dest
+
+		case "r":
+			dest := player.XLocation + step
+			newCol := g.FindInnerCell('x', 'r', dest, playerIndex)
+			if newCol >= NumberOfColumns || g.Panel[player.Row][newCol].IsWall || g.Panel[player.Row][newCol].IsDestructible {
 				return false
 			}
-			player.XLocation = destionation
-		case "left":
-			destionation = player.XLocation - player.StepSize
-			player.Column = g.FindInnerCell('x', 'r', destionation, playerIndex)
-			if player.Column < 0 || g.Panel[player.Row][player.Column].IsWall || g.Panel[player.Row][player.Column].IsDestructible {
+			player.Column = newCol
+			player.XLocation = dest
+
+		case "l":
+			dest := player.XLocation - step
+			newCol := g.FindInnerCell('x', 'l', dest, playerIndex)
+			if newCol < 0 || g.Panel[player.Row][newCol].IsWall || g.Panel[player.Row][newCol].IsDestructible {
 				return false
 			}
-			player.XLocation = destionation
+			player.Column = newCol
+			player.XLocation = dest
 		default:
 			return false
 		}
 	}
-
 	return true
 }
