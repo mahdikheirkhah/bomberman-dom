@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -25,12 +27,19 @@ type JoinRequest struct {
 	Name string `json:"name"`
 }
 
+var once sync.Once
+
 func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	// Read the request body
+	if g.IsStarted {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("you can not join now wait"))
+		return
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Can't read body", http.StatusBadRequest)
@@ -38,19 +47,21 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 	}
 	defer r.Body.Close()
 
-	// Parse JSON into struct
 	var req JoinRequest
 	if err := json.Unmarshal(body, &req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
+
 	g.Mu.Lock()
 	err = g.CreatePlayer(req.Name)
 	if err != nil {
+		g.Mu.Unlock()
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(err.Error()))
 		return
 	}
+	playerIndex := g.NumberOfPlayers - 1
 	g.Mu.Unlock()
 
 	conn, err := Upgrader.Upgrade(w, r, nil)
@@ -60,23 +71,63 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 	}
 
 	g.Mu.Lock()
-	g.PlayersConnections[g.NumberOfPlayers-1] = conn
+	g.PlayersConnections[playerIndex] = conn
+	g.Mu.Unlock()
+
+	go g.HandlePlayerMessages(playerIndex, conn)
+
+	if g.NumberOfPlayers == MinNumberOfPlayers {
+		// Start countdown only once
+		once.Do(func() {
+			go g.startCountdown()
+		})
+	}
+
+	if g.NumberOfPlayers == MaxNumberOfPlayers {
+		g.forceStartGame()
+	}
+}
+
+func (g *GameBoard) startCountdown() {
+	for i := 20; i > 0; i-- {
+		msg := map[string]interface{}{
+			"type":    "countdown",
+			"seconds": i,
+		}
+		g.SendMsgToChannel(msg, -1)
+		time.Sleep(1 * time.Second)
+
+		g.Mu.Lock()
+		if g.NumberOfPlayers == MaxNumberOfPlayers {
+			g.Mu.Unlock()
+			return // Game already started
+		}
+		g.Mu.Unlock()
+	}
+
+	g.forceStartGame()
+}
+
+func (g *GameBoard) forceStartGame() {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+
+	if g.IsStarted {
+		return
+	}
+	g.IsStarted = true
+
 	msg := struct {
+		Type            string                                  `json:"type"`
 		Players         []Player                                `json:"players"`
 		NumberOfPlayers int                                     `json:"numberOfPlayers"`
 		Panel           [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
 	}{
+		Type:            "gameStart",
 		Players:         g.Players,
 		NumberOfPlayers: g.NumberOfPlayers,
 		Panel:           g.Panel,
 	}
-	go g.HandlePlayerMessages(g.NumberOfPlayers-1, conn)
-	g.Mu.Unlock()
 
-	select {
-	case g.BroadcastChannel <- msg:
-		// Successfully sent
-	default:
-		log.Println("Broadcast channel full, initial game state not sent")
-	}
+	g.SendMsgToChannel(msg, -1)
 }

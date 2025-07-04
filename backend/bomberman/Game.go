@@ -17,12 +17,12 @@ const CellSize = 64
 var Colors = []string{"G", "Y", "R", "B"}
 
 type GameBoard struct {
-	Players         []Player                                `json:"players"`
-	Bombs           []Bomb                                  `json:"bombs"`
-	NumberOfPlayers int                                     `json:"numberOfPlayers"`
-	Panel           [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
-	CellSize        int                                     `json:"cellSize"`
-
+	Players            []Player                                `json:"players"`
+	Bombs              []Bomb                                  `json:"bombs"`
+	NumberOfPlayers    int                                     `json:"numberOfPlayers"`
+	Panel              [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
+	CellSize           int                                     `json:"cellSize"`
+	IsStarted          bool
 	PlayersConnections map[int]*websocket.Conn
 
 	BroadcastChannel chan interface{}
@@ -157,6 +157,7 @@ func (g *GameBoard) RandomStart() {
 
 func InitGame() *GameBoard {
 	g := &GameBoard{
+		IsStarted:          false,
 		CellSize:           CellSize,
 		NumberOfPlayers:    0,
 		PlayersConnections: make(map[int]*websocket.Conn),
