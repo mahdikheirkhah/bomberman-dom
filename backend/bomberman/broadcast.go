@@ -75,12 +75,18 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 	g.Mu.Unlock()
 
 	go g.HandlePlayerMessages(playerIndex, conn)
-
 	if g.NumberOfPlayers == MinNumberOfPlayers {
+
 		// Start countdown only once
 		once.Do(func() {
 			go g.startCountdown()
 		})
+	}
+	if g.NumberOfPlayers >= MinNumberOfPlayers && !g.IsStarted {
+		msg := map[string]interface{}{
+			"state": "Lobby_countdown",
+		}
+		g.SendMsgToChannel(msg, -1)
 	}
 
 	if g.NumberOfPlayers == MaxNumberOfPlayers {
@@ -116,6 +122,16 @@ func (g *GameBoard) forceStartGame() {
 		return
 	}
 	g.IsStarted = true
+
+	// 10 seconds to start
+	for i := 10; i > 0; i-- {
+		msg := map[string]interface{}{
+			"type":    "countdown",
+			"seconds": i,
+		}
+		g.SendMsgToChannel(msg, -1)
+		time.Sleep(1 * time.Second)
+	}
 
 	msg := struct {
 		Type            string                                `json:"type"`
