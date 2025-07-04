@@ -28,8 +28,10 @@ type JoinRequest struct {
 }
 
 var once sync.Once
+var LobbyMsg bool
 
 func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -82,9 +84,9 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 			go g.startCountdown()
 		})
 	}
-	if g.NumberOfPlayers >= MinNumberOfPlayers && !g.IsStarted {
+	if LobbyMsg && !g.IsStarted && g.NumberOfPlayers != MaxNumberOfPlayers {
 		msg := map[string]interface{}{
-			"state": "Lobby_countdown",
+			"state": "LobbyCountdown",
 		}
 		g.SendMsgToChannel(msg, -1)
 	}
@@ -102,7 +104,7 @@ func (g *GameBoard) startCountdown() {
 		}
 		g.SendMsgToChannel(msg, -1)
 		time.Sleep(1 * time.Second)
-
+		LobbyMsg = true
 		g.Mu.Lock()
 		if g.NumberOfPlayers == MaxNumberOfPlayers {
 			g.Mu.Unlock()
@@ -126,6 +128,7 @@ func (g *GameBoard) forceStartGame() {
 	// 10 seconds to start
 	for i := 10; i > 0; i-- {
 		msg := map[string]interface{}{
+			"state":   "gameCountdown",
 			"type":    "countdown",
 			"seconds": i,
 		}
