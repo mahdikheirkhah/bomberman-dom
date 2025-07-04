@@ -1,13 +1,13 @@
-
 import { createElement } from '../framework/dom.js';
 import { router } from '../framework/router.js';
 import { APIUrl } from './main.js';
 
+let currentPlayerId = null; // To highlight "you"
+
 export default function Lobby() {
-    let nameInput, joinButton, playerName, gameStatus, nameEntry, waitingRoom, countdownMessage, countdownSpan;
+    let nameInput, joinButton, playerName, gameStatus, nameEntry, waitingRoom, playerListContainer;
 
     const joinHandler = async (e) => {
-        console.log('handling eveng')
         if (e.key === 'Enter' || e.type === 'click') {
             const name = nameInput.dom.value;
             if (name) {
@@ -20,6 +20,8 @@ export default function Lobby() {
 
                     if (response.ok) {
                         const data = await response.json();
+                        currentPlayerId = data.playerId;
+
                         playerName.dom.textContent = name;
                         nameEntry.dom.style.display = 'none';
                         waitingRoom.dom.style.display = 'block';
@@ -47,14 +49,13 @@ export default function Lobby() {
                     updatePlayerList(message.payload.players);
                     break;
                 case 'game_start':
-                    alert('Strating the game')
-                    router.navigate('/game')
+                    router.navigate('/game');
                     break;
             }
         };
 
         ws.onclose = () => {
-            console.log('WebSocket connection closed');
+            console.log('WebSocket closed');
             gameStatus.dom.textContent = 'Connection lost';
         };
 
@@ -65,36 +66,77 @@ export default function Lobby() {
     }
 
     function updatePlayerList(players) {
-        const playerList = document.getElementById('player-list');
-        playerList.innerHTML = '';
-        players.forEach(player => {
-            const li = document.createElement('li');
-            li.textContent = player;
-            playerList.appendChild(li);
+        playerListContainer.dom.innerHTML = '';
+
+        players.forEach((player, index) => {
+            const isHost = index === 0;
+            const isYou = player.id === currentPlayerId;
+
+            let label = isHost ? '👑 Host' : '🧍 Player';
+            if (isYou) label += ' (You)';
+
+            const playerDiv = createElement('div', {
+                class: `player ${isHost ? 'host' : ''}`,
+                'data-testid': `player-${player.id}`
+            }, `${label}: ${player.name}`);
+
+            playerListContainer.dom.appendChild(playerDiv.dom || playerDiv);
         });
+
+        if (players.length >= 2 && players[0].id === currentPlayerId) {
+            const startBtn = createElement('button', {
+                id: 'start-game',
+                onclick: () => {
+                    fetch(`http://${APIUrl}/api/start`, { method: 'POST' });
+                }
+            }, 'Start Game');
+            playerListContainer.dom.appendChild(startBtn.dom || startBtn);
+        }
     }
 
-    nameInput = createElement('input', { type: 'text', id: 'name-input', placeholder: 'Enter your name', onkeydown: joinHandler });
-    joinButton = createElement('button', { id: 'join-game', onclick: joinHandler }, 'Join Game');
+    // Leave lobby button
+    const leaveButton = createElement('button', {
+        id: 'leave-lobby',
+        onclick: () => {
+            location.reload(); // or implement a route
+        }
+    }, 'Leave Lobby');
+
+    nameInput = createElement('input', {
+        type: 'text',
+        id: 'name-input',
+        placeholder: 'Enter your name',
+        onkeydown: joinHandler,
+        'data-testid': 'name-input'
+    });
+
+    joinButton = createElement('button', {
+        id: 'join-game',
+        onclick: joinHandler,
+        'data-testid': 'join-button'
+    }, 'Join Game');
+
     playerName = createElement('span', { id: 'player-name' });
-    gameStatus = createElement('span', { id: 'game-status' }, 'Not started');
+    gameStatus = createElement('span', { id: 'game-status' }, 'Waiting');
 
     nameEntry = createElement('div', { id: 'name-entry' },
         nameInput,
-        joinButton,
+        joinButton
     );
+
+    playerListContainer = createElement('div', { id: 'player-list', 'data-testid': 'player-list' });
 
     waitingRoom = createElement('div', { id: 'waiting-room', style: 'display: none;' },
         createElement('h2', {}, 'Welcome, ', playerName, '!'),
-        createElement('p', {}, 'Waiting for other players to join...'),
         createElement('p', {}, 'Game Status: ', gameStatus),
-        createElement('h3', {}, 'Players:'),
-        createElement('ul', { id: 'player-list' })
+        createElement('h3', {}, 'Players in the lobby:'),
+        playerListContainer,
+        leaveButton
     );
 
     return createElement('div', {},
         createElement('h1', {}, 'Bomberman Lobby'),
         nameEntry,
-        waitingRoom,
+        waitingRoom
     );
 }
