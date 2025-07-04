@@ -94,18 +94,18 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 }
 
 type MovePlayerMsg struct {
-	MsgType   string  `json:"MT"`
-	XLocation float64 `json:"XL"`
-	YLocation float64 `json:"YL"`
-	Row       int     `json:"R"`
-	Column    int     `json:"C"`
+	MsgType   string `json:"MT"`
+	XLocation int    `json:"XL"`
+	YLocation int    `json:"YL"`
+	Row       int    `json:"R"`
+	Column    int    `json:"C"`
 }
 type PlantBomb struct {
-	MsgType   string  `json:"MT"`
-	XLocation float64 `json:"XL"`
-	YLocation float64 `json:"YL"`
-	Row       int     `json:"R"`
-	Column    int     `json:"C"`
+	MsgType   string `json:"MT"`
+	XLocation int    `json:"XL"`
+	YLocation int    `json:"YL"`
+	Row       int    `json:"R"`
+	Column    int    `json:"C"`
 }
 type NotMove struct {
 	MsgType string `json:"MT"`

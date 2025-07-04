@@ -12,7 +12,7 @@ const NumberOfRows = 11
 const NumberOfColumns = 13
 const MaxNumberOfPlayers = 4
 const MinNumberOfPlayers = 2
-const CellSize = 64.00
+const CellSize = 64
 
 var Colors = []string{"G", "Y", "R", "B"}
 
@@ -21,7 +21,7 @@ type GameBoard struct {
 	Bombs           []Bomb                                  `json:"bombs"`
 	NumberOfPlayers int                                     `json:"numberOfPlayers"`
 	Panel           [NumberOfRows][NumberOfColumns]GameCell `json:"panel"`
-	CellSize        float64                                 `json:"cellSize"`
+	CellSize        int                                     `json:"cellSize"`
 
 	PlayersConnections map[int]*websocket.Conn
 
@@ -66,55 +66,54 @@ func (g *GameBoard) HasExploaded(row, col int) bool {
 	return g.Panel[row][col].IsExploaded
 }
 
-func (g *GameBoard) FindInnerCell(axis byte, direction byte, location float64, playerIndex int) int {
+func (g *GameBoard) FindInnerCell(axis byte, direction byte, location int, playerIndex int) int {
 	col := g.Players[playerIndex].Column
 	row := g.Players[playerIndex].Row
+
 	if axis == 'x' {
-		if direction == 'r' {
-			if location > g.FindGridBorderLocation('r', playerIndex) {
-				return col + 1
-			}
-		} else if direction == 'l' {
-			if location < g.FindGridBorderLocation('l', playerIndex) {
-				return col - 1
-			}
+		if direction == 'r' && location >= g.FindGridBorderLocation('r', playerIndex) {
+			return col + 1
+		}
+		if direction == 'l' && location <= g.FindGridBorderLocation('l', playerIndex) {
+			return col - 1
 		}
 		return col
 	} else if axis == 'y' {
-		if direction == 'u' {
-			if location > g.FindGridBorderLocation('u', playerIndex) {
-				return row + 1
-			}
-		} else if direction == 'd' {
-			if location < g.FindGridBorderLocation('d', playerIndex) {
-				return row - 1
-			}
+		if direction == 'u' && location <= g.FindGridBorderLocation('u', playerIndex) {
+			return row - 1
+		}
+		if direction == 'd' && location >= g.FindGridBorderLocation('d', playerIndex) {
+			return row + 1
 		}
 		return row
 	}
+
 	return 0
 }
 
-func (g *GameBoard) FindGridBorderLocation(borderName byte, playerIndex int) float64 {
+func (g *GameBoard) FindGridBorderLocation(borderName byte, playerIndex int) int {
 	row := g.Players[playerIndex].Row
 	col := g.Players[playerIndex].Column
+	cellSize := int(g.CellSize)
+
 	switch borderName {
 	case 'u':
-		return (float64(row) * g.CellSize) + g.CellSize
+		return row * cellSize // top border
 	case 'd':
-		return float64(row) * g.CellSize
-	case 'r':
-		return (float64(col) * g.CellSize) + g.CellSize
+		return (row + 1) * cellSize // bottom border
 	case 'l':
-		return (float64(col) * g.CellSize)
+		return col * cellSize
+	case 'r':
+		return (col + 1) * cellSize
 	}
 	return -1
 }
 
-func (g *GameBoard) FindGridCenterLocation(row, col int) (float64, float64) {
-	return (float64(col) * g.CellSize) + (g.CellSize / 2), (float64(row) * g.CellSize) + (g.CellSize / 2)
+func (g *GameBoard) FindGridCenterLocation(row, col int) (int, int) {
+	x := (col * int(g.CellSize)) + int(g.CellSize/2)
+	y := (row * int(g.CellSize)) + int(g.CellSize/2)
+	return x, y
 }
-
 func (g *GameBoard) RandomStart() {
 	rand.Seed(time.Now().UnixNano())
 

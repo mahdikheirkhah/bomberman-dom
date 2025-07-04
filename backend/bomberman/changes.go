@@ -16,8 +16,8 @@ type Position struct {
 type Bomb struct {
 	Row           int       `json:"row"`
 	Column        int       `json:"column"`
-	XLocation     float64   `json:"xlocation"`
-	YLocation     float64   `json:"yLocation"`
+	XLocation     int       `json:"xlocation"`
+	YLocation     int       `json:"yLocation"`
 	ExplosionTime time.Time `json:"explosionTime"`
 	// RowRange      int       `json:"rowRange"`
 	// ColRange      int       `json:"colRange"`
