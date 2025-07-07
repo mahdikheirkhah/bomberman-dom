@@ -10,6 +10,7 @@ type Chat struct {
 	Date time.Time `json:"date"`
 	Filter bool `json:"filter"`
 	SenderIndex int `json:"senderIndex"`
+	Color string `json:"color"`
 
 }
 func (g *GameBoard) HandleChatMessage(msgMap map[string]interface{}) {
@@ -28,6 +29,7 @@ func (g *GameBoard) HandleChatMessage(msgMap map[string]interface{}) {
 	g.Mu.Lock()
 	msg.Type = "CM" // chat message
 	msg.Name = g.Players[playerIndex].Name
+	msg.Color = g.Players[playerIndex].Color
 	msg.Content = Content
 	msg.Date = time.Now()
 	g.SendMsgToChannel(msg, playerIndex)
