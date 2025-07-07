@@ -17,6 +17,7 @@ class AppRenderer {
     
 
     render = () => {
+        console.log('Rendering...', new Date().toLocaleTimeString())        
         const newVnodeOrVnodes = this.rootComponent();
         const oldVnodeOrVnodes = this.vnode;
 

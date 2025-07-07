@@ -10,41 +10,45 @@ store.setState({
 	currentView: 'start',
 	error: '',
 	players: [],
-	countdown: null,
 	playerId: null,
-	ws: null
+	ws: null,
+	countdown: null,
+	gameStarted: false,
 });
 
-function handleWebSocket() {
+export function handleWebSocket() {
 	const { ws } = store.getState();
 	if (!ws) return;
 
 	ws.onmessage = (event) => {
 		const message = JSON.parse(event.data);
-		const state = store.getState();
 
 		switch (message.type) {
 			case 'player_list':
-				store.setState({ ...state, players: message.players });
+				store.setState({ players: message.players });
+				break;
+			case 'GameState':
+				if (message.state === 'LobbyCountdown') {
+					store.setState({ countdown: null, gameStarted: false });
+				} else if (message.state === 'GameCountdown') {
+					store.setState({ currentView: 'game', gameStarted: false });
+				} else if (message.state === 'GameStarted') {
+					store.setState({ countdown: null, gameStarted: true });
+				}
 				break;
 			case 'lobbyCountdown':
 			case 'gameCountdown':
-				store.setState({ ...state, countdown: message.seconds });
-				break;
-			case 'GameState':
-				if (message.state === 'GameStarted') {
-					router.navigate('/game');
-				}
+				store.setState({ countdown: message.seconds });
 				break;
 		}
 	};
 
 	ws.onclose = () => {
-		store.setState({ ...store.getState(), error: 'Connection lost' });
+		store.setState({ error: 'Connection lost' });
 	};
 
 	ws.onerror = () => {
-		store.setState({ ...store.getState(), error: 'Connection error' });
+		store.setState({ error: 'Connection error' });
 	};
 }
 
@@ -63,11 +67,11 @@ function App() {
 }
 
 // Add routes that change the currentView
-router.addRoute('/', () => store.setState(prevState => ({ ...prevState, currentView: 'start' })));
-router.addRoute('/lobby', () => store.setState(prevState => ({ ...prevState, currentView: 'lobby' })));
-router.addRoute('/game', () => store.setState(prevState => ({ ...prevState, currentView: 'game' })));
-router.setDefaultHandler(() => store.setState(prevState => ({ ...prevState, currentView: 'start' })));
+router.addRoute('/', () => store.setState({ currentView: 'start' }));
+router.addRoute('/lobby', () => store.setState({ currentView: 'lobby' }));
+router.addRoute('/game', () => store.setState({ currentView: 'game' }));
+router.setDefaultHandler(() => store.setState({ currentView: 'start' }));
 
 createApp(App, document.getElementById('app'));
 
-export { APIUrl, handleWebSocket };
+export { APIUrl };
