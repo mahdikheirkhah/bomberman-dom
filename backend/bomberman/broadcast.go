@@ -92,17 +92,6 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 		})
 	}
 
-
-	// OB: Moved to startCountdown func
-	// -----------------------------------
-	// if LobbyMsg && !g.IsStarted && g.NumberOfPlayers != MaxNumberOfPlayers {
-	// 	stateMsg := StateMsg{
-	// 		Type:  "GameState",
-	// 		State: "LobbyCountdown",
-	// 	}
-	// 	g.SendMsgToChannel(stateMsg, -1)
-	// }
-
 	if g.NumberOfPlayers == MaxNumberOfPlayers {
 		log.Println("Maximum number of players reached. Forcing game start.")
 		g.forceStartGame()
@@ -136,8 +125,6 @@ func (g *GameBoard) startCountdown() {
 }
 
 func (g *GameBoard) forceStartGame() {
-	g.Mu.Lock()
-	defer g.Mu.Unlock()
 
 	if g.IsStarted {
 		return

@@ -16,7 +16,7 @@ class AppRenderer {
     }
     
 
-    render = () => {
+    render = () => { 
         const newVnodeOrVnodes = this.rootComponent();
         const oldVnodeOrVnodes = this.vnode;
 
