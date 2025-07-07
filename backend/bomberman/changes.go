@@ -5,24 +5,26 @@ import (
 	"time"
 )
 
-const BombRowRange = 2
-const BombColRange = 2
+// BombExplosionDuration defines how long cells stay 'Ex' after an explosion before clearing.
+const BombExplosionDuration = 2 * time.Second
 
+// Position represents a row and column in the game grid.
 type Position struct {
 	Row int
 	Col int
 }
 
+// Bomb represents a bomb placed on the game board.
 type Bomb struct {
-	Row           int       `json:"row"`
-	Column        int       `json:"column"`
-	XLocation     int       `json:"xlocation"`
-	YLocation     int       `json:"yLocation"`
-	ExplosionTime time.Time `json:"explosionTime"`
-	// RowRange      int       `json:"rowRange"`
-	// ColRange      int       `json:"colRange"`
+	Row            int       `json:"row"`
+	Column         int       `json:"column"`
+	XLocation      int       `json:"xlocation"`     // Assuming these are for rendering
+	YLocation      int       `json:"yLocation"`     // Assuming these are for rendering
+	ExplosionTime  time.Time `json:"explosionTime"` // When the bomb will explode
+	OwnPlayerIndex int       `json:"playerIndex"`   // ID of the player who placed this bomb
 }
 
+// Powerup represents an item that can be collected by players.
 type Powerup struct {
 	Type     string `json:"type"`
 	Value    int    `json:"value"`
@@ -31,135 +33,275 @@ type Powerup struct {
 	IsHidden bool   `json:"isHidden"`
 }
 
+// ExplodedCellInfo tracks a cell that has been exploded and its scheduled clear time.
+type ExplodedCellInfo struct {
+	Position  Position
+	ClearTime time.Time // When this cell should revert from "Ex" to ""
+}
+
+type PlayerExplosionMsg struct {
+	Type  string `json:"type"`
+	Lives int    `json:"lives"`
+	Color string `json:"color"`
+}
+type PLayerDeath struct {
+	Type   string `json:"type"`
+	Player Player `json:"player"`
+}
+
+// CheckExplosion iterates through players and reduces lives if they are on an "Ex" cell.
 func (g *GameBoard) CheckExplosion() {
-	for i, player := range g.Players {
-		if g.HasExploaded(player.Row, player.Column) {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+
+	for i := range g.Players {
+		// Check if player is on an exploded cell
+		if g.HasExploaded(g.Players[i].Row, g.Players[i].Column) {
 			g.Players[i].Lives--
+
 		}
-		if player.Lives == 0 {
-			g.NumberOfPlayers--
-			g.Players[i].IsDead = true
+		// If player's lives reach zero and they are not already marked dead
+		if g.Players[i].Lives <= 0 && !g.Players[i].IsDead {
+			g.PlayerDeath(i)
+
+		} else {
+			msg := PlayerExplosionMsg{
+				Type:  "PLD", // player live decreae
+				Lives: g.Players[i].Lives,
+				Color: g.Players[i].Color,
+			}
+			g.SendMsgToChannel(msg, -1)
 		}
 	}
 }
 
+func (g *GameBoard) PlayerDeath(playerIndex int) {
+	g.NumberOfPlayers--
+	g.Players[playerIndex].IsDead = true
+	msg := PLayerDeath{
+		Type:   "PD", // player dead
+		Player: g.Players[playerIndex],
+	}
+	g.SendMsgToChannel(msg, -1)
+}
+
+// HasExploaded checks if a given position on the game panel is currently marked as "Ex".
+func (g *GameBoard) HasExploaded(row, col int) bool {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+
+	if row < 0 || row >= len(g.Panel) || col < 0 || col >= len(g.Panel[0]) {
+		return false // Position is out of bounds
+	}
+	return g.Panel[row][col] == "Ex"
+}
+
+// CanCreateBomb checks if a player is allowed to place another bomb.
 func (g *GameBoard) CanCreateBomb(playerIndex int) bool {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+	if playerIndex < 0 || playerIndex >= len(g.Players) {
+		return false // Invalid player index
+	}
 	return g.Players[playerIndex].NumberOfUsedBombs < g.Players[playerIndex].NumberOfBombs
 }
 
+// CreateBomb creates a new bomb at the player's current position.
 func (g *GameBoard) CreateBomb(playerIndex int) (int, error) {
-	if !g.CanCreateBomb(playerIndex) {
-		return -1, errors.New("can not create a new bomb")
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+
+	if playerIndex < 0 || playerIndex >= len(g.Players) {
+		return -1, errors.New("invalid player index")
 	}
 
+	if !g.CanCreateBomb(playerIndex) {
+		return -1, errors.New("can not create a new bomb: player has reached bomb limit")
+	}
+
+	// Increment the count of bombs used by this player
 	g.Players[playerIndex].NumberOfUsedBombs++
+
 	var bomb Bomb
 	bomb.Column = g.Players[playerIndex].Column
 	bomb.Row = g.Players[playerIndex].Row
-	bomb.XLocation, bomb.YLocation = g.FindGridCenterLocation(bomb.Row, bomb.Column)
+	// Assuming g.FindGridCenterLocation exists for rendering purposes
+	// bomb.XLocation, bomb.YLocation = g.FindGridCenterLocation(bomb.Row, bomb.Column)
 	bomb.ExplosionTime = time.Now().Add(g.Players[playerIndex].BombDelay)
-	g.Mu.Lock()
+	bomb.OwnPlayerIndex = playerIndex // Associate bomb with the player who placed it
+
 	g.Bombs = append(g.Bombs, bomb)
 	bombIndex := len(g.Bombs) - 1
-	g.Mu.Unlock()
 	return bombIndex, nil
 }
 
-func (g *GameBoard) FindBombRange(bombIndex int) []Position {
-	bomb := g.Bombs[bombIndex]
-	var changedLocations []Position
+// CalculateBombRange determines all grid positions that will be affected by a bomb explosion.
+// It does NOT modify the game board; it only calculates the positions.
+func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Position {
+	var affectedPositions []Position
 
-	// Up
-	for row := bomb.Row; row >= 0 && bomb.Row-row <= BombRowRange; row-- {
-		cell := &g.Panel[row][bomb.Column]
-		if *cell == "D" || *cell == "W" {
-			if *cell == "D" {
-				*cell = ""
-				changedLocations = append(changedLocations, Position{Row: row, Col: bomb.Column})
-			}
+	// Always include the bomb's own position
+	affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: bombCol})
+
+	// Check explosion range upwards
+	for row := bombRow - 1; row >= 0 && bombRow-row <= bombRange; row-- {
+		if g.Panel[row][bombCol] == "W" { // Stop if a wall is encountered
 			break
-		} else {
-			*cell = "Ex"
-			changedLocations = append(changedLocations, Position{Row: row, Col: bomb.Column})
+		}
+		affectedPositions = append(affectedPositions, Position{Row: row, Col: bombCol})
+		if g.Panel[row][bombCol] == "D" { // Stop after destroying a destructible block
+			break
 		}
 	}
 
-	// Down
-	for row := bomb.Row + 1; row < len(g.Panel) && row-bomb.Row <= BombRowRange; row++ {
-		cell := &g.Panel[row][bomb.Column]
-		if *cell == "D" || *cell == "W" {
-			if *cell == "D" {
-				*cell = ""
-				changedLocations = append(changedLocations, Position{Row: row, Col: bomb.Column})
-			}
+	// Check explosion range downwards
+	for row := bombRow + 1; row < len(g.Panel) && row-bombRow <= bombRange; row++ {
+		if g.Panel[row][bombCol] == "W" {
 			break
-		} else {
-			*cell = "Ex"
-			changedLocations = append(changedLocations, Position{Row: row, Col: bomb.Column})
+		}
+		affectedPositions = append(affectedPositions, Position{Row: row, Col: bombCol})
+		if g.Panel[row][bombCol] == "D" {
+			break
 		}
 	}
 
-	// Left
-	for col := bomb.Column - 1; col >= 0 && bomb.Column-col <= BombColRange; col-- {
-		cell := &g.Panel[bomb.Row][col]
-		if *cell == "D" || *cell == "W" {
-			if *cell == "D" {
-				*cell = ""
-				changedLocations = append(changedLocations, Position{Row: bomb.Row, Col: col})
-			}
+	// Check explosion range to the left
+	for col := bombCol - 1; col >= 0 && bombCol-col <= bombRange; col-- {
+		if g.Panel[bombRow][col] == "W" {
 			break
-		} else {
-			*cell = "Ex"
-			changedLocations = append(changedLocations, Position{Row: bomb.Row, Col: col})
+		}
+		affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: col})
+		if g.Panel[bombRow][col] == "D" {
+			break
 		}
 	}
 
-	// Right
-	for col := bomb.Column + 1; col < len(g.Panel[0]) && col-bomb.Column <= BombColRange; col++ {
-		cell := &g.Panel[bomb.Row][col]
-		if *cell == "D" || *cell == "W" {
-			if *cell == "D" {
-				*cell = ""
-				changedLocations = append(changedLocations, Position{Row: bomb.Row, Col: col})
-			}
+	// Check explosion range to the right
+	for col := bombCol + 1; col < len(g.Panel[0]) && col-bombCol <= bombRange; col++ {
+		if g.Panel[bombRow][col] == "W" {
 			break
-		} else {
-			*cell = "Ex"
-			changedLocations = append(changedLocations, Position{Row: bomb.Row, Col: col})
+		}
+		affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: col})
+		if g.Panel[bombRow][col] == "D" {
+			break
 		}
 	}
 
-	// Add the bomb's own position
-	g.Panel[bomb.Row][bomb.Column] = "Ex"
-	changedLocations = append(changedLocations, Position{Row: bomb.Row, Col: bomb.Column})
-	g.CheckExplosion()
-	return changedLocations
+	return affectedPositions
 }
 
+// ApplyExplosion marks cells as 'Ex' or "" (if destructible) and schedules them for clearing.
+// It also decrements the bomb count for the player who placed it.
+func (g *GameBoard) ApplyExplosion(bomb Bomb) {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+
+	// Find the player who placed this bomb to get their current bomb range
+	var player *Player
+	for i := range g.Players {
+		if i == bomb.OwnPlayerIndex {
+			player = &g.Players[i]
+			break
+		}
+	}
+	if player == nil {
+		// Log an error: Player not found, perhaps disconnected or an invalid ID.
+		// This bomb's explosion won't decrement a player's bomb count.
+		return
+	}
+
+	// Calculate the actual positions affected by this bomb's explosion
+	affectedPositions := g.CalculateBombRange(bomb.Row, bomb.Column, player.BombRange)
+
+	for _, pos := range affectedPositions {
+		// Ensure the position is within the game board boundaries
+		if pos.Row < 0 || pos.Row >= len(g.Panel) || pos.Col < 0 || pos.Col >= len(g.Panel[0]) {
+			continue // Skip out-of-bounds positions
+		}
+
+		cell := &g.Panel[pos.Row][pos.Col]
+		if *cell == "D" {
+			*cell = "" // Destructible block is destroyed and becomes empty
+			// TODO: Add logic here to potentially spawn a powerup at this position
+			g.ExplodedCells = append(g.ExplodedCells, ExplodedCellInfo{Position: pos, ClearTime: time.Now().Add(BombExplosionDuration)})
+		} else if *cell != "W" { // If it's not a wall, mark it as exploded
+			*cell = "Ex"
+			g.ExplodedCells = append(g.ExplodedCells, ExplodedCellInfo{Position: pos, ClearTime: time.Now().Add(BombExplosionDuration)})
+		}
+	}
+
+	// Decrement the number of bombs currently used by the player
+	player.NumberOfUsedBombs--
+	// Check if any players were caught in the explosion and update their lives/status
+	g.CheckExplosion()
+}
+
+// ClearExpiredExplosions iterates through the list of exploded cells and
+// reverts them to empty ("") if their clear time has passed.
+func (g *GameBoard) ClearExpiredExplosions() {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+
+	var remainingExplodedCells []ExplodedCellInfo
+	now := time.Now()
+
+	for _, info := range g.ExplodedCells {
+		if now.After(info.ClearTime) {
+			// Time to clear this cell
+			// Ensure position is still within bounds before modifying the panel
+			if info.Position.Row >= 0 && info.Position.Row < len(g.Panel) &&
+				info.Position.Col >= 0 && info.Position.Col < len(g.Panel[0]) {
+				// Only clear the cell if it's still marked as "Ex".
+				// This prevents clearing a cell that has been re-exploded by another bomb.
+				if g.Panel[info.Position.Row][info.Position.Col] == "Ex" {
+					g.Panel[info.Position.Row][info.Position.Col] = ""
+				}
+			}
+		} else {
+			// This cell has not yet expired, keep it in the list
+			remainingExplodedCells = append(remainingExplodedCells, info)
+		}
+	}
+	g.ExplodedCells = remainingExplodedCells // Update the list with only unexpired cells
+}
+
+// StartBombWatcher starts a goroutine that periodically checks for bomb explosions
+// and clears expired exploded cells.
 func (g *GameBoard) StartBombWatcher() {
 	go func() {
-		ticker := time.NewTicker(100 * time.Millisecond) // check every 100ms
-		defer ticker.Stop()
+		// Check every 100 milliseconds for bombs to explode and cells to clear
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop() // Ensure the ticker is stopped when the goroutine exits
 
 		for range ticker.C {
-			g.checkBombs()
+			g.checkBombs()             // Process bombs that are due to explode
+			g.ClearExpiredExplosions() // Clear cells whose explosion effect has timed out
 		}
 	}()
 }
 
-// internal logic
+// checkBombs processes bombs that have reached their explosion time.
 func (g *GameBoard) checkBombs() {
-	var remainingBombs []Bomb
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
 
-	for i := 0; i < len(g.Bombs); i++ {
-		bomb := g.Bombs[i]
-		if time.Now().After(bomb.ExplosionTime) {
-			// explode the bomb
-			g.FindBombRange(i)
-			// skip adding to remainingBombs
+	var remainingBombs []Bomb
+	now := time.Now()
+
+	for _, bomb := range g.Bombs {
+		if now.After(bomb.ExplosionTime) {
+			// This bomb is ready to explode
+			g.ApplyExplosion(bomb)
+			// This bomb is now "used up" and will not be added back to remainingBombs
 		} else {
+			// This bomb has not yet exploded, keep it for the next check
 			remainingBombs = append(remainingBombs, bomb)
 		}
 	}
-	g.Bombs = remainingBombs
+	g.Bombs = remainingBombs // Update the list of active bombs
 }
+
+// Note: The original BombRowRange, BombColRange, and BombExploisonTime constants
+// are no longer directly used in the explosion logic if Player.BombRange and
+// BombExplosionDuration are the source of truth. You might consider removing them
+// if they are truly redundant to avoid confusion.

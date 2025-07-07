@@ -65,7 +65,11 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 		log.Println("Invalid message format")
 		return
 	}
-
+	playerIndex, ok := msgMap["fromPlayer"].(int)
+	if !ok {
+		log.Println("fromPlayer not found in message")
+		return
+	}
 	// Step 2: Extract msgType
 	msgType, ok := msgMap["msgType"].(string)
 	if !ok {
@@ -77,11 +81,15 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 	switch msgType {
 	//move
 	case "m":
-		g.HandleMoveMessage(msgMap)
+		if !g.Players[playerIndex].IsDead {
+			g.HandleMoveMessage(msgMap)
+		}
 
 	//bomb
 	case "b":
-		g.HandleBombMessage(msgMap)
+		if !g.Players[playerIndex].IsDead {
+			g.HandleBombMessage(msgMap)
+		}
 
 	//chat
 	case "c":
