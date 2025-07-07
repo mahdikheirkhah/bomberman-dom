@@ -24,7 +24,6 @@ class Store {
      * @param {Object|Function} update - New state object or update function
      */
     setState(update) {
-        console.log('Setting new state...', new Date().toLocaleTimeString())    
         const newState = typeof update === 'function' 
             ? update(this.state)
             : update;
@@ -53,10 +52,8 @@ class Store {
     /**
      * Notify all listeners of state change
      */
-    notify() {
-        console.log('Notifying...', new Date().toLocaleTimeString())    
+    notify() {  
         for (const listener of this.listeners) {
-            console.log('Func name:', listener.name)
             listener(this.state);
         }
     }

@@ -18,7 +18,10 @@ store.setState({
 
 export function handleWebSocket() {
 	const { ws } = store.getState();
-	if (!ws) return;
+	if (!ws) {
+		console.log('No WS!!!')
+		return;
+	}
 
 	ws.onmessage = (event) => {
 		const message = JSON.parse(event.data);
@@ -37,6 +40,8 @@ export function handleWebSocket() {
 				}
 				break;
 			case 'lobbyCountdown':
+				store.setState({ countdown: message.seconds });
+				break;
 			case 'gameCountdown':
 				store.setState({ countdown: message.seconds });
 				break;

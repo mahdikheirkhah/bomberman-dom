@@ -10,7 +10,7 @@ import (
 func main() {
 	game := bomberman.InitGame()
 	game.RandomStart()
-	game.StartBroadcaster()
+	go game.StartBroadcaster()
 	fmt.Println(game.Panel)
 	// Bind the /ws route
 	http.HandleFunc("/ws", game.HandleWSConnections)

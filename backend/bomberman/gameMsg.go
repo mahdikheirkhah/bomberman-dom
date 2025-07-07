@@ -7,40 +7,35 @@ import (
 )
 
 func (g *GameBoard) StartBroadcaster() {
-	go func() {
-		for msg := range g.BroadcastChannel {
-			g.Mu.Lock()
-			conns := make(map[int]*websocket.Conn)
-			for k, v := range g.PlayersConnections {
-				conns[k] = v
-			}
-			g.Mu.Unlock()
-			for playerIndex, conn := range conns {
-				// check for the chat messages sender
-				msg := CheckForPlayer(msg, playerIndex)
-				err := conn.WriteJSON(msg)
-				if err != nil {
-					log.Printf("Broadcast error to player %d: %v\n", playerIndex, err)
-					conn.Close()
-					delete(g.PlayersConnections, playerIndex)
-				}
-			}
-
+	for msg := range g.BroadcastChannel {
+		g.Mu.Lock()
+		conns := make(map[int]*websocket.Conn)
+		for k, v := range g.PlayersConnections {
+			conns[k] = v
 		}
-	}()
+		g.Mu.Unlock()
+		for playerIndex, conn := range conns {
+			// check for the chat messages sender
+			msg := CheckForPlayer(msg, playerIndex)
+			err := conn.WriteJSON(msg)
+			if err != nil {
+				log.Printf("Broadcast error to player %d: %v\n", playerIndex, err)
+				conn.Close()
+				delete(g.PlayersConnections, playerIndex)
+			}
+		}
+	}
 }
 
-func CheckForPlayer(msg interface{}, playerIndex int) interface{}{
+func CheckForPlayer(msg interface{}, playerIndex int) interface{} {
 	msgMap, ok := msg.(map[string]interface{})
 	if !ok {
-		log.Println("Invalid message format")
 		return msg
 	}
 
 	// Step 2: Extract msgType
 	msgType, ok := msgMap["Type"].(string)
 	if !ok {
-		log.Println("msgType not found or not a string")
 		return msg
 	}
 	if msgType == "CM" {
@@ -60,7 +55,7 @@ func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) 
 	}()
 
 	for {
-		var msg map[string]interface{} 
+		var msg map[string]interface{}
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("Error reading from player %d: %v\n", playerIndex, err)
@@ -72,7 +67,6 @@ func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) 
 	}
 }
 func (g *GameBoard) SendMsgToChannel(msg any, playerIndex int) {
-	log.Println("Broadcasting:", msg)
 	select {
 	case g.BroadcastChannel <- msg:
 		// Message forwarded
@@ -84,7 +78,7 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 	// Step 1: Assert msg is a map[string]interface{}
 	msgMap, ok := msg.(map[string]interface{})
 	if !ok {
-		log.Println("Invalid message format")
+		log.Println("Invalid message format in ChooseHandlerForMessages")
 		return
 	}
 
