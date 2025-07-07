@@ -39,30 +39,6 @@ var startCountdownTimer = 3 // 10 for production
 func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling new WS connection")
 
-	if g.IsStarted {
-		log.Println("Game already started, connection rejected")
-		http.Error(w, "Game has already started", http.StatusForbidden)
-		return
-	}
-
-	name := r.URL.Query().Get("name")
-	if name == "" {
-		log.Println("Player name is missing from query parameters")
-		http.Error(w, "Player name is required as a query parameter", http.StatusBadRequest)
-		return
-	}
-
-	g.Mu.Lock()
-	err := g.CreatePlayer(name)
-	if err != nil {
-		g.Mu.Unlock()
-		log.Println("Error creating player:", err)
-		http.Error(w, err.Error(), http.StatusConflict)
-		return
-	}
-	playerIndex := g.NumberOfPlayers - 1
-	g.Mu.Unlock()
-
 	conn, err := Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Upgrade error:", err)
@@ -70,10 +46,46 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if g.IsStarted {
+		log.Println("Game already started, closing connection")
+		conn.WriteControl(websocket.CloseMessage,
+			websocket.FormatCloseMessage(1008, "Game is full"),
+			time.Now().Add(time.Second))
+		return
+	}
+
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		log.Println("Player name is missing from query parameters")
+		// http.Error(w, "Player name is required as a query parameter", http.StatusBadRequest)
+		conn.WriteControl(websocket.CloseMessage,
+			websocket.FormatCloseMessage(1008, "Player name is missing from query parameters"),
+			time.Now().Add(time.Second))
+		return
+
+	}
+
 	g.Mu.Lock()
+	err = g.CreatePlayer(name)
+	if err != nil {
+		g.Mu.Unlock()
+		log.Println("Error creating player:", err)
+		conn.WriteControl(websocket.CloseMessage,
+			websocket.FormatCloseMessage(1008, "Error creating player"),
+			time.Now().Add(time.Second))
+		return
+	}
+	playerIndex := g.NumberOfPlayers - 1
+
 	g.PlayersConnections[playerIndex] = conn
 	log.Printf("Player %s connected successfully as player %d\n", name, playerIndex)
 	g.Mu.Unlock()
+
+	stateMsg := StateMsg{
+		Type:  "GameState",
+		State: "PlayerAccepted",
+	}
+	g.SendMsgToChannel(stateMsg, playerIndex)
 
 	// Send the current list of players to all clients
 	playerListMsg := map[string]interface{}{

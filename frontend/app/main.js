@@ -19,7 +19,6 @@ store.setState({
 export function handleWebSocket() {
 	const { ws } = store.getState();
 	if (!ws) {
-		console.log('No WS!!!')
 		return;
 	}
 
@@ -35,8 +34,11 @@ export function handleWebSocket() {
 					store.setState({ countdown: null, gameStarted: false });
 				} else if (message.state === 'GameCountdown') {
 					store.setState({ currentView: 'game', gameStarted: false });
+					router.navigate("/game")
 				} else if (message.state === 'GameStarted') {
 					store.setState({ countdown: null, gameStarted: true });
+				} else if (message.state === 'PlayerAccepted') {
+					router.navigate('/lobby');
 				}
 				break;
 			case 'lobbyCountdown':
@@ -48,8 +50,13 @@ export function handleWebSocket() {
 		}
 	};
 
-	ws.onclose = () => {
-		store.setState({ error: 'Connection lost' });
+	ws.onclose = (event) => {
+		console.log('Websocket connection closed for player ', name)
+		if (event.code === 1008) {
+			store.setState({ error: 'Game is full' });
+		} else {
+			store.setState({ error: 'Connection lost' });
+		}
 	};
 
 	ws.onerror = () => {
