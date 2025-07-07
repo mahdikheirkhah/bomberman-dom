@@ -14,6 +14,8 @@ store.setState({
 	ws: null,
 	countdown: null,
 	gameStarted: false,
+	gameData: null,
+	chatMessages: [],
 });
 
 export function handleWebSocket() {
@@ -38,14 +40,37 @@ export function handleWebSocket() {
 				} else if (message.state === 'GameStarted') {
 					store.setState({ countdown: null, gameStarted: true });
 				} else if (message.state === 'PlayerAccepted') {
-					router.navigate('/lobby');
+					store.setState({ playerId: message.playerId });
 				}
+				break;
+			case 'gameStart':
+				store.setState({ gameData: { players: message.players, panel: message.panel } });
 				break;
 			case 'lobbyCountdown':
 				store.setState({ countdown: message.seconds });
 				break;
 			case 'gameCountdown':
 				store.setState({ countdown: message.seconds });
+				break;
+			case 'chatMessage':
+				const { chatMessages } = store.getState();
+				store.setState({ chatMessages: [...chatMessages, { player: message.player, message: message.message }] });
+				break;
+			case 'playerUpdate':
+				store.setState({ players: message.players });
+				break;
+			case 'bombUpdate':
+				store.setState({ gameData: { ...store.getState().gameData, panel: message.panel } });
+				break;
+			case 'explosion':
+				store.setState({ gameData: { ...store.getState().gameData, panel: message.panel } });
+				break;
+			case 'playerDead':
+				store.setState({ gameData: { ...store.getState().gameData, players: message.players } });
+				break;
+			case 'gameOver':
+				store.setState({ currentView: 'start', gameStarted: false, gameData: null, countdown: null, players: [], chatMessages: [] });
+				router.navigate('/');
 				break;
 		}
 	};
@@ -56,7 +81,7 @@ export function handleWebSocket() {
 			store.setState({ error: 'Game is full' });
 		} else {
 			store.setState({ error: 'Connection lost' });
-		}
+	}
 	};
 
 	ws.onerror = () => {
