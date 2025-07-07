@@ -52,7 +52,7 @@ class Store {
     /**
      * Notify all listeners of state change
      */
-    notify() {
+    notify() {  
         for (const listener of this.listeners) {
             listener(this.state);
         }
