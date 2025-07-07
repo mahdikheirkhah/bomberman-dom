@@ -27,11 +27,12 @@ function handleWebSocket() {
 			case 'player_list':
 				store.setState({ ...state, players: message.players });
 				break;
-			case 'countdown':
+			case 'lobbyCountdown':
+			case 'gameCountdown':
 				store.setState({ ...state, countdown: message.seconds });
 				break;
 			case 'GameState':
-				if (message.state === 'GameCountdown') {
+				if (message.state === 'GameStarted') {
 					router.navigate('/game');
 				}
 				break;

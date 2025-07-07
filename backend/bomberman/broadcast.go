@@ -118,7 +118,7 @@ func (g *GameBoard) startCountdown() {
 
 	for i := lobbyCountdownTimer; i > 0; i-- {
 		msg := map[string]interface{}{
-			"type":    "countdown",
+			"type":    "lobbyCountdown",
 			"seconds": i,
 		}
 		g.SendMsgToChannel(msg, -1)
@@ -153,7 +153,7 @@ func (g *GameBoard) forceStartGame() {
 	// 10 seconds to start
 	for i := startCountdownTimer; i > 0; i-- {
 		msg := map[string]interface{}{
-			"type":    "countdown",
+			"type":    "gameCountdown",
 			"seconds": i,
 		}
 		g.SendMsgToChannel(msg, -1)
@@ -165,7 +165,6 @@ func (g *GameBoard) forceStartGame() {
 		State: "GameStarted",
 	}
 	g.SendMsgToChannel(stateMsg, -1)
-
 	msg := struct {
 		Type            string                                `json:"type"`
 		Players         []Player                              `json:"players"`
