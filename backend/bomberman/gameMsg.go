@@ -50,6 +50,7 @@ func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) 
 	}
 }
 func (g *GameBoard) SendMsgToChannel(msg any, playerIndex int) {
+	log.Println("Broadcasting:", msg)
 	select {
 	case g.BroadcastChannel <- msg:
 		// Message forwarded

@@ -160,7 +160,7 @@ func InitGame() *GameBoard {
 		CellSize:           CellSize,
 		NumberOfPlayers:    0,
 		PlayersConnections: make(map[int]*websocket.Conn),
-		BroadcastChannel:   make(chan interface{}),
+		BroadcastChannel:   make(chan interface{}, 100),
 	}
 	return g
 }
