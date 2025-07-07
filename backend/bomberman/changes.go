@@ -10,8 +10,9 @@ const BombExplosionDuration = 2 * time.Second
 
 // Position represents a row and column in the game grid.
 type Position struct {
-	Row int
-	Col int
+	Row        int  `json:"row"`
+	Col        int  `json:"col"`
+	CellOnFire bool `json:"CellOnFire"`
 }
 
 // Bomb represents a bomb placed on the game board.
@@ -37,6 +38,10 @@ type Powerup struct {
 type ExplodedCellInfo struct {
 	Position  Position
 	ClearTime time.Time // When this cell should revert from "Ex" to ""
+}
+type ExploadeCellsMsg struct {
+	Type      string     `json:"type"`
+	Positions []Position `json:"positions"`
 }
 
 type PlayerExplosionMsg struct {
@@ -212,7 +217,8 @@ func (g *GameBoard) ApplyExplosion(bomb Bomb) {
 
 	// Calculate the actual positions affected by this bomb's explosion
 	affectedPositions := g.CalculateBombRange(bomb.Row, bomb.Column, player.BombRange)
-
+	var msg ExploadeCellsMsg
+	msg.Type = "EXC" // Exploaded Cells
 	for _, pos := range affectedPositions {
 		// Ensure the position is within the game board boundaries
 		if pos.Row < 0 || pos.Row >= len(g.Panel) || pos.Col < 0 || pos.Col >= len(g.Panel[0]) {
@@ -224,11 +230,14 @@ func (g *GameBoard) ApplyExplosion(bomb Bomb) {
 			*cell = "" // Destructible block is destroyed and becomes empty
 			// TODO: Add logic here to potentially spawn a powerup at this position
 			g.ExplodedCells = append(g.ExplodedCells, ExplodedCellInfo{Position: pos, ClearTime: time.Now().Add(BombExplosionDuration)})
+			msg.Positions = append(msg.Positions, pos)
 		} else if *cell != "W" { // If it's not a wall, mark it as exploded
 			*cell = "Ex"
 			g.ExplodedCells = append(g.ExplodedCells, ExplodedCellInfo{Position: pos, ClearTime: time.Now().Add(BombExplosionDuration)})
+			msg.Positions = append(msg.Positions, Position{Row: pos.Row, Col: pos.Col, CellOnFire: true})
 		}
 	}
+	g.SendMsgToChannel(msg, -1)
 
 	// Decrement the number of bombs currently used by the player
 	player.NumberOfUsedBombs--
@@ -244,23 +253,29 @@ func (g *GameBoard) ClearExpiredExplosions() {
 
 	var remainingExplodedCells []ExplodedCellInfo
 	now := time.Now()
-
+	var msg ExploadeCellsMsg
 	for _, info := range g.ExplodedCells {
 		if now.After(info.ClearTime) {
 			// Time to clear this cell
 			// Ensure position is still within bounds before modifying the panel
+
 			if info.Position.Row >= 0 && info.Position.Row < len(g.Panel) &&
 				info.Position.Col >= 0 && info.Position.Col < len(g.Panel[0]) {
 				// Only clear the cell if it's still marked as "Ex".
 				// This prevents clearing a cell that has been re-exploded by another bomb.
 				if g.Panel[info.Position.Row][info.Position.Col] == "Ex" {
 					g.Panel[info.Position.Row][info.Position.Col] = ""
+					msg.Type = "OF" // Turn Off Fire
+					msg.Positions = append(msg.Positions, Position{Row: info.Position.Row, Col: info.Position.Col})
 				}
 			}
 		} else {
 			// This cell has not yet expired, keep it in the list
 			remainingExplodedCells = append(remainingExplodedCells, info)
 		}
+	}
+	if msg.Type == "OF" {
+		g.SendMsgToChannel(msg, -1)
 	}
 	g.ExplodedCells = remainingExplodedCells // Update the list with only unexpired cells
 }
