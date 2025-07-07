@@ -16,6 +16,8 @@ func (g *GameBoard) StartBroadcaster() {
 			}
 			g.Mu.Unlock()
 			for playerIndex, conn := range conns {
+				// check for the chat messages sender
+				msg := CheckForPlayer(msg, playerIndex)
 				err := conn.WriteJSON(msg)
 				if err != nil {
 					log.Printf("Broadcast error to player %d: %v\n", playerIndex, err)
@@ -28,6 +30,26 @@ func (g *GameBoard) StartBroadcaster() {
 	}()
 }
 
+func CheckForPlayer(msg interface{}, playerIndex int) interface{}{
+	msgMap, ok := msg.(map[string]interface{})
+	if !ok {
+		log.Println("Invalid message format")
+		return msg
+	}
+
+	// Step 2: Extract msgType
+	msgType, ok := msgMap["Type"].(string)
+	if !ok {
+		log.Println("msgType not found or not a string")
+		return msg
+	}
+	if msgType == "CM" {
+		if msgMap["SenderIndex"] == playerIndex {
+			msgMap["Filter"] = true
+		}
+	}
+	return msgMap
+}
 func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) {
 	defer func() {
 		g.Mu.Lock()
@@ -38,7 +60,7 @@ func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) 
 	}()
 
 	for {
-		var msg map[string]interface{} // or define a proper struct if you know the schema
+		var msg map[string]interface{} 
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("Error reading from player %d: %v\n", playerIndex, err)
@@ -85,7 +107,7 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 
 	//chat
 	case "c":
-		//g.HandleChatMessage(msgMap)
+		g.HandleChatMessage(msgMap)
 
 	//power up
 	case "p":
