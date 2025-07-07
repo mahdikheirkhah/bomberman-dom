@@ -1,8 +1,6 @@
 package bomberman
 
 import (
-	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -35,37 +33,31 @@ type StateMsg struct {
 var once sync.Once
 var LobbyMsg bool
 
+var lobbyCountdownTimer = 5 // 20 for production
+var startCountdownTimer = 3 // 10 for production
+
 func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling new WS connection")
 
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	if g.IsStarted {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("you can not join now wait"))
+		log.Println("Game already started, connection rejected")
+		http.Error(w, "Game has already started", http.StatusForbidden)
 		return
 	}
 
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Can't read body", http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-
-	var req JoinRequest
-	if err := json.Unmarshal(body, &req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		log.Println("Player name is missing from query parameters")
+		http.Error(w, "Player name is required as a query parameter", http.StatusBadRequest)
 		return
 	}
 
 	g.Mu.Lock()
-	err = g.CreatePlayer(req.Name)
+	err := g.CreatePlayer(name)
 	if err != nil {
 		g.Mu.Unlock()
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(err.Error()))
+		log.Println("Error creating player:", err)
+		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
 	playerIndex := g.NumberOfPlayers - 1
@@ -74,38 +66,59 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 	conn, err := Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Upgrade error:", err)
+		// The upgrader writes a response on error, so we just return.
 		return
 	}
 
 	g.Mu.Lock()
 	g.PlayersConnections[playerIndex] = conn
+	log.Printf("Player %s connected successfully as player %d\n", name, playerIndex)
 	g.Mu.Unlock()
 
-	go g.HandlePlayerMessages(playerIndex, conn)
-	if g.NumberOfPlayers == MinNumberOfPlayers {
+	// Send the current list of players to all clients
+	playerListMsg := map[string]interface{}{
+		"type":    "player_list",
+		"players": g.Players,
+	}
+	g.SendMsgToChannel(playerListMsg, -1) // -1 sends to all
 
+	go g.HandlePlayerMessages(playerIndex, conn)
+
+	if g.NumberOfPlayers == MinNumberOfPlayers {
+		log.Println("Minimum number of players reached. Starting countdown.")
 		// Start countdown only once
 		once.Do(func() {
 			go g.startCountdown()
 		})
 	}
-	if LobbyMsg && !g.IsStarted && g.NumberOfPlayers != MaxNumberOfPlayers {
-		stateMsg := StateMsg{
-			Type:  "GameState",
-			State: "LobbyCountdown",
-		}
-		g.SendMsgToChannel(stateMsg, -1)
-	}
+
+
+	// OB: Moved to startCountdown func
+	// -----------------------------------
+	// if LobbyMsg && !g.IsStarted && g.NumberOfPlayers != MaxNumberOfPlayers {
+	// 	stateMsg := StateMsg{
+	// 		Type:  "GameState",
+	// 		State: "LobbyCountdown",
+	// 	}
+	// 	g.SendMsgToChannel(stateMsg, -1)
+	// }
 
 	if g.NumberOfPlayers == MaxNumberOfPlayers {
+		log.Println("Maximum number of players reached. Forcing game start.")
 		g.forceStartGame()
 	}
 }
 
 func (g *GameBoard) startCountdown() {
-	for i := 20; i > 0; i-- {
+	stateMsg := StateMsg{
+		Type:  "GameState",
+		State: "LobbyCountdown",
+	}
+	g.SendMsgToChannel(stateMsg, -1)
+
+	for i := lobbyCountdownTimer; i > 0; i-- {
 		msg := map[string]interface{}{
-			"type":    "countdown",
+			"type":    "lobbyCountdown",
 			"seconds": i,
 		}
 		g.SendMsgToChannel(msg, -1)
@@ -138,9 +151,9 @@ func (g *GameBoard) forceStartGame() {
 	g.SendMsgToChannel(stateMsg, -1)
 
 	// 10 seconds to start
-	for i := 10; i > 0; i-- {
+	for i := startCountdownTimer; i > 0; i-- {
 		msg := map[string]interface{}{
-			"type":    "countdown",
+			"type":    "gameCountdown",
 			"seconds": i,
 		}
 		g.SendMsgToChannel(msg, -1)
@@ -152,7 +165,6 @@ func (g *GameBoard) forceStartGame() {
 		State: "GameStarted",
 	}
 	g.SendMsgToChannel(stateMsg, -1)
-
 	msg := struct {
 		Type            string                                `json:"type"`
 		Players         []Player                              `json:"players"`

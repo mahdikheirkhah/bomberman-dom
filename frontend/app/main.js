@@ -1,32 +1,73 @@
-import { createApp } from '../framework/app.js';
-import { router } from '../framework/router.js';
-import { store } from '../framework/state.js';
+import { createApp, store, router } from '../framework/framework.js';
+import Start from './start.js';
 import Lobby from './lobby.js';
 import Game from './game.js';
 
-const APIUrl = 'localhost:8080'
+const APIUrl = 'localhost:8080';
 
-// Initialize game status in the store
-store.setState({ gameStatus: 'waiting', currentView: Lobby });
+// Initialize store
+store.setState({
+	currentView: 'start',
+	error: '',
+	players: [],
+	countdown: null,
+	playerId: null,
+	ws: null
+});
 
-// Function to render a component by updating the store
-const renderComponent = (component) => {
-    store.setState({ currentView: component });
-};
+function handleWebSocket() {
+	const { ws } = store.getState();
+	if (!ws) return;
 
-// Add routes
-router.addRoute('/', () => renderComponent(Lobby));
-router.addRoute('/game', () => renderComponent(Game));
+	ws.onmessage = (event) => {
+		const message = JSON.parse(event.data);
+		const state = store.getState();
 
-// Set default route handler
-router.setDefaultHandler(() => renderComponent(Lobby));
+		switch (message.type) {
+			case 'player_list':
+				store.setState({ ...state, players: message.players });
+				break;
+			case 'lobbyCountdown':
+			case 'gameCountdown':
+				store.setState({ ...state, countdown: message.seconds });
+				break;
+			case 'GameState':
+				if (message.state === 'GameStarted') {
+					router.navigate('/game');
+				}
+				break;
+		}
+	};
 
+	ws.onclose = () => {
+		store.setState({ ...store.getState(), error: 'Connection lost' });
+	};
+
+	ws.onerror = () => {
+		store.setState({ ...store.getState(), error: 'Connection error' });
+	};
+}
 
 function App() {
-    const state = store.getState();
-    return state.currentView();
+	const { currentView } = store.getState();
+	switch (currentView) {
+		case 'start':
+			return Start();
+		case 'lobby':
+			return Lobby();
+		case 'game':
+			return Game();
+		default:
+			return Start();
+	}
 }
+
+// Add routes that change the currentView
+router.addRoute('/', () => store.setState(prevState => ({ ...prevState, currentView: 'start' })));
+router.addRoute('/lobby', () => store.setState(prevState => ({ ...prevState, currentView: 'lobby' })));
+router.addRoute('/game', () => store.setState(prevState => ({ ...prevState, currentView: 'game' })));
+router.setDefaultHandler(() => store.setState(prevState => ({ ...prevState, currentView: 'start' })));
 
 createApp(App, document.getElementById('app'));
 
-export { APIUrl }
+export { APIUrl, handleWebSocket };

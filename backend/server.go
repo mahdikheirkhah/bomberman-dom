@@ -9,6 +9,7 @@ import (
 
 func main() {
 	game := bomberman.InitGame()
+	game.RandomStart()
 	game.StartBroadcaster()
 	fmt.Println(game.Panel)
 	// Bind the /ws route
