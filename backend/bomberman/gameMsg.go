@@ -119,8 +119,7 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 }
 
 type MovePlayerMsg struct {
-	MsgType   string `json:"type"`
-	Player    string `json:"p"`
+	MsgType   string `json:"MT"`
 	XLocation int    `json:"XL"`
 	YLocation int    `json:"YL"`
 	Row       int    `json:"R"`
@@ -154,12 +153,11 @@ func (g *GameBoard) HandleMoveMessage(msgMap map[string]interface{}) {
 	if g.MovePlayer(playerIndex, direction) {
 		var msg MovePlayerMsg
 		msg.MsgType = "MA" // Move Accepted
-		msg.Player = g.Players[playerIndex].Name
 		msg.Column = g.Players[playerIndex].Column
 		msg.Row = g.Players[playerIndex].Row
 		msg.XLocation = g.Players[playerIndex].XLocation
 		msg.YLocation = g.Players[playerIndex].YLocation
-		g.SendMsgToChannel(msg, -1)
+		g.SendMsgToChannel(msg, playerIndex)
 	} else {
 		var msg NotMove
 		msg.MsgType = "MNA" // Move Not Accpeted
