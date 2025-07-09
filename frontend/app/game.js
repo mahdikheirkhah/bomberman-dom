@@ -10,30 +10,33 @@ const sendMsg = (msg) => {
 };
 
 // Player movement and bomb placement
-const handleKeyDown = (e) => {
+const handleKeyEvent = (e, isKeyDown) => {
     if (e.repeat) return;
+    const msgType = isKeyDown ? 'ms' : 'me'; // ms for move start, me for move end
+
     switch (e.code) {
         case 'ArrowUp':
-            sendMsg({ msgType: 'm', d: 'up' });
+            sendMsg({ msgType, d: 'up' });
             break;
         case 'ArrowDown':
-            sendMsg({ msgType: 'm', d: 'down' });
+            sendMsg({ msgType, d: 'down' });
             break;
         case 'ArrowLeft':
-            sendMsg({ msgType: 'm', d: 'left' });
+            sendMsg({ msgType, d: 'left' });
             break;
         case 'ArrowRight':
-            sendMsg({ msgType: 'm', d: 'right' });
+            sendMsg({ msgType, d: 'right' });
             break;
         case 'Space':
-            sendMsg({ msgType: 'b' });
+            if (isKeyDown) sendMsg({ msgType: 'b' }); // Only send bomb on keydown
             break;
     }
 };
 
 // Add and remove event listeners
 function setupEventListeners() {
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', (e) => handleKeyEvent(e, true));
+    document.addEventListener('keyup', (e) => handleKeyEvent(e, false));
 }
 
 // Render a single player panel
