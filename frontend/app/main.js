@@ -16,6 +16,7 @@ store.setState({
 	gameStarted: false,
 	gameData: null,
 	chatMessages: [],
+	gameListenersAttached: false, // Add this flag
 });
 
 export function handleWebSocket() {
@@ -40,7 +41,8 @@ export function handleWebSocket() {
 				} else if (message.state === 'GameStarted') {
 					store.setState({ countdown: null, gameStarted: true });
 				} else if (message.state === 'PlayerAccepted') {
-					store.setState({ playerId: message.playerId });
+					store.setState({ currentView: 'lobby', playerId: message.playerId });
+
 				}
 				break;
 			case 'gameStart':
@@ -52,9 +54,23 @@ export function handleWebSocket() {
 			case 'gameCountdown':
 				store.setState({ countdown: message.seconds });
 				break;
-			case 'chatMessage':
+			case 'CM':
 				const { chatMessages } = store.getState();
-				store.setState({ chatMessages: [...chatMessages, { player: message.player, message: message.message }] });
+				store.setState({ chatMessages: [...chatMessages, { player: message.name, message: message.content }] });
+				break;
+			case 'MA':
+                const { gameData } = store.getState();
+                const updatedPlayers = gameData.players.map(player => {
+                    if (player.name === message.p) {
+                        return { ...player, xlocation: message.XL, yLocation: message.YL };
+                    }
+                    return player;
+                });
+                store.setState({ gameData: { ...gameData, players: updatedPlayers } });
+                break;
+			case 'BA':
+			case 'playerUpdate':
+				store.setState({ gameData: { ...store.getState().gameData, players: message.players, panel: message.panel } });
 				break;
 			case 'playerUpdate':
 				store.setState({ players: message.players });

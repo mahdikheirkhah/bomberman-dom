@@ -39,6 +39,7 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	player.Color = g.FindColor()
 	player.Row = g.FindStartRowLocation()
 	player.Column = g.FindStartColLocation()
+	player.XLocation, player.YLocation = g.FindGridCenterLocation(player.Row, player.Column)
 	player.StepSize = StepSize
 	player.BombDelay = MiliBombDelay * time.Millisecond
 	player.BombRange = BombRange
