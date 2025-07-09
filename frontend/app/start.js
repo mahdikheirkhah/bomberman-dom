@@ -16,18 +16,11 @@ const joinHandler = async (e) => {
 	ws.onopen = () => {
 		store.setState({ ws: ws, playerId: name }); // Using name as a temporary ID
 		handleWebSocket();
-		router.navigate('/lobby');
-	};
-
-	ws.onclose = (event) => {
-		if (event.code === 4000) {
-			store.setState({ error: 'Game is full' });
-		} else {
-			store.setState({ error: 'Connection failed' });
-		}
+		console.log('Websocket connection opened for player ', name)
 	};
 
 	ws.onerror = () => {
+		console.log('Websocket connection error for player ', name)
 		store.setState({ error: 'Connection error' });
 	};
 };
