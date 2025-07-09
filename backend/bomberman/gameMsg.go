@@ -81,7 +81,11 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 		log.Println("Invalid message format in ChooseHandlerForMessages")
 		return
 	}
-
+	playerIndex, ok := msgMap["fromPlayer"].(int)
+	if !ok {
+		log.Println("fromPlayer not found in message")
+		return
+	}
 	// Step 2: Extract msgType
 	msgType, ok := msgMap["msgType"].(string)
 	if !ok {
@@ -93,11 +97,15 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 	switch msgType {
 	//move
 	case "m":
-		g.HandleMoveMessage(msgMap)
+		if !g.Players[playerIndex].IsDead {
+			g.HandleMoveMessage(msgMap)
+		}
 
 	//bomb
 	case "b":
-		g.HandleBombMessage(msgMap)
+		if !g.Players[playerIndex].IsDead {
+			g.HandleBombMessage(msgMap)
+		}
 
 	//chat
 	case "c":
@@ -149,6 +157,7 @@ func (g *GameBoard) HandleMoveMessage(msgMap map[string]interface{}) {
 		msg.Row = g.Players[playerIndex].Row
 		msg.XLocation = g.Players[playerIndex].XLocation
 		msg.YLocation = g.Players[playerIndex].YLocation
+
 		g.SendMsgToChannel(msg, playerIndex)
 	} else {
 		var msg NotMove

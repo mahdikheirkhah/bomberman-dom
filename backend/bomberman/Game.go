@@ -23,6 +23,7 @@ type GameBoard struct {
 	Panel              [NumberOfRows][NumberOfColumns]string `json:"panel"` // Ex -> Exploade , W -> Wall, D -> Destructible, ""(empty) -> empty cell, B -> Bomb
 	CellSize           int                                   `json:"cellSize"`
 	IsStarted          bool
+	ExplodedCells      []ExplodedCellInfo `json:"explodedCells"`
 	PlayersConnections map[int]*websocket.Conn
 
 	BroadcastChannel chan interface{}
@@ -60,10 +61,6 @@ func (g *GameBoard) FindStartColLocation() int {
 		return 0
 	}
 	return NumberOfColumns - 1
-}
-
-func (g *GameBoard) HasExploaded(row, col int) bool {
-	return g.Panel[row][col] == "Ex"
 }
 
 func (g *GameBoard) FindInnerCell(axis byte, direction byte, location int, playerIndex int) int {
@@ -176,7 +173,7 @@ func (g *GameBoard) RandomStart() {
 			var cell string
 
 			// Step 1.1: Place indestructible wall at even-even positions
-			if row%2 == 0 && col%2 == 0 {
+			if row%2 == 1 && col%2 == 1 {
 				cell = "W"
 			} else {
 				// Step 1.2: Randomly place destructible walls (30% chance)

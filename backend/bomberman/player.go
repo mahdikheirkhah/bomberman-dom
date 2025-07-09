@@ -7,8 +7,10 @@ import (
 
 const StepSize = 5
 const MiliBombDelay = 500
+const BombRange = 2
 
 type Player struct {
+	Index             int           `json:"index"`
 	Name              string        `json:"name"`
 	Lives             int           `json:"lives"`
 	Score             int           `json:"score"`
@@ -21,6 +23,7 @@ type Player struct {
 	NumberOfBombs     int           `json:"numberOfBombs"`
 	NumberOfUsedBombs int           `json:"numberOfUsedBombs"`
 	BombDelay         time.Duration `json:"bombDelay"`
+	BombRange         int           `json:"bombRange"`
 	StepSize          int           `json:"stepSize"`
 	DirectionFace     byte          `json:"DirectionFace"`
 }
@@ -30,7 +33,7 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	if !g.CanCreateNewPlayer() {
 		return errors.New("max number of players of has been reached")
 	}
-
+	player.Index = g.NumberOfPlayers
 	player.Name = name
 	player.Lives = 3
 	player.Score = 0
@@ -39,6 +42,7 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	player.Column = g.FindStartColLocation()
 	player.StepSize = StepSize
 	player.BombDelay = MiliBombDelay * time.Millisecond
+	player.BombRange = BombRange
 	g.Players = append(g.Players, player)
 
 	g.NumberOfPlayers++
@@ -64,7 +68,7 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 				return false
 			}
 			if collision == "Ex" {
-				g.HandlePlayerDeath(playerIndex)
+				//g.HandlePlayerDeath(playerIndex)
 				return false
 			}
 		case "d":
@@ -76,7 +80,7 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 				return false
 			}
 			if collision == "Ex" {
-				g.HandlePlayerDeath(playerIndex)
+				//g.HandlePlayerDeath(playerIndex)
 				return false
 			}
 		case "r":
@@ -88,7 +92,7 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 				return false
 			}
 			if collision == "Ex" {
-				g.HandlePlayerDeath(playerIndex)
+				//g.HandlePlayerDeath(playerIndex)
 				return false
 			}
 		case "l":
@@ -100,7 +104,7 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 				return false
 			}
 			if collision == "Ex" {
-				g.HandlePlayerDeath(playerIndex)
+				//g.HandlePlayerDeath(playerIndex)
 				return false
 			}
 		default:
