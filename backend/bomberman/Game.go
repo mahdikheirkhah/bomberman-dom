@@ -89,6 +89,50 @@ func (g *GameBoard) FindInnerCell(axis byte, direction byte, location int, playe
 	return 0
 }
 
+func (g *GameBoard) FindCollision(playerIndex int) string {
+	row := g.Players[playerIndex].Row
+	col := g.Players[playerIndex].Column
+	x := g.Players[playerIndex].XLocation
+	y := g.Players[playerIndex].YLocation
+
+	cellSize := int(g.CellSize)
+	//check right border
+	if col < NumberOfColumns-1 && x+cellSize > (col+1)*cellSize && g.Panel[row][col+1] != "" {
+		return g.Panel[row][col+1]
+	}
+	//check left border
+	if col > 0 && x < col*cellSize && g.Panel[row][col-1] != "" {
+		return g.Panel[row][col-1]
+	}
+	//check top border
+	if row > 0 && y < row*cellSize && g.Panel[row-1][col] != "" {
+		return g.Panel[row-1][col]
+	}
+	//check bottom border
+	if row < NumberOfRows-1 && y+cellSize > (row+1)*cellSize && g.Panel[row+1][col] != "" {
+		return g.Panel[row+1][col]
+	}
+
+	return g.Panel[row][col]
+}
+
+// func (g *GameBoard) CheckCollisionType(playerIndex int) string {
+// 	collision := g.FindCollision(playerIndex)
+// 	if collision == "W" {
+// 		return "Wall"
+// 	}
+// 	if collision == "D" {
+// 		return "Destructible"
+// 	}
+// 	if collision == "B" {
+// 		return "Bomb"
+// 	}
+// 	if collision == "Ex" {
+// 		return "Exploaded"
+// 	}
+// 	return "NoCollision"
+// }
+
 func (g *GameBoard) FindGridBorderLocation(borderName byte, playerIndex int) int {
 	row := g.Players[playerIndex].Row
 	col := g.Players[playerIndex].Column
@@ -129,7 +173,7 @@ func (g *GameBoard) RandomStart() {
 			var cell string
 
 			// Step 1.1: Place indestructible wall at even-even positions
-			if row%2 == 0 && col%2 == 0 {
+			if row%2 == 1 && col%2 == 1 {
 				cell = "W"
 			} else {
 				// Step 1.2: Randomly place destructible walls (30% chance)

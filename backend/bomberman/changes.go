@@ -56,12 +56,9 @@ type PLayerDeath struct {
 
 // CheckExplosion iterates through players and reduces lives if they are on an "Ex" cell.
 func (g *GameBoard) CheckExplosion() {
-	g.Mu.Lock()
-	defer g.Mu.Unlock()
-
 	for i := range g.Players {
-		// Check if player is on an exploded cell
-		if g.HasExploaded(g.Players[i].Row, g.Players[i].Column) {
+		collision := g.FindCollision(i)
+		if collision == "Ex" {
 			g.Players[i].Lives--
 
 		}
