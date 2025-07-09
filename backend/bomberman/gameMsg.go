@@ -94,25 +94,27 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 	}
 
 	// Step 3: Switch based on msgType
-	switch msgType {
+	switch msgType[0] {
 	//move
-	case "m":
-		if !g.Players[playerIndex].IsDead {
-			g.HandleMoveMessage(msgMap)
+	case 'M':
+		for msgType[1] != 'E' {
+			if !g.Players[playerIndex].IsDead {
+				g.HandleMoveMessage(msgMap)
+			}
 		}
 
 	//bomb
-	case "b":
+	case 'b':
 		if !g.Players[playerIndex].IsDead {
 			g.HandleBombMessage(msgMap)
 		}
 
 	//chat
-	case "c":
+	case 'c':
 		g.HandleChatMessage(msgMap)
 
 	//power up
-	case "p":
+	case 'p':
 	default:
 		log.Println("Unknown msgType:", msgType)
 	}
@@ -122,8 +124,7 @@ type MovePlayerMsg struct {
 	MsgType   string `json:"MT"`
 	XLocation int    `json:"XL"`
 	YLocation int    `json:"YL"`
-	Row       int    `json:"R"`
-	Column    int    `json:"C"`
+	Direction string `json:"D"`
 }
 type PlantBomb struct {
 	MsgType   string `json:"MT"`
@@ -132,9 +133,10 @@ type PlantBomb struct {
 	Row       int    `json:"R"`
 	Column    int    `json:"C"`
 }
-type NotMove struct {
-	MsgType string `json:"MT"`
-}
+
+// type NotMove struct {
+// 	MsgType string `json:"MT"`
+// }
 
 func (g *GameBoard) HandleMoveMessage(msgMap map[string]interface{}) {
 	playerIndex, ok := msgMap["fromPlayer"].(int)
@@ -152,16 +154,10 @@ func (g *GameBoard) HandleMoveMessage(msgMap map[string]interface{}) {
 	g.Mu.Lock()
 	if g.MovePlayer(playerIndex, direction) {
 		var msg MovePlayerMsg
-		msg.MsgType = "MA" // Move Accepted
-		msg.Column = g.Players[playerIndex].Column
-		msg.Row = g.Players[playerIndex].Row
+		msg.MsgType = "M"
 		msg.XLocation = g.Players[playerIndex].XLocation
 		msg.YLocation = g.Players[playerIndex].YLocation
 
-		g.SendMsgToChannel(msg, playerIndex)
-	} else {
-		var msg NotMove
-		msg.MsgType = "MNA" // Move Not Accpeted
 		g.SendMsgToChannel(msg, playerIndex)
 	}
 	g.Mu.Unlock()
