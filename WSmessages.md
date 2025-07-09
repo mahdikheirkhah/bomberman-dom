@@ -87,6 +87,7 @@ These messages are sent from the server to the client(s).
     "type": "player_list",
     "players": [
       {
+		"index": "int",
         "name": "string",
         "lives": "int",
         "score": "int",
@@ -170,12 +171,11 @@ These messages are sent from the server to the client(s).
 
 - **Type:** `MA`
 - **Direction:** Server -> Client
-- **Description:** Confirms that a player's move was valid and provides their new position.
+- **Description:** Confirms that a player's move was valid and provides their new position. This message is sent only to the player who made the move.
 - **Format:**
   ```json
   {
-    "type": "MA",
-    "p": "string (player name)",
+    "MT": "MA",
     "XL": "int (x location)",
     "YL": "int (y location)",
     "R": "int (row)",

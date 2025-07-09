@@ -50,15 +50,33 @@ function renderPlayerPanel(player) {
 
 // Render the game grid
 function renderGameGrid(panel, players) {
+    const borderedPanel = [];
+    const numRows = panel.length + 2;
+    const numCols = panel[0].length + 2;
+
+    for (let i = 0; i < numRows; i++) {
+        borderedPanel[i] = [];
+        for (let j = 0; j < numCols; j++) {
+            if (i === 0 || i === numRows - 1 || j === 0 || j === numCols - 1) {
+                borderedPanel[i][j] = 'W';
+            } else {
+                borderedPanel[i][j] = panel[i - 1][j - 1];
+            }
+        }
+    }
+
     const playerElements = players.map(player => {
+        const left = player.xlocation - 32 + 64; // Adjust for center coordinates and border
+        const top = player.yLocation - 32 + 64;  // Adjust for center coordinates and border
+
         return createElement('div', {
             class: `player ${player.color}`,
-            style: `left: ${player.xlocation}px; top: ${player.yLocation}px;`
+            style: `left: ${left}px; top: ${top}px;`
         });
     });
 
     return createElement('div', { class: 'game-grid' },
-        ...panel.map(row =>
+        ...borderedPanel.map(row =>
             createElement('div', { class: 'grid-row' },
                 ...row.map(cell => createElement('div', { class: `grid-cell ${cell}` }))
             )
