@@ -25,7 +25,9 @@ type Player struct {
 	BombDelay         time.Duration `json:"bombDelay"`
 	BombRange         int           `json:"bombRange"`
 	StepSize          int           `json:"stepSize"`
-	DirectionFace     byte          `json:"DirectionFace"`
+	DirectionFace     string        `json:"DirectionFace"`
+	IsMoving          bool          `json:"isMoving"`
+	StopMoveChan      chan struct{} `json:"-"` // Channel to signal the player's movement goroutine to stop
 }
 
 func (g *GameBoard) CreatePlayer(name string) error {
@@ -54,8 +56,8 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 	player := &g.Players[playerIndex]
 	step := player.StepSize
 
-	if player.DirectionFace != byte(direction[0]) {
-		player.DirectionFace = byte(direction[0])
+	if player.DirectionFace != direction {
+		player.DirectionFace = direction
 	} else {
 		switch direction {
 		case "u":

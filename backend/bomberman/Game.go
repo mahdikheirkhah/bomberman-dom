@@ -46,7 +46,7 @@ func (g *GameBoard) CanCreateNewPlayer() bool {
 }
 
 func (g *GameBoard) FindColor() string {
-	return Colors[g.NumberOfPlayers+1]
+	return Colors[g.NumberOfPlayers]
 }
 
 func (g *GameBoard) FindStartRowLocation() int {
