@@ -16,16 +16,16 @@ const handleKeyEvent = (e, isKeyDown) => {
 
     switch (e.code) {
         case 'ArrowUp':
-            sendMsg({ msgType, d: 'up' });
+            sendMsg({ msgType, d: 'u' });
             break;
         case 'ArrowDown':
-            sendMsg({ msgType, d: 'down' });
+            sendMsg({ msgType, d: 'd' });
             break;
         case 'ArrowLeft':
-            sendMsg({ msgType, d: 'left' });
+            sendMsg({ msgType, d: 'l' });
             break;
         case 'ArrowRight':
-            sendMsg({ msgType, d: 'right' });
+            sendMsg({ msgType, d: 'r' });
             break;
         case 'Space':
             if (isKeyDown) sendMsg({ msgType: 'b' }); // Only send bomb on keydown
