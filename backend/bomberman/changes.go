@@ -60,7 +60,13 @@ func (g *GameBoard) CheckExplosion() {
 		collision := g.FindCollision(i)
 		if collision == "Ex" {
 			g.Players[i].Lives--
-
+			if g.Players[i].IsMoving {
+				g.Players[i].IsMoving = false
+				if g.Players[i].StopMoveChan != nil {
+					close(g.Players[i].StopMoveChan)
+					g.Players[i].StopMoveChan = nil // Mark as closed
+				}
+			}
 		}
 		// If player's lives reach zero and they are not already marked dead
 		if g.Players[i].Lives <= 0 && !g.Players[i].IsDead {
@@ -80,6 +86,7 @@ func (g *GameBoard) CheckExplosion() {
 func (g *GameBoard) PlayerDeath(playerIndex int) {
 	g.NumberOfPlayers--
 	g.Players[playerIndex].IsDead = true
+
 	msg := PLayerDeath{
 		Type:   "PD", // player dead
 		Player: g.Players[playerIndex],

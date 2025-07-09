@@ -197,10 +197,11 @@ func (g *GameBoard) playerMoveLoop(playerIndex int) {
 
 			// Check conditions to stop movement
 			// HasExploaded assumes the mutex is held, which it is here.
-			if !player.IsMoving || player.IsDead || g.HasExploaded(player.Row, player.Column) {
+			collision := g.FindCollision(playerIndex) // Update collision status
+			if !player.IsMoving || player.IsDead || collision == "Ex" || collision == "B" || collision == "D" || collision == "W" {
 				// If player is no longer moving, dead, or on an exploded cell, stop this goroutine
-				log.Printf("Player %d movement loop stopping due to state change (IsMoving: %t, IsDead: %t, OnExploded: %t).\n",
-					playerIndex, player.IsMoving, player.IsDead, g.HasExploaded(player.Row, player.Column)) // Corrected log message
+				log.Printf("Player %d movement loop stopping due to state change (IsMoving: %t, IsDead: %t, OnCollision: %s).\n",
+					playerIndex, player.IsMoving, player.IsDead, collision) // Corrected log message
 				player.IsMoving = false // Ensure state is consistent
 				if player.StopMoveChan != nil {
 					close(player.StopMoveChan) // Close the channel to prevent future starts without recreation
