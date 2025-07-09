@@ -55,40 +55,54 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 	} else {
 		switch direction {
 		case "u":
-			dest := player.YLocation - step
-			newRow := g.FindInnerCell('y', 'u', dest, playerIndex)
-			if newRow < 0 || g.Panel[newRow][player.Column] == "W" || g.Panel[newRow][player.Column] == "D" || g.Panel[newRow][player.Column] == "B" {
+			y := player.YLocation
+			player.YLocation -= step
+
+			collision := g.FindCollision(playerIndex)
+			if collision == "W" || collision == "D" || collision == "B" {
+				player.YLocation = y
 				return false
 			}
-			player.Row = newRow
-			player.YLocation = dest
-
+			if collision == "Ex" {
+				g.HandlePlayerDeath(playerIndex)
+				return false
+			}
 		case "d":
-			dest := player.YLocation + step
-			newRow := g.FindInnerCell('y', 'd', dest, playerIndex)
-			if newRow >= NumberOfRows || g.Panel[newRow][player.Column] == "W" || g.Panel[newRow][player.Column] == "D" || g.Panel[newRow][player.Column] == "B" {
+			y := player.YLocation
+			player.YLocation += step
+			collision := g.FindCollision(playerIndex)
+			if collision == "W" || collision == "D" || collision == "B" {
+				player.YLocation = y
 				return false
 			}
-			player.Row = newRow
-			player.YLocation = dest
-
+			if collision == "Ex" {
+				g.HandlePlayerDeath(playerIndex)
+				return false
+			}
 		case "r":
-			dest := player.XLocation + step
-			newCol := g.FindInnerCell('x', 'r', dest, playerIndex)
-			if newCol >= NumberOfColumns || g.Panel[player.Row][newCol] == "W" || g.Panel[player.Row][newCol] == "D" || g.Panel[player.Row][newCol] == "B" {
+			x := player.XLocation
+			player.XLocation += step
+			collision := g.FindCollision(playerIndex)
+			if collision == "W" || collision == "D" || collision == "B" {
+				player.XLocation = x
 				return false
 			}
-			player.Column = newCol
-			player.XLocation = dest
-
+			if collision == "Ex" {
+				g.HandlePlayerDeath(playerIndex)
+				return false
+			}
 		case "l":
-			dest := player.XLocation - step
-			newCol := g.FindInnerCell('x', 'l', dest, playerIndex)
-			if newCol < 0 || g.Panel[player.Row][newCol] == "W" || g.Panel[player.Row][newCol] == "D" || g.Panel[player.Row][newCol] == "B" {
+			x := player.XLocation
+			player.XLocation -= step
+			collision := g.FindCollision(playerIndex)
+			if collision == "W" || collision == "D" || collision == "B" {
+				player.XLocation = x
 				return false
 			}
-			player.Column = newCol
-			player.XLocation = dest
+			if collision == "Ex" {
+				g.HandlePlayerDeath(playerIndex)
+				return false
+			}
 		default:
 			return false
 		}
