@@ -12,7 +12,7 @@ const sendMsg = (msg) => {
 // Player movement and bomb placement
 const handleKeyEvent = (e, isKeyDown) => {
     if (e.repeat) return;
-    const msgType = isKeyDown ? 'ms' : 'me'; // ms for move start, me for move end
+    const msgType = isKeyDown ? 'MS' : 'ME'; // ms for move start, me for move end
 
     switch (e.code) {
         case 'ArrowUp':
