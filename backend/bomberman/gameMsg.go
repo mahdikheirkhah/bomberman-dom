@@ -157,6 +157,7 @@ func (g *GameBoard) HandleMoveMessage(msgMap map[string]interface{}) {
 		msg.Row = g.Players[playerIndex].Row
 		msg.XLocation = g.Players[playerIndex].XLocation
 		msg.YLocation = g.Players[playerIndex].YLocation
+
 		g.SendMsgToChannel(msg, playerIndex)
 	} else {
 		var msg NotMove
