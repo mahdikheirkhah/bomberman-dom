@@ -97,7 +97,7 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 	// Step 3: Switch based on msgType
 	switch msgType {
 	case "MS": // Move Start
-		direction, ok := msgMap["D"].(string)
+		direction, ok := msgMap["d"].(string)
 		if !ok {
 			log.Println("Invalid or missing direction in MS message")
 			return
