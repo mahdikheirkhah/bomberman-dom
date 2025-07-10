@@ -42,7 +42,7 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	player.Color = g.FindColor()
 	player.Row = g.FindStartRowLocation()
 	player.Column = g.FindStartColLocation()
-	player.XLocation, player.YLocation = g.FindGridCenterLocation(player.Row, player.Column)
+	player.XLocation, player.YLocation = player.Column*int(g.CellSize), player.Row*int(g.CellSize)
 	player.StepSize = StepSize
 	player.BombDelay = MiliBombDelay * time.Millisecond
 	player.BombRange = BombRange
@@ -54,89 +54,4 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	g.NumberOfPlayers++
 
 	return nil
-}
-
-func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
-	player := &g.Players[playerIndex]
-	step := player.StepSize
-
-	if player.DirectionFace != direction {
-		player.DirectionFace = direction
-	} else {
-		switch direction {
-		case "u":
-			y := player.YLocation
-			player.YLocation -= step
-
-			collision := g.FindCollision(playerIndex)
-
-			if collision == "W" || collision == "D" || collision == "B" {
-				distance := g.FindDistanceToBorder(playerIndex, "u")
-				if distance < 0 {
-					distance = 0
-				}
-				player.YLocation = y + distance
-				g.SendMoveMsg(playerIndex)
-				return false
-			}
-			if collision == "Ex" {
-				//g.HandlePlayerDeath(playerIndex)
-				return false
-			}
-		case "d":
-			y := player.YLocation
-			player.YLocation += step
-			collision := g.FindCollision(playerIndex)
-			if collision == "W" || collision == "D" || collision == "B" {
-				distance := g.FindDistanceToBorder(playerIndex, "d")
-				if distance < 0 {
-					distance = 0
-				}
-				player.YLocation = y + distance
-				g.SendMoveMsg(playerIndex)
-				return false
-			}
-			if collision == "Ex" {
-				//g.HandlePlayerDeath(playerIndex)
-				return false
-			}
-		case "r":
-			x := player.XLocation
-			player.XLocation += step
-			collision := g.FindCollision(playerIndex)
-			if collision == "W" || collision == "D" || collision == "B" {
-				distance := g.FindDistanceToBorder(playerIndex, "r")
-				if distance < 0 {
-					distance = 0
-				}
-				player.XLocation = x + distance
-				g.SendMoveMsg(playerIndex)
-				return false
-			}
-			if collision == "Ex" {
-				//g.HandlePlayerDeath(playerIndex)
-				return false
-			}
-		case "l":
-			x := player.XLocation
-			player.XLocation -= step
-			collision := g.FindCollision(playerIndex)
-			if collision == "W" || collision == "D" || collision == "B" {
-				distance := g.FindDistanceToBorder(playerIndex, "r")
-				if distance < 0 {
-					distance = 0
-				}
-				player.XLocation = x + distance
-				g.SendMoveMsg(playerIndex)
-				return false
-			}
-			if collision == "Ex" {
-				//g.HandlePlayerDeath(playerIndex)
-				return false
-			}
-		default:
-			return false
-		}
-	}
-	return true
 }
