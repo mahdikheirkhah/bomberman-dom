@@ -281,27 +281,6 @@ func (g *GameBoard) HandleMoveMessage(msgMap map[string]interface{}) {
 	}
 }
 
-func (g *GameBoard) HandleBombMessage(msgMap map[string]interface{}) {
-	playerIndex, ok := msgMap["fromPlayer"].(int)
-	if !ok {
-		log.Println("fromPlayer not found in message")
-		return
-	}
-
-	g.Mu.Lock()
-	bombIndex, err := g.CreateBomb(playerIndex)
-	if err != nil {
-		var msg PlantBomb
-		msg.MsgType = "BA" //Bomb Accepted
-		msg.Column = g.Bombs[bombIndex].Column
-		msg.Row = g.Bombs[bombIndex].Row
-		msg.XLocation = g.Bombs[bombIndex].XLocation
-		msg.YLocation = g.Bombs[bombIndex].YLocation
-		g.SendMsgToChannel(msg, playerIndex)
-	}
-	g.Mu.Unlock()
-}
-
 func (g *GameBoard) SendMoveMsg(playerIndex int) {
 	var msg MovePlayerMsg
 	msg.MsgType = "M" // General move update

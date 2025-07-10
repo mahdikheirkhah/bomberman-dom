@@ -2,6 +2,7 @@ package bomberman
 
 import (
 	"errors"
+	"log"
 	"time"
 )
 
@@ -52,6 +53,28 @@ type PlayerExplosionMsg struct {
 type PLayerDeath struct {
 	Type   string `json:"type"`
 	Player Player `json:"player"`
+}
+
+func (g *GameBoard) HandleBombMessage(msgMap map[string]interface{}) {
+	playerIndex, ok := msgMap["fromPlayer"].(int)
+	if !ok {
+		log.Println("fromPlayer not found in message")
+		return
+	}
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+	bombIndex, err := g.CreateBomb(playerIndex)
+	if err != nil {
+		log.Println("Error creating bomb:", err)
+		return
+	}
+	var msg PlantBomb
+	msg.MsgType = "BA" //Bomb Accepted
+	msg.Column = g.Bombs[bombIndex].Column
+	msg.Row = g.Bombs[bombIndex].Row
+	msg.XLocation = g.Bombs[bombIndex].XLocation
+	msg.YLocation = g.Bombs[bombIndex].YLocation
+	g.SendMsgToChannel(msg, playerIndex)
 }
 
 // CheckExplosion iterates through players and reduces lives if they are on an "Ex" cell.
