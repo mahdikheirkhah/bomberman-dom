@@ -37,9 +37,9 @@ func (g *GameBoard) HandleMoveStartMessage(playerIndex int, direction string) {
 	if player.StopMoveChan == nil {
 		player.StopMoveChan = make(chan struct{}) // Create a new stop channel
 		go g.playerMoveLoop(playerIndex)          // Start the continuous movement loop
-		log.Printf("Player %d started continuous movement in direction: %s\n", playerIndex, direction)
+		//log.Printf("Player %d started continuous movement in direction: %s\n", playerIndex, direction)
 	} else {
-		log.Printf("Player %d already has a movement loop running.\n", playerIndex)
+		//log.Printf("Player %d already has a movement loop running.\n", playerIndex)
 	}
 }
 
@@ -55,7 +55,7 @@ func (g *GameBoard) HandleMoveEndMessage(playerIndex int) {
 		if player.StopMoveChan != nil {
 			close(player.StopMoveChan)
 			player.StopMoveChan = nil // Mark as closed
-			log.Printf("Player %d stopped continuous movement.\n", playerIndex)
+			//log.Printf("Player %d stopped continuous movement.\n", playerIndex)
 		}
 	}
 }
@@ -166,48 +166,35 @@ func (g *GameBoard) SendMoveMsg(playerIndex int) {
 func (g *GameBoard) FindCollision(playerIndex int) string {
 	player := g.Players[playerIndex]
 	cellSize := int(g.CellSize)
+	playerSize := 32 // As requested
 
-	// Get current cell
-	currentRow := player.YLocation / cellSize
-	currentCol := player.XLocation / cellSize
+	// Player's bounding box corners
+	topLeftX, topLeftY := player.XLocation, player.YLocation
+	topRightX, topRightY := player.XLocation+playerSize-1, player.YLocation
+	bottomLeftX, bottomLeftY := player.XLocation, player.YLocation+playerSize-1
+	bottomRightX, bottomRightY := player.XLocation+playerSize-1, player.YLocation+playerSize-1
 
-	// Check current cell first
-	if currentRow >= 0 && currentRow < NumberOfRows &&
-		currentCol >= 0 && currentCol < NumberOfColumns {
-		if g.Panel[currentRow][currentCol] != "" {
-			return g.Panel[currentRow][currentCol]
-		}
+	// Convert corner coordinates to grid cells
+	topLeftRow, topLeftCol := topLeftY/cellSize, topLeftX/cellSize
+	topRightRow, topRightCol := topRightY/cellSize, topRightX/cellSize
+	bottomLeftRow, bottomLeftCol := bottomLeftY/cellSize, bottomLeftX/cellSize
+	bottomRightRow, bottomRightCol := bottomRightY/cellSize, bottomRightX/cellSize
+
+	// Use a map to check unique cells to avoid redundant checks
+	cellsToCheck := map[[2]int]bool{
+		{topLeftRow, topLeftCol}:       true,
+		{topRightRow, topRightCol}:     true,
+		{bottomLeftRow, bottomLeftCol}: true,
+		{bottomRightRow, bottomRightCol}: true,
 	}
 
-	// Check adjacent cells based on direction and position within current cell
-	xInCell := player.XLocation % cellSize
-	yInCell := player.YLocation % cellSize
-
-	// Check right border
-	if xInCell > cellSize-5 && currentCol < NumberOfColumns-1 {
-		if g.Panel[currentRow][currentCol+1] != "" {
-			return g.Panel[currentRow][currentCol+1]
-		}
-	}
-
-	// Check left border
-	if xInCell < 5 && currentCol > 0 {
-		if g.Panel[currentRow][currentCol-1] != "" {
-			return g.Panel[currentRow][currentCol-1]
-		}
-	}
-
-	// Check bottom border
-	if yInCell > cellSize-5 && currentRow < NumberOfRows-1 {
-		if g.Panel[currentRow+1][currentCol] != "" {
-			return g.Panel[currentRow+1][currentCol]
-		}
-	}
-
-	// Check top border
-	if yInCell < 5 && currentRow > 0 {
-		if g.Panel[currentRow-1][currentCol] != "" {
-			return g.Panel[currentRow-1][currentCol]
+	for cell := range cellsToCheck {
+		row, col := cell[0], cell[1]
+		if row >= 0 && row < NumberOfRows && col >= 0 && col < NumberOfColumns {
+			cellContent := g.Panel[row][col]
+			if cellContent != "" {
+				return cellContent
+			}
 		}
 	}
 
@@ -251,7 +238,7 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 		}
 	case "d":
 		player.YLocation += step
-		if player.YLocation >= NumberOfRows*cellSize {
+		if player.YLocation > NumberOfRows*cellSize {
 			player.YLocation = NumberOfRows*cellSize - 1
 		}
 	case "l":
@@ -261,7 +248,7 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 		}
 	case "r":
 		player.XLocation += step
-		if player.XLocation >= NumberOfColumns*cellSize {
+		if player.XLocation > NumberOfColumns*cellSize {
 			player.XLocation = NumberOfColumns*cellSize - 1
 		}
 	}

@@ -9,6 +9,8 @@ const sendMsg = (msg) => {
     }
 };
 
+const cellSize = 50
+
 // Player movement and bomb placement
 const handleKeyEvent = (e, isKeyDown) => {
     if (e.repeat) return;
@@ -69,8 +71,8 @@ function renderGameGrid(panel, players) {
     }
 
     const playerElements = players.map(player => {
-        const left = player.xlocation - 32 + 64; // Adjust for center coordinates and border
-        const top = player.yLocation - 32 + 64;  // Adjust for center coordinates and border
+        const left = player.xlocation + cellSize; // Adjust for center coordinates and border
+        const top = player.yLocation + cellSize;  // Adjust for center coordinates and border
 
         return createElement('div', {
             class: `player ${player.color}`,

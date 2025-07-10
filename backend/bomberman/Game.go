@@ -12,7 +12,7 @@ const NumberOfRows = 11
 const NumberOfColumns = 13
 const MaxNumberOfPlayers = 4
 const MinNumberOfPlayers = 2
-const CellSize = 64
+const CellSize = 50
 
 var Colors = []string{"G", "Y", "R", "B"}
 
