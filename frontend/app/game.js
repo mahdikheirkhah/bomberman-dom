@@ -12,20 +12,20 @@ const sendMsg = (msg) => {
 // Player movement and bomb placement
 const handleKeyEvent = (e, isKeyDown) => {
     if (e.repeat) return;
-    const msgType = isKeyDown ? 'ms' : 'me'; // ms for move start, me for move end
+    const msgType = isKeyDown ? 'MS' : 'ME'; // ms for move start, me for move end
 
     switch (e.code) {
         case 'ArrowUp':
-            sendMsg({ msgType, d: 'up' });
+            sendMsg({ msgType, d: 'u' });
             break;
         case 'ArrowDown':
-            sendMsg({ msgType, d: 'down' });
+            sendMsg({ msgType, d: 'd' });
             break;
         case 'ArrowLeft':
-            sendMsg({ msgType, d: 'left' });
+            sendMsg({ msgType, d: 'l' });
             break;
         case 'ArrowRight':
-            sendMsg({ msgType, d: 'right' });
+            sendMsg({ msgType, d: 'r' });
             break;
         case 'Space':
             if (isKeyDown) sendMsg({ msgType: 'b' }); // Only send bomb on keydown

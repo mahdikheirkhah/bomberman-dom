@@ -97,7 +97,7 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 	// Step 3: Switch based on msgType
 	switch msgType {
 	case "MS": // Move Start
-		direction, ok := msgMap["D"].(string)
+		direction, ok := msgMap["d"].(string)
 		if !ok {
 			log.Println("Invalid or missing direction in MS message")
 			return
@@ -277,12 +277,7 @@ func (g *GameBoard) HandleMoveMessage(msgMap map[string]interface{}) {
 	}
 
 	if g.MovePlayer(playerIndex, direction) { // Assuming MovePlayer updates player's X/Y
-		var msg MovePlayerMsg
-		msg.MsgType = "M" // General move update
-		msg.PlayerIndex = playerIndex
-		msg.XLocation = g.Players[playerIndex].XLocation
-		msg.YLocation = g.Players[playerIndex].YLocation
-		g.SendMsgToChannel(msg, playerIndex)
+		g.SendMoveMsg(playerIndex)
 	}
 }
 
@@ -305,4 +300,15 @@ func (g *GameBoard) HandleBombMessage(msgMap map[string]interface{}) {
 		g.SendMsgToChannel(msg, playerIndex)
 	}
 	g.Mu.Unlock()
+}
+
+func (g *GameBoard) SendMoveMsg(playerIndex int) {
+	var msg MovePlayerMsg
+	msg.MsgType = "M" // General move update
+	msg.PlayerIndex = playerIndex
+	msg.XLocation = g.Players[playerIndex].XLocation
+	msg.YLocation = g.Players[playerIndex].YLocation
+	msg.Direction = g.Players[playerIndex].DirectionFace
+	g.SendMsgToChannel(msg, playerIndex)
+	return
 }

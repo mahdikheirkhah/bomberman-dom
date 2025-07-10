@@ -107,13 +107,34 @@ func (g *GameBoard) FindCollision(playerIndex int) string {
 	//check top border
 	if row > 0 && y < row*cellSize && g.Panel[row-1][col] != "" {
 		return g.Panel[row-1][col]
+		//check bottom border
 	}
-	//check bottom border
 	if row < NumberOfRows-1 && y+cellSize > (row+1)*cellSize && g.Panel[row+1][col] != "" {
 		return g.Panel[row+1][col]
 	}
 
 	return g.Panel[row][col]
+}
+func (g *GameBoard) FindDistanceToBorder(playerIndex int, borderName string) int {
+	row := g.Players[playerIndex].Row
+	col := g.Players[playerIndex].Column
+	cellSize := int(g.CellSize)
+	player := &g.Players[playerIndex]
+	switch borderName {
+	case "u":
+		distance := player.YLocation - (row * cellSize)
+		return distance
+	case "d":
+		distance := (row)*cellSize - player.YLocation
+		return distance
+	case "l":
+		distance := player.XLocation - (col * cellSize)
+		return distance
+	case "r":
+		distance := (col)*cellSize - player.XLocation
+		return distance
+	}
+	return -1
 }
 
 // func (g *GameBoard) CheckCollisionType(playerIndex int) string {

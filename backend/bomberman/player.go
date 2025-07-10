@@ -66,8 +66,14 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 			player.YLocation -= step
 
 			collision := g.FindCollision(playerIndex)
+
 			if collision == "W" || collision == "D" || collision == "B" {
-				player.YLocation = y
+				distance := g.FindDistanceToBorder(playerIndex, "u")
+				if distance < 0 {
+					distance = 0
+				}
+				player.YLocation = y + distance
+				g.SendMoveMsg(playerIndex)
 				return false
 			}
 			if collision == "Ex" {
@@ -79,7 +85,12 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 			player.YLocation += step
 			collision := g.FindCollision(playerIndex)
 			if collision == "W" || collision == "D" || collision == "B" {
-				player.YLocation = y
+				distance := g.FindDistanceToBorder(playerIndex, "d")
+				if distance < 0 {
+					distance = 0
+				}
+				player.YLocation = y + distance
+				g.SendMoveMsg(playerIndex)
 				return false
 			}
 			if collision == "Ex" {
@@ -91,7 +102,12 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 			player.XLocation += step
 			collision := g.FindCollision(playerIndex)
 			if collision == "W" || collision == "D" || collision == "B" {
-				player.XLocation = x
+				distance := g.FindDistanceToBorder(playerIndex, "r")
+				if distance < 0 {
+					distance = 0
+				}
+				player.XLocation = x + distance
+				g.SendMoveMsg(playerIndex)
 				return false
 			}
 			if collision == "Ex" {
@@ -103,7 +119,12 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 			player.XLocation -= step
 			collision := g.FindCollision(playerIndex)
 			if collision == "W" || collision == "D" || collision == "B" {
-				player.XLocation = x
+				distance := g.FindDistanceToBorder(playerIndex, "r")
+				if distance < 0 {
+					distance = 0
+				}
+				player.XLocation = x + distance
+				g.SendMoveMsg(playerIndex)
 				return false
 			}
 			if collision == "Ex" {
