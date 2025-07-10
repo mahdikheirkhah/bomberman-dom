@@ -90,6 +90,14 @@ export function handleWebSocket() {
                         store.setState({ gameData: { ...gameData, players: updatedPlayers } });
                     }
                     break;
+                case 'BA':
+                    const { gameData: gameDataBomb } = store.getState();
+                    if (gameDataBomb && gameDataBomb.panel) {
+                        const newPanel = [...gameDataBomb.panel];
+                        newPanel[message.R][message.C] = 'B';
+                        store.setState({ gameData: { ...gameDataBomb, panel: newPanel } });
+                    }
+                    break;
             }
         }
 	};
