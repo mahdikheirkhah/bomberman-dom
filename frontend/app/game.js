@@ -81,7 +81,15 @@ function renderGameGrid(panel, players) {
     return createElement('div', { class: 'game-grid' },
         ...borderedPanel.map(row =>
             createElement('div', { class: 'grid-row' },
-                ...row.map(cell => createElement('div', { class: `grid-cell ${cell}` }))
+                ...row.map(cell => {
+                    if (cell === 'B') {
+                        return createElement('div', { class: 'grid-cell' },
+                            createElement('img', { src: '/public/bomb.svg', class: 'bomb-image' })
+                        );
+                    } else {
+                        return createElement('div', { class: `grid-cell ${cell}` });
+                    }
+                })
             )
         ),
         ...playerElements
