@@ -55,6 +55,14 @@ type PLayerDeath struct {
 	Player Player `json:"player"`
 }
 
+type PlantBomb struct {
+	MsgType   string `json:"MT"`
+	XLocation int    `json:"XL"`
+	YLocation int    `json:"YL"`
+	Row       int    `json:"R"`
+	Column    int    `json:"C"`
+}
+
 func (g *GameBoard) HandleBombMessage(msgMap map[string]interface{}) {
 	playerIndex, ok := msgMap["fromPlayer"].(int)
 	if !ok {
@@ -130,8 +138,7 @@ func (g *GameBoard) HasExploaded(row, col int) bool {
 
 // CanCreateBomb checks if a player is allowed to place another bomb.
 func (g *GameBoard) CanCreateBomb(playerIndex int) bool {
-	g.Mu.Lock()
-	defer g.Mu.Unlock()
+
 	if playerIndex < 0 || playerIndex >= len(g.Players) {
 		return false // Invalid player index
 	}
@@ -140,8 +147,6 @@ func (g *GameBoard) CanCreateBomb(playerIndex int) bool {
 
 // CreateBomb creates a new bomb at the player's current position.
 func (g *GameBoard) CreateBomb(playerIndex int) (int, error) {
-	g.Mu.Lock()
-	defer g.Mu.Unlock()
 
 	if playerIndex < 0 || playerIndex >= len(g.Players) {
 		return -1, errors.New("invalid player index")
