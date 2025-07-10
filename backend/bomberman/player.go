@@ -46,6 +46,9 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	player.StepSize = StepSize
 	player.BombDelay = MiliBombDelay * time.Millisecond
 	player.BombRange = BombRange
+	player.NumberOfBombs = 1
+	player.NumberOfUsedBombs = 0
+	player.IsDead = false
 	g.Players = append(g.Players, player)
 
 	g.NumberOfPlayers++
