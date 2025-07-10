@@ -2,6 +2,7 @@ package bomberman
 
 import (
 	"errors"
+	"log"
 	"time"
 )
 
@@ -52,6 +53,36 @@ type PlayerExplosionMsg struct {
 type PLayerDeath struct {
 	Type   string `json:"type"`
 	Player Player `json:"player"`
+}
+
+type PlantBomb struct {
+	MsgType   string `json:"MT"`
+	XLocation int    `json:"XL"`
+	YLocation int    `json:"YL"`
+	Row       int    `json:"R"`
+	Column    int    `json:"C"`
+}
+
+func (g *GameBoard) HandleBombMessage(msgMap map[string]interface{}) {
+	playerIndex, ok := msgMap["fromPlayer"].(int)
+	if !ok {
+		log.Println("fromPlayer not found in message")
+		return
+	}
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+	bombIndex, err := g.CreateBomb(playerIndex)
+	if err != nil {
+		log.Println("Error creating bomb:", err)
+		return
+	}
+	var msg PlantBomb
+	msg.MsgType = "BA" //Bomb Accepted
+	msg.Column = g.Bombs[bombIndex].Column
+	msg.Row = g.Bombs[bombIndex].Row
+	msg.XLocation = g.Bombs[bombIndex].XLocation
+	msg.YLocation = g.Bombs[bombIndex].YLocation
+	g.SendMsgToChannel(msg, playerIndex)
 }
 
 // CheckExplosion iterates through players and reduces lives if they are on an "Ex" cell.
@@ -107,8 +138,7 @@ func (g *GameBoard) HasExploaded(row, col int) bool {
 
 // CanCreateBomb checks if a player is allowed to place another bomb.
 func (g *GameBoard) CanCreateBomb(playerIndex int) bool {
-	g.Mu.Lock()
-	defer g.Mu.Unlock()
+
 	if playerIndex < 0 || playerIndex >= len(g.Players) {
 		return false // Invalid player index
 	}
@@ -117,8 +147,6 @@ func (g *GameBoard) CanCreateBomb(playerIndex int) bool {
 
 // CreateBomb creates a new bomb at the player's current position.
 func (g *GameBoard) CreateBomb(playerIndex int) (int, error) {
-	g.Mu.Lock()
-	defer g.Mu.Unlock()
 
 	if playerIndex < 0 || playerIndex >= len(g.Players) {
 		return -1, errors.New("invalid player index")
