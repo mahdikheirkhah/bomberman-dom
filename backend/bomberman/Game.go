@@ -63,113 +63,90 @@ func (g *GameBoard) FindStartColLocation() int {
 	return NumberOfColumns - 1
 }
 
+// FindInnerCell determines which cell the player is entering based on their pixel position
+// Returns the new cell index if crossing a grid boundary, or current cell if not
 func (g *GameBoard) FindInnerCell(axis byte, direction byte, location int, playerIndex int) int {
-	col := g.Players[playerIndex].Column
-	row := g.Players[playerIndex].Row
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+
+	player := g.Players[playerIndex]
+	cellSize := int(g.CellSize)
+
+	// Current grid position
+	currentCol := player.Column
+	currentRow := player.Row
 
 	switch axis {
-	case 'x':
-		if direction == 'r' && location >= g.FindGridBorderLocation('r', playerIndex) {
-			return col + 1
+	case 'x': // Horizontal movement
+		rightBorder := (currentCol + 1) * cellSize
+		leftBorder := currentCol * cellSize
+
+		if direction == 'r' { // Moving right
+			if location >= rightBorder && currentCol < NumberOfColumns-1 {
+				return currentCol + 1
+			}
+		} else if direction == 'l' { // Moving left
+			if location <= leftBorder && currentCol > 0 {
+				return currentCol - 1
+			}
 		}
-		if direction == 'l' && location <= g.FindGridBorderLocation('l', playerIndex) {
-			return col - 1
+		return currentCol
+
+	case 'y': // Vertical movement
+		bottomBorder := (currentRow + 1) * cellSize
+		topBorder := currentRow * cellSize
+
+		if direction == 'd' { // Moving down
+			if location >= bottomBorder && currentRow < NumberOfRows-1 {
+				return currentRow + 1
+			}
+		} else if direction == 'u' { // Moving up
+			if location <= topBorder && currentRow > 0 {
+				return currentRow - 1
+			}
 		}
-		return col
-	case 'y':
-		if direction == 'u' && location <= g.FindGridBorderLocation('u', playerIndex) {
-			return row - 1
-		}
-		if direction == 'd' && location >= g.FindGridBorderLocation('d', playerIndex) {
-			return row + 1
-		}
-		return row
+		return currentRow
 	}
 
 	return 0
 }
 
-func (g *GameBoard) FindCollision(playerIndex int) string {
-	row := g.Players[playerIndex].Row
-	col := g.Players[playerIndex].Column
-	x := g.Players[playerIndex].XLocation
-	y := g.Players[playerIndex].YLocation
-
-	cellSize := int(g.CellSize)
-	//check right border
-	if col < NumberOfColumns-1 && x+cellSize > (col+1)*cellSize && g.Panel[row][col+1] != "" {
-		return g.Panel[row][col+1]
-	}
-	//check left border
-	if col > 0 && x < col*cellSize && g.Panel[row][col-1] != "" {
-		return g.Panel[row][col-1]
-	}
-	//check top border
-	if row > 0 && y < row*cellSize && g.Panel[row-1][col] != "" {
-		return g.Panel[row-1][col]
-		//check bottom border
-	}
-	if row < NumberOfRows-1 && y+cellSize > (row+1)*cellSize && g.Panel[row+1][col] != "" {
-		return g.Panel[row+1][col]
-	}
-
-	return g.Panel[row][col]
-}
-func (g *GameBoard) FindDistanceToBorder(playerIndex int, borderName string) int {
-	row := g.Players[playerIndex].Row
-	col := g.Players[playerIndex].Column
-	cellSize := int(g.CellSize)
-	player := &g.Players[playerIndex]
-	switch borderName {
-	case "u":
-		distance := player.YLocation - (row * cellSize)
-		return distance
-	case "d":
-		distance := (row)*cellSize - player.YLocation
-		return distance
-	case "l":
-		distance := player.XLocation - (col * cellSize)
-		return distance
-	case "r":
-		distance := (col)*cellSize - player.XLocation
-		return distance
-	}
-	return -1
-}
-
-// func (g *GameBoard) CheckCollisionType(playerIndex int) string {
-// 	collision := g.FindCollision(playerIndex)
-// 	if collision == "W" {
-// 		return "Wall"
-// 	}
-// 	if collision == "D" {
-// 		return "Destructible"
-// 	}
-// 	if collision == "B" {
-// 		return "Bomb"
-// 	}
-// 	if collision == "Ex" {
-// 		return "Exploaded"
-// 	}
-// 	return "NoCollision"
-// }
-
+// FindGridBorderLocation returns the pixel coordinate of the specified grid border
+// Includes bounds checking to prevent out-of-range errors
 func (g *GameBoard) FindGridBorderLocation(borderName byte, playerIndex int) int {
-	row := g.Players[playerIndex].Row
-	col := g.Players[playerIndex].Column
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+
+	player := g.Players[playerIndex]
 	cellSize := int(g.CellSize)
 
+	// Clamp row and column to valid ranges
+	row := Clamp(player.Row, 0, NumberOfRows-1)
+	col := Clamp(player.Column, 0, NumberOfColumns-1)
+
 	switch borderName {
-	case 'u':
-		return row * cellSize // top border
-	case 'd':
-		return (row + 1) * cellSize // bottom border
-	case 'l':
+	case 'u': // Top border of current cell
+		return row * cellSize
+	case 'd': // Bottom border of current cell
+		return (row + 1) * cellSize
+	case 'l': // Left border of current cell
 		return col * cellSize
-	case 'r':
+	case 'r': // Right border of current cell
 		return (col + 1) * cellSize
+	default:
+		return -1 // Invalid border name
 	}
-	return -1
+}
+
+// Helper function to clamp values between min and max
+func Clamp(value, min, max int) int {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
 }
 
 func (g *GameBoard) FindGridCenterLocation(row, col int) (int, int) {

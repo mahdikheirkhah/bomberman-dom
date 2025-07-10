@@ -61,70 +61,64 @@ func (g *GameBoard) HandleMoveEndMessage(playerIndex int) {
 }
 
 // playerMoveLoop is a goroutine that handles continuous movement for a single player.
-// playerMoveLoop is a goroutine that handles continuous movement for a single player.
+// It checks the player's movement state and updates their position at regular intervals.
 func (g *GameBoard) playerMoveLoop(playerIndex int) {
-	// Adjust this ticker duration to control movement speed/update frequency
 	ticker := time.NewTicker(50 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			g.Mu.Lock() // Acquire lock for this tick's operations
-			player := &g.Players[playerIndex]
+			g.Mu.Lock() // Hold lock for entire operation
 
-			// Check conditions to stop movement
-			// HasExploaded assumes the mutex is held, which it is here.
-			collision := g.FindCollision(playerIndex) // Update collision status
-			if !player.IsMoving || player.IsDead || collision == "Ex" || collision == "B" || collision == "D" || collision == "W" {
-				// If player is no longer moving, dead, or on an exploded cell, stop this goroutine
-				log.Printf("Player %d movement loop stopping due to state change (IsMoving: %t, IsDead: %t, OnCollision: %s).\n",
-					playerIndex, player.IsMoving, player.IsDead, collision) // Corrected log message
-				player.IsMoving = false // Ensure state is consistent
-				if player.StopMoveChan != nil {
-					close(player.StopMoveChan) // Close the channel to prevent future starts without recreation
-					player.StopMoveChan = nil
-				}
+			player := &g.Players[playerIndex]
+			if !player.IsMoving || player.IsDead {
 				g.Mu.Unlock()
-				return // Terminate the goroutine
+				return
 			}
 
-			// Attempt to move the player
-			// g.MovePlayer is assumed to return true on success, false on failure (e.g., hit wall)
-			// MovePlayer assumes the mutex is held, which it is here.
-			moved := g.MovePlayer(playerIndex, player.DirectionFace) // Corrected field name
-			if moved {
-				// If player moved successfully, broadcast the new position
-				var msg MovePlayerMsg
-				msg.MsgType = "M" // General move update
-				msg.PlayerIndex = playerIndex
-				msg.XLocation = player.XLocation
-				msg.YLocation = player.YLocation
-				msg.Direction = player.DirectionFace // Corrected field name
-				g.SendMsgToChannel(msg, playerIndex)
-			} else {
-				// If player couldn't move (hit a wall, etc.), stop continuous movement
-				log.Printf("Player %d stopped continuous movement due to obstacle.\n", playerIndex)
+			// Check collision before moving
+			if collision := g.FindCollision(playerIndex); collision == "Ex" || collision == "B" || collision == "D" || collision == "W" {
 				player.IsMoving = false
 				if player.StopMoveChan != nil {
 					close(player.StopMoveChan)
 					player.StopMoveChan = nil
 				}
 				g.Mu.Unlock()
-				return // Terminate the goroutine
+				return
 			}
-			g.Mu.Unlock() // Release lock at the end of the tick's operations
-		case <-g.Players[playerIndex].StopMoveChan:
 
-			// Received explicit stop signal from HandleMoveEndMessage or disconnect handler
-			log.Printf("Player %d movement loop received explicit stop signal.\n", playerIndex)
-			g.Mu.Lock() // Acquire lock to ensure state consistency before returning
-			player := &g.Players[playerIndex]
-			player.IsMoving = false // Ensure state is consistent
-			// Channel is already closed by the sender (HandleMoveEndMessage or HandlePlayerMessages defer)
-			player.StopMoveChan = nil // Mark as closed
+			// Perform movement
+			moved := g.MovePlayer(playerIndex, player.DirectionFace)
+			if moved {
+				// Broadcast new position
+				msg := MovePlayerMsg{
+					MsgType:     "M",
+					PlayerIndex: playerIndex,
+					XLocation:   player.XLocation,
+					YLocation:   player.YLocation,
+					Direction:   player.DirectionFace,
+				}
+				g.SendMsgToChannel(msg, playerIndex)
+			} else {
+				player.IsMoving = false
+				if player.StopMoveChan != nil {
+					close(player.StopMoveChan)
+					player.StopMoveChan = nil
+				}
+			}
+
 			g.Mu.Unlock()
-			return // Terminate the goroutine
+
+		case <-g.Players[playerIndex].StopMoveChan:
+			g.Mu.Lock()
+			player := &g.Players[playerIndex]
+			player.IsMoving = false
+			if player.StopMoveChan != nil {
+				player.StopMoveChan = nil
+			}
+			g.Mu.Unlock()
+			return
 		}
 	}
 }
@@ -145,8 +139,8 @@ func (g *GameBoard) HandleMoveMessage(msgMap map[string]interface{}) {
 		return
 	}
 
-	g.Mu.Lock()
-	defer g.Mu.Unlock()
+	// g.Mu.Lock()
+	// defer g.Mu.Unlock()
 
 	player := &g.Players[playerIndex]
 	if player.IsDead || g.HasExploaded(player.Row, player.Column) {
@@ -167,4 +161,124 @@ func (g *GameBoard) SendMoveMsg(playerIndex int) {
 	msg.YLocation = g.Players[playerIndex].YLocation
 	msg.Direction = g.Players[playerIndex].DirectionFace
 	g.SendMsgToChannel(msg, playerIndex)
+}
+
+func (g *GameBoard) FindCollision(playerIndex int) string {
+	player := g.Players[playerIndex]
+	cellSize := int(g.CellSize)
+
+	// Get current cell
+	currentRow := player.YLocation / cellSize
+	currentCol := player.XLocation / cellSize
+
+	// Check current cell first
+	if currentRow >= 0 && currentRow < NumberOfRows &&
+		currentCol >= 0 && currentCol < NumberOfColumns {
+		if g.Panel[currentRow][currentCol] != "" {
+			return g.Panel[currentRow][currentCol]
+		}
+	}
+
+	// Check adjacent cells based on direction and position within current cell
+	xInCell := player.XLocation % cellSize
+	yInCell := player.YLocation % cellSize
+
+	// Check right border
+	if xInCell > cellSize-5 && currentCol < NumberOfColumns-1 {
+		if g.Panel[currentRow][currentCol+1] != "" {
+			return g.Panel[currentRow][currentCol+1]
+		}
+	}
+
+	// Check left border
+	if xInCell < 5 && currentCol > 0 {
+		if g.Panel[currentRow][currentCol-1] != "" {
+			return g.Panel[currentRow][currentCol-1]
+		}
+	}
+
+	// Check bottom border
+	if yInCell > cellSize-5 && currentRow < NumberOfRows-1 {
+		if g.Panel[currentRow+1][currentCol] != "" {
+			return g.Panel[currentRow+1][currentCol]
+		}
+	}
+
+	// Check top border
+	if yInCell < 5 && currentRow > 0 {
+		if g.Panel[currentRow-1][currentCol] != "" {
+			return g.Panel[currentRow-1][currentCol]
+		}
+	}
+
+	return ""
+}
+func (g *GameBoard) FindDistanceToBorder(playerIndex int, borderName string) int {
+	row := g.Players[playerIndex].Row
+	col := g.Players[playerIndex].Column
+	cellSize := int(g.CellSize)
+	player := &g.Players[playerIndex]
+	switch borderName {
+	case "u":
+		distance := player.YLocation - (row * cellSize)
+		return distance
+	case "d":
+		distance := (row)*cellSize - player.YLocation
+		return distance
+	case "l":
+		distance := player.XLocation - (col * cellSize)
+		return distance
+	case "r":
+		distance := (col)*cellSize - player.XLocation
+		return distance
+	}
+	return -1
+}
+
+func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
+	player := &g.Players[playerIndex]
+	step := player.StepSize
+	cellSize := int(g.CellSize)
+
+	originalX := player.XLocation
+	originalY := player.YLocation
+
+	switch direction {
+	case "u":
+		player.YLocation -= step
+		if player.YLocation < 0 {
+			player.YLocation = 0
+		}
+	case "d":
+		player.YLocation += step
+		if player.YLocation >= NumberOfRows*cellSize {
+			player.YLocation = NumberOfRows*cellSize - 1
+		}
+	case "l":
+		player.XLocation -= step
+		if player.XLocation < 0 {
+			player.XLocation = 0
+		}
+	case "r":
+		player.XLocation += step
+		if player.XLocation >= NumberOfColumns*cellSize {
+			player.XLocation = NumberOfColumns*cellSize - 1
+		}
+	}
+
+	// Update row/column
+	player.Row = player.YLocation / cellSize
+	player.Column = player.XLocation / cellSize
+
+	// Check if we hit something
+	if collision := g.FindCollision(playerIndex); collision != "" {
+		// Revert position
+		player.XLocation = originalX
+		player.YLocation = originalY
+		player.Row = originalY / cellSize
+		player.Column = originalX / cellSize
+		return false
+	}
+
+	return true
 }
