@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const movementTolerance = 5
+
 type MovePlayerMsg struct {
 	MsgType     string `json:"MT"`
 	XLocation   int    `json:"XL"`
@@ -166,7 +168,7 @@ func (g *GameBoard) SendMoveMsg(playerIndex int) {
 func (g *GameBoard) FindCollision(playerIndex int) string {
 	player := g.Players[playerIndex]
 	cellSize := int(g.CellSize)
-	playerSize := 32 // As requested
+	playerSize := 48 // As requested
 
 	// Player's bounding box corners
 	topLeftX, topLeftY := player.XLocation, player.YLocation
@@ -259,12 +261,43 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 
 	// Check if we hit something
 	if collision := g.FindCollision(playerIndex); collision != "" {
-		// Revert position
-		player.XLocation = originalX
-		player.YLocation = originalY
-		player.Row = originalY / cellSize
-		player.Column = originalX / cellSize
-		return false
+		// If moving horizontally, check for vertical tolerance
+		if direction == "l" || direction == "r" {
+			// Check if the player is slightly off-center vertically
+			verticalOffset := player.YLocation % cellSize
+			if verticalOffset <= movementTolerance {
+				// Snap to the grid and allow movement
+				player.YLocation -= verticalOffset
+			} else if cellSize-verticalOffset <= movementTolerance {
+				// Snap to the grid and allow movement
+				player.YLocation += cellSize - verticalOffset
+			} else {
+				// Revert position if no tolerance is met
+				player.XLocation = originalX
+				player.YLocation = originalY
+				return false
+			}
+		} else if direction == "u" || direction == "d" {
+			// Check if the player is slightly off-center horizontally
+			horizontalOffset := player.XLocation % cellSize
+			if horizontalOffset <= movementTolerance {
+				// Snap to the grid and allow movement
+				player.XLocation -= horizontalOffset
+			} else if cellSize-horizontalOffset <= movementTolerance {
+				// Snap to the grid and allow movement
+				player.XLocation += cellSize - horizontalOffset
+			} else {
+				// Revert position if no tolerance is met
+				player.XLocation = originalX
+				player.YLocation = originalY
+				return false
+			}
+		} else {
+			// Revert position for any other collision
+			player.XLocation = originalX
+			player.YLocation = originalY
+			return false
+		}
 	}
 
 	return true
