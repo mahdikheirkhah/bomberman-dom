@@ -199,6 +199,21 @@ func (g *GameBoard) FindCollision(playerIndex int) string {
 		}
 	}
 
+	// Check for bomb collisions
+	for _, bomb := range g.Bombs {
+		if player.XLocation < bomb.XLocation+cellSize &&
+			player.XLocation+PlayerSize > bomb.XLocation &&
+			player.YLocation < bomb.YLocation+cellSize &&
+			player.YLocation+PlayerSize > bomb.YLocation {
+			// Collision with a bomb
+			if bomb.OwnPlayerIndex == playerIndex && bomb.InitialIntersection {
+				// Player can pass through their own bomb initially
+				continue
+			}
+			return "B" // Treat as a solid block
+		}
+	}
+
 	return ""
 }
 func (g *GameBoard) FindDistanceToBorder(playerIndex int, borderName string) int {
@@ -303,6 +318,20 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 			player.XLocation = originalX
 			player.YLocation = originalY
 			return false
+		}
+	}
+
+	// Update bomb intersection status
+	for i := range g.Bombs {
+		bomb := &g.Bombs[i]
+		if bomb.OwnPlayerIndex == playerIndex && bomb.InitialIntersection {
+			if player.XLocation >= bomb.XLocation+cellSize ||
+				player.XLocation+PlayerSize <= bomb.XLocation ||
+				player.YLocation >= bomb.YLocation+cellSize ||
+				player.YLocation+PlayerSize <= bomb.YLocation {
+				// Player has moved off the bomb
+				bomb.InitialIntersection = false
+			}
 		}
 	}
 

@@ -18,12 +18,13 @@ type Position struct {
 
 // Bomb represents a bomb placed on the game board.
 type Bomb struct {
-	Row            int       `json:"row"`
-	Column         int       `json:"column"`
-	XLocation      int       `json:"xlocation"`     // Assuming these are for rendering
-	YLocation      int       `json:"yLocation"`     // Assuming these are for rendering
-	ExplosionTime  time.Time `json:"explosionTime"` // When the bomb will explode
-	OwnPlayerIndex int       `json:"playerIndex"`   // ID of the player who placed this bomb
+	Row                 int       `json:"row"`
+	Column              int       `json:"column"`
+	XLocation           int       `json:"xlocation"`     // Assuming these are for rendering
+	YLocation           int       `json:"yLocation"`     // Assuming these are for rendering
+	ExplosionTime       time.Time `json:"explosionTime"` // When the bomb will explode
+	OwnPlayerIndex      int       `json:"playerIndex"`   // ID of the player who placed this bomb
+	InitialIntersection bool      `json:"initialIntersection"`
 }
 
 // Powerup represents an item that can be collected by players.
@@ -162,10 +163,11 @@ func (g *GameBoard) CreateBomb(playerIndex int) (int, error) {
 	var bomb Bomb
 	bomb.Column = g.Players[playerIndex].Column
 	bomb.Row = g.Players[playerIndex].Row
-	// Assuming g.FindGridCenterLocation exists for rendering purposes
-	// bomb.XLocation, bomb.YLocation = g.FindGridCenterLocation(bomb.Row, bomb.Column)
+	bomb.XLocation = bomb.Column * g.CellSize
+	bomb.YLocation = bomb.Row * g.CellSize
 	bomb.ExplosionTime = time.Now().Add(g.Players[playerIndex].BombDelay)
 	bomb.OwnPlayerIndex = playerIndex // Associate bomb with the player who placed it
+	bomb.InitialIntersection = true
 
 	g.Bombs = append(g.Bombs, bomb)
 	bombIndex := len(g.Bombs) - 1
