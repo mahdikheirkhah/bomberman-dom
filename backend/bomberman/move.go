@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const movementTolerance = 10
+const movementTolerance = 20
 
 type MovePlayerMsg struct {
 	MsgType     string `json:"MT"`
