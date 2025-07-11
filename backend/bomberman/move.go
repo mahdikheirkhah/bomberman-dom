@@ -199,6 +199,35 @@ func (g *GameBoard) FindCollision(playerIndex int) string {
 		}
 	}
 
+	// Check for bomb collisions
+	for _, bomb := range g.Bombs {
+		if player.XLocation < bomb.XLocation+cellSize &&
+			player.XLocation+PlayerSize > bomb.XLocation &&
+			player.YLocation < bomb.YLocation+cellSize &&
+			player.YLocation+PlayerSize > bomb.YLocation {
+			// Collision with a bomb
+			if bomb.OwnPlayerIndex == playerIndex && bomb.InitialIntersection {
+				// Player can pass through their own bomb initially
+				continue
+			}
+			return "B" // Treat as a solid block
+		}
+	}
+
+	// Check for player collisions
+	for i, otherPlayer := range g.Players {
+		if i == playerIndex || otherPlayer.IsDead {
+			continue
+		}
+
+		if player.XLocation < otherPlayer.XLocation+PlayerSize &&
+			player.XLocation+PlayerSize > otherPlayer.XLocation &&
+			player.YLocation < otherPlayer.YLocation+PlayerSize &&
+			player.YLocation+PlayerSize > otherPlayer.YLocation {
+			return "P" // Collision with another player
+		}
+	}
+
 	return ""
 }
 func (g *GameBoard) FindDistanceToBorder(playerIndex int, borderName string) int {
@@ -254,9 +283,9 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 		}
 	}
 
-	// Update row/column
-	player.Row = player.YLocation / cellSize
-	player.Column = player.XLocation / cellSize
+	// Update row/column based on the player's center
+	player.Row = (player.YLocation + PlayerSize/2) / cellSize
+	player.Column = (player.XLocation + PlayerSize/2) / cellSize
 
 	// Check if we hit something
 	if collision := g.FindCollision(playerIndex); collision != "" {
@@ -303,6 +332,20 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 			player.XLocation = originalX
 			player.YLocation = originalY
 			return false
+		}
+	}
+
+	// Update bomb intersection status
+	for i := range g.Bombs {
+		bomb := &g.Bombs[i]
+		if bomb.OwnPlayerIndex == playerIndex && bomb.InitialIntersection {
+			if player.XLocation >= bomb.XLocation+cellSize ||
+				player.XLocation+PlayerSize <= bomb.XLocation ||
+				player.YLocation >= bomb.YLocation+cellSize ||
+				player.YLocation+PlayerSize <= bomb.YLocation {
+				// Player has moved off the bomb
+				bomb.InitialIntersection = false
+			}
 		}
 	}
 

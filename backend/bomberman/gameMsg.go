@@ -49,10 +49,25 @@ func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) 
 	defer func() {
 		g.Mu.Lock()
 		delete(g.PlayersConnections, playerIndex)
+
+		// After removing the player, check if the game should be restarted
+		if g.IsStarted && len(g.PlayersConnections) == 0 {
+			log.Println("All players disconnected. Restarting game.")
+			// Reset game state safely without replacing the mutex or channel
+			g.Players = nil
+			g.Bombs = nil
+			g.NumberOfPlayers = 0
+			g.IsStarted = false
+			g.ExplodedCells = nil
+			g.RandomStart() // Re-create the panel
+		}
 		g.Mu.Unlock()
+
 		conn.Close()
 		log.Printf("Connection closed for player %d\n", playerIndex)
 	}()
+
+
 
 	for {
 		var msg map[string]interface{}

@@ -1,276 +1,122 @@
-# WebSocket Messages Documentation
+# Bomberman WebSocket API Documentation (Corrected)
 
-This document outlines the WebSocket messages used in the Bomberman game, detailing their format, direction, and purpose.
+This document outlines the WebSocket messages used for communication between the game client (frontend) and the game server (backend), based on the current implementation.
 
 ## General Concepts
 
-- **Client:** The frontend JavaScript application running in the user's browser.
-- **Server:** The backend Go application.
-- **Direction:** Indicates the flow of the message (e.g., Client -> Server, Server -> Client).
-- **Format:** The JSON structure of the message.
+- **Client-to-Server (C->S):** Messages sent from the player's browser to the server.
+- **Server-to-Client (S->C):** Messages sent from the server to one or more players' browsers.
+- Most messages are JSON objects.
+- There are two primary formats for server-to-client messages, identified by either a `type` field or an `MT` (MessageType) field.
 
 ---
 
-## Client to Server Messages
+## Client-to-Server (C->S) Messages
 
-These messages are sent from the client to the server.
+These messages are sent from the client to the server to report player actions. They use the `msgType` field.
 
-### 1. Player Movement
-
-- **Type:** `m`
-- **Direction:** Client -> Server
-- **Description:** Sent when the player presses a movement key (Arrow keys).
-- **Format:**
+### `MS` (Move Start)
+- **Description:** Sent when a player presses a movement key to start moving.
+- **Payload:**
   ```json
   {
-    "msgType": "m",
-    "d": "up" | "down" | "left" | "right"
+    "msgType": "MS",
+    "d": "u"
+  }
+  ```
+- **Fields:**
+  - `msgType` (string): `"MS"`
+  - `d` (string): Direction of movement: `"u"`, `"d"`, `"l"`, or `"r"`.
+
+### `ME` (Move End)
+- **Description:** Sent when the player releases the last movement key to stop moving.
+- **Payload:**
+  ```json
+  {
+    "msgType": "ME"
   }
   ```
 
-### 2. Place Bomb
-
-- **Type:** `b`
-- **Direction:** Client -> Server
-- **Description:** Sent when the player presses the spacebar to place a bomb.
-- **Format:**
+### `b` (Place Bomb)
+- **Description:** Sent when the player presses the space key to place a bomb.
+- **Payload:**
   ```json
   {
     "msgType": "b"
   }
   ```
 
-### 3. Chat Message
-
-- **Type:** `c`
-- **Direction:** Client -> Server
-- **Description:** Sent when a player sends a message in the game chat.
-- **Format:**
+### `c` (Chat Message)
+- **Description:** Sent when a player submits a chat message.
+- **Payload:**
   ```json
   {
     "msgType": "c",
-    "content": "Your message here"
+    "content": "Hello!"
   }
   ```
+- **Fields:**
+  - `content` (string): The text of the message.
 
 ---
 
-## Server to Client Messages
+## Server-to-Client (S->C) Messages
 
-These messages are sent from the server to the client(s).
+These messages are sent from the server to the client(s) to update the game state.
 
-### 1. Game State Change
+### Messages with `type` field
 
-- **Type:** `GameState`
-- **Direction:** Server -> Client
-- **Description:** Informs the client about changes in the overall game state.
-- **Format:**
-  ```json
-  {
-    "type": "GameState",
-    "state": "PlayerAccepted" | "LobbyCountdown" | "GameCountdown" | "GameStarted"
-  }
-  ```
-  - **`PlayerAccepted`**: Sent to a player when they have successfully joined the game.
-  - **`LobbyCountdown`**: Sent to all players when the minimum number of players has been reached, starting the lobby countdown.
-  - **`GameCountdown`**: Sent to all players when the game is about to start.
-  - **`GameStarted`**: Sent to all players when the game officially begins.
+#### `player_list`
+- **Description:** Provides the current list of players in the lobby.
+- **Payload:** `{"type":"player_list","players":[...]}`
 
-### 2. Player List Update
+#### `GameState`
+- **Description:** Informs the client of a major change in the game's state.
+- **Payload:** `{"type":"GameState","state":"LobbyCountdown"}`
+- **Possible States:** `PlayerAccepted`, `LobbyCountdown`, `GameCountdown`, `GameStarted`.
 
-- **Type:** `player_list`
-- **Direction:** Server -> Client
-- **Description:** Sent to all clients whenever a new player joins, providing the updated list of all players.
-- **Format:**
-  ```json
-  {
-    "type": "player_list",
-    "players": [
-      {
-		"index": "int",
-        "name": "string",
-        "lives": "int",
-        "score": "int",
-        "color": "string",
-        "row": "int",
-        "column": "int",
-        "xlocation": "int",
-        "yLocation": "int",
-        "isDead": "bool",
-        "numberOfBombs": "int",
-        "numberOfUsedBombs": "int",
-        "bombDelay": "int",
-        "bombRange": "int",
-        "stepSize": "int",
-        "DirectionFace": "byte"
-      }
-    ]
-  }
-  ```
+#### `lobbyCountdown` / `gameCountdown`
+- **Description:** Provides the remaining seconds in a countdown.
+- **Payload:** `{"type":"lobbyCountdown","seconds":5}`
 
-### 3. Lobby Countdown
+#### `gameStart`
+- **Description:** Sent when the game begins, containing the initial board and player data.
+- **Payload:** `{"type":"gameStart","players":[...],"panel":[...]}`
 
-- **Type:** `lobbyCountdown`
-- **Direction:** Server -> Client
-- **Description:** Provides the remaining seconds in the lobby countdown.
-- **Format:**
-  ```json
-  {
-    "type": "lobbyCountdown",
-    "seconds": "int"
-  }
-  ```
+#### `CM` (Chat Message)
+- **Description:** Broadcasts a chat message to all players.
+- **Payload:** `{"type":"CM","name":"player1","content":"Hi!","color":"G"}`
 
-### 4. Game Countdown
+#### `playerUpdate`
+- **Description:** Sent to update player and panel data simultaneously.
+- **Payload:** `{"type":"playerUpdate","players":[...],"panel":[...]}`
 
-- **Type:** `gameCountdown`
-- **Direction:** Server -> Client
-- **Description:** Provides the remaining seconds before the game starts.
-- **Format:**
-  ```json
-  {
-    "type": "gameCountdown",
-    "seconds": "int"
-  }
-  ```
+#### `bombUpdate` / `explosion`
+- **Description:** Sent when bombs or explosions change the game grid. The frontend uses both `bombUpdate` and `explosion` cases to handle updates to the game panel.
+- **Payload:** `{"type":"...","panel":[...]}`
 
-### 5. Game Start
-
-- **Type:** `gameStart`
-- **Direction:** Server -> Client
-- **Description:** Sent to all clients to signal the start of the game, including the initial game board layout and player positions.
-- **Format:**
-  ```json
-  {
-    "type": "gameStart",
-    "players": "[see player_list format]",
-    "numberOfPlayers": "int",
-    "panel": "array[array[string]]"
-  }
-  ```
-
-### 6. Chat Message
-
-- **Type:** `CM`
-- **Direction:** Server -> Client
-- **Description:** Broadcasts a chat message from a player to all other players.
-- **Format:**
-  ```json
-  {
-    "type": "CM",
-    "name": "string",
-    "content": "string",
-    "date": "timestamp",
-    "filter": "bool",
-    "senderIndex": "int",
-    "color": "string"
-  }
-  ```
-
-### 7. Move Accepted
-
-- **Type:** `MA`
-- **Direction:** Server -> Client
-- **Description:** Confirms that a player's move was valid and provides their new position. This message is sent only to the player who made the move.
-- **Format:**
-  ```json
-  {
-    "MT": "MA",
-    "XL": "int (x location)",
-    "YL": "int (y location)",
-    "R": "int (row)",
-    "C": "int (column)"
-  }
-  ```
-
-### 8. Bomb Accepted
-
-- **Type:** `BA`
-- **Direction:** Server -> Client
-- **Description:** Confirms that a bomb has been placed.
-- **Format:**
-  ```json
-  {
-    "MT": "BA",
-    "XL": "int (x location)",
-    "YL": "int (y location)",
-    "R": "int (row)",
-    "C": "int (column)"
-  }
-  ```
-
-### 9. Bomb Not Accepted
-
-- **Type:** `BNA`
-- **Direction:** Server -> Client
-- **Description:** Informs the player that they cannot place a bomb (e.g., they have no bombs left).
-- **Format:**
-  ```json
-  {
-    "MT": "BNA"
-  }
-  ```
-
-### 10. Player Lives Decreased
-
-- **Type:** `PLD`
-- **Direction:** Server -> Client
-- **Description:** Sent when a player is hit by an explosion and loses a life.
-- **Format:**
-  ```json
-  {
-    "type": "PLD",
-    "lives": "int",
-    "color": "string"
-  }
-  ```
-
-### 11. Player Death
-
-- **Type:** `PD`
-- **Direction:** Server -> Client
+#### `playerDead`
 - **Description:** Sent when a player has lost all their lives.
-- **Format:**
-  ```json
-  {
-    "type": "PD",
-    "player": "[see player_list format]"
-  }
-  ```
+- **Payload:** `{"type":"playerDead","players":[...]}`
 
-### 12. Explosion Cells
+#### `gameOver`
+- **Description:** Sent when the game has ended.
+- **Payload:** `{"type":"gameOver"}`
 
-- **Type:** `EXC`
-- **Direction:** Server -> Client
-- **Description:** Sent when a bomb explodes, indicating which cells are on fire.
-- **Format:**
-  ```json
-  {
-    "type": "EXC",
-    "positions": [
-      {
-        "row": "int",
-        "col": "int",
-        "CellOnFire": "bool"
-      }
-    ]
-  }
-  ```
+### Messages with `MT` (MessageType) field
 
-### 13. Turn Off Fire
+#### `M` (Player Move)
+- **Description:** Broadcasts a player's new position and direction.
+- **Payload:** `{"MT":"M","PI":0,"XL":150,"YL":50,"D":"r"}`
+- **Fields:**
+  - `PI` (number): Player Index.
+  - `XL` (number): X Location (pixels).
+  - `YL` (number): Y Location (pixels).
+  - `D` (string): Direction.
 
-- **Type:** `OF`
-- **Direction:** Server -> Client
-- **Description:** Sent when the fire from an explosion has extinguished.
-- **Format:**
-  ```json
-  {
-    "type": "OF",
-    "positions": [
-      {
-        "row": "int",
-        "col": "int"
-      }
-    ]
-  }
-  ```
+#### `BA` (Bomb Accepted)
+- **Description:** Confirms a bomb has been placed and provides its grid location.
+- **Payload:** `{"MT":"BA","R":2,"C":4}`
+- **Fields:**
+  - `R` (number): Row index.
+  - `C` (number): Column index.

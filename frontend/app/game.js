@@ -11,27 +11,40 @@ const sendMsg = (msg) => {
 
 const cellSize = 50
 
+// Set to track currently pressed movement keys
+const pressedKeys = new Set();
+
 // Player movement and bomb placement
 const handleKeyEvent = (e, isKeyDown) => {
     if (e.repeat) return;
-    const msgType = isKeyDown ? 'MS' : 'ME'; // ms for move start, me for move end
 
-    switch (e.code) {
-        case 'ArrowUp':
-            sendMsg({ msgType, d: 'u' });
-            break;
-        case 'ArrowDown':
-            sendMsg({ msgType, d: 'd' });
-            break;
-        case 'ArrowLeft':
-            sendMsg({ msgType, d: 'l' });
-            break;
-        case 'ArrowRight':
-            sendMsg({ msgType, d: 'r' });
-            break;
-        case 'Space':
-            if (isKeyDown) sendMsg({ msgType: 'b' }); // Only send bomb on keydown
-            break;
+    const moveKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+    const key = e.code;
+
+    if (moveKeys.includes(key)) {
+        if (isKeyDown) {
+            sendMsg({ msgType: 'MS', d: getDirection(key) });
+            pressedKeys.add(key);
+        } else {
+            pressedKeys.delete(key);
+            // If all movement keys are released, send ME
+            if (pressedKeys.size === 0) {
+                sendMsg({ msgType: 'ME' });
+            }
+        }
+    } else if (key === 'Space' && isKeyDown) {
+        sendMsg({ msgType: 'b' }); // Only send bomb on keydown
+    }
+};
+
+// Helper to get direction from key code
+const getDirection = (key) => {
+    switch (key) {
+        case 'ArrowUp': return 'u';
+        case 'ArrowDown': return 'd';
+        case 'ArrowLeft': return 'l';
+        case 'ArrowRight': return 'r';
+        default: return '';
     }
 };
 
