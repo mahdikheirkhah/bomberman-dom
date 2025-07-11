@@ -78,7 +78,20 @@ body {
     height: 48px;
     background-size: cover;
     transition: left 0.1s linear, top 0.1s linear;
+    background-repeat: no-repeat;
 }
+
+/* Assuming a sprite sheet where each frame is 48x48 */
+.player.moving.frame-0 { background-position-y: 0; }
+.player.moving.frame-1 { background-position-y: -48px; }
+
+.player.stopped { background-position-y: 0; } /* Default frame when not moving */
+
+/* Adjust background-position-x for direction */
+.player.face-d { background-position-x: 0; }
+.player.face-l { background-position-x: -48px; }
+.player.face-r { background-position-x: -96px; }
+.player.face-u { background-position-x: -144px; }
 
 .player.Y { background-image: url('/public/Y.gif'); }
 .player.R { background-image: url('/public/R.gif'); }

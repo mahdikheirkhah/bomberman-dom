@@ -17,7 +17,10 @@ store.setState({
 	gameData: null,
 	chatMessages: [],
 	gameListenersAttached: false, // Add this flag
+	playerAnimation: new Map(), // For client-side animation
 });
+
+const playerMoveTimers = new Map();
 
 export function handleWebSocket() {
 	const { ws } = store.getState();
@@ -79,7 +82,7 @@ export function handleWebSocket() {
         if (message.MT) {
             switch (message.MT) {
                 case 'M': // Player Move
-                    const { gameData } = store.getState();
+                    const { gameData, playerAnimation } = store.getState();
                     if (gameData && gameData.players) {
                         const updatedPlayers = gameData.players.map(player => {
                             if (player.index === message.PI) {
@@ -87,7 +90,27 @@ export function handleWebSocket() {
                             }
                             return player;
                         });
-                        store.setState({ gameData: { ...gameData, players: updatedPlayers } });
+
+                        // Animation logic
+                        const animationState = playerAnimation.get(message.PI) || { isMoving: false, frame: 0 };
+                        animationState.isMoving = true;
+                        animationState.frame = 1 - animationState.frame; // Toggle frame
+                        playerAnimation.set(message.PI, animationState);
+
+                        // Reset timer to stop animation
+                        if (playerMoveTimers.has(message.PI)) {
+                            clearTimeout(playerMoveTimers.get(message.PI));
+                        }
+                        playerMoveTimers.set(message.PI, setTimeout(() => {
+                            animationState.isMoving = false;
+                            playerAnimation.set(message.PI, animationState);
+                            store.setState({ playerAnimation: new Map(playerAnimation) });
+                        }, 150));
+
+                        store.setState({ 
+                            gameData: { ...gameData, players: updatedPlayers },
+                            playerAnimation: new Map(playerAnimation)
+                        });
                     }
                     break;
                 case 'BA':

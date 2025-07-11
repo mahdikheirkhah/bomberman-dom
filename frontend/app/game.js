@@ -68,6 +68,7 @@ function renderPlayerPanel(player) {
 
 // Render the game grid
 function renderGameGrid(panel, players) {
+    const { playerAnimation } = store.getState();
     const borderedPanel = [];
     const numRows = panel.length + 2;
     const numCols = panel[0].length + 2;
@@ -86,9 +87,18 @@ function renderGameGrid(panel, players) {
     const playerElements = players.map(player => {
         const left = player.xlocation + cellSize; // Adjust for center coordinates and border
         const top = player.yLocation + cellSize;  // Adjust for center coordinates and border
+        const animation = playerAnimation.get(player.index) || { isMoving: false, frame: 0 };
+
+        const playerClasses = [
+            'player',
+            player.color,
+            `face-${player.DirectionFace}`,
+            animation.isMoving ? 'moving' : 'stopped',
+            animation.isMoving ? `frame-${animation.frame}` : 'frame-0'
+        ].join(' ');
 
         return createElement('div', {
-            class: `player ${player.color}`,
+            class: playerClasses,
             style: `left: ${left}px; top: ${top}px;`
         });
     });
