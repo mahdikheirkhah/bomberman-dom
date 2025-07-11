@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -156,7 +155,6 @@ func (g *GameBoard) FindGridCenterLocation(row, col int) (int, int) {
 	return x, y
 }
 func (g *GameBoard) RandomStart() {
-	rand.Seed(time.Now().UnixNano())
 
 	// Define safe zones around each player start (row, col) + adjacent cells
 	safeZones := map[int][][2]int{

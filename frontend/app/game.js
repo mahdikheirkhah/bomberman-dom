@@ -85,22 +85,25 @@ function renderGameGrid(panel, players) {
     }
 
     const playerElements = players.map(player => {
-        const left = player.xlocation + cellSize; // Adjust for center coordinates and border
-        const top = player.yLocation + cellSize;  // Adjust for center coordinates and border
-        const animation = playerAnimation.get(player.index) || { isMoving: false, frame: 0 };
+        const x = player.xlocation + cellSize; // Adjust for border
+        const y = player.yLocation + cellSize;  // Adjust for border
+        const animation = playerAnimation.get(player.index) || { isMoving: false };
 
         const playerClasses = [
             'player',
+            animation.isMoving ? 'moving' : 'stopped'
+        ].join(' ');
+
+        const spriteClasses = [
+            'player-sprite',
             player.color,
-            `face-${player.DirectionFace}`,
-            animation.isMoving ? 'moving' : 'stopped',
-            animation.isMoving ? `frame-${animation.frame}` : 'frame-0'
+            `face-${player.DirectionFace}`
         ].join(' ');
 
         return createElement('div', {
             class: playerClasses,
-            style: `left: ${left}px; top: ${top}px;`
-        });
+            style: `transform: translate(${x}px, ${y}px);`
+        }, createElement('div', { class: spriteClasses }));
     });
 
     return createElement('div', { class: 'game-grid' },

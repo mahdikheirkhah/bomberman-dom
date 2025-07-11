@@ -72,31 +72,51 @@ body {
     position: relative;
 }
 
+@keyframes walk-animation {
+    from { background-position-y: 0; }
+    to   { background-position-y: -96px; } /* Go through both frames */
+}
+
 .player {
     position: absolute;
     width: 48px;
     height: 48px;
-    background-size: cover;
-    transition: left 0.1s linear, top 0.1s linear;
+    /* Smooth movement is handled here */
+    transition: transform 0.1s linear;
+}
+
+.player-sprite {
+    width: 100%;
+    height: 100%;
+    background-size: 192px 96px;
     background-repeat: no-repeat;
 }
 
-/* Assuming a sprite sheet where each frame is 48x48 */
-.player.moving.frame-0 { background-position-y: 0; }
-.player.moving.frame-1 { background-position-y: -48px; }
+/* When moving, apply the stepped animation to the sprite */
+.player.moving .player-sprite {
+    animation: walk-animation 0.2s steps(2) infinite;
+}
 
-.player.stopped { background-position-y: 0; } /* Default frame when not moving */
+.player.stopped .player-sprite {
+    background-position-y: 0; /* Default frame when not moving */
+}
 
-/* Adjust background-position-x for direction */
-.player.face-d { background-position-x: 0; }
-.player.face-l { background-position-x: -48px; }
-.player.face-r { background-position-x: -96px; }
-.player.face-u { background-position-x: -144px; }
+/* Player color is now on the sprite */
+.player-sprite.Y { background-image: url('/public/Y.png'); }
+.player-sprite.R { background-image: url('/public/R.png'); }
+.player-sprite.B { background-image: url('/public/B.png'); }
+.player-sprite.G { background-image: url('/public/G.png'); }
 
-.player.Y { background-image: url('/public/Y.gif'); }
-.player.R { background-image: url('/public/R.gif'); }
-.player.B { background-image: url('/public/B.gif'); }
-.player.G { background-image: url('/public/G.gif'); }
+/* Adjust background-position-x for direction on the sprite */
+.player-sprite.face-d { background-position-x: 0; }
+.player-sprite.face-l { background-position-x: -48px; }
+.player-sprite.face-r { background-position-x: -96px; }
+.player-sprite.face-u { background-position-x: -144px; }
+
+.player.Y { background-image: url('/public/Y.png'); }
+.player.R { background-image: url('/public/R.png'); }
+.player.B { background-image: url('/public/B.png'); }
+.player.G { background-image: url('/public/G.png'); }
 
 .grid-row {
     display: flex;

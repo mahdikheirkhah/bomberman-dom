@@ -92,9 +92,8 @@ export function handleWebSocket() {
                         });
 
                         // Animation logic
-                        const animationState = playerAnimation.get(message.PI) || { isMoving: false, frame: 0 };
+                        const animationState = playerAnimation.get(message.PI) || { isMoving: false };
                         animationState.isMoving = true;
-                        animationState.frame = 1 - animationState.frame; // Toggle frame
                         playerAnimation.set(message.PI, animationState);
 
                         // Reset timer to stop animation

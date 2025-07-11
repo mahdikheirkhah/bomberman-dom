@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -30,7 +29,6 @@ type StateMsg struct {
 	State string `json:"state"`
 }
 
-var once sync.Once
 var LobbyMsg bool
 
 var lobbyCountdownTimer = 5 // 20 for production
@@ -100,7 +98,7 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 		log.Println("Minimum number of players reached. Starting countdown.")
 		// Start countdown only once
 		//once.Do(func() {
-			go g.startCountdown()
+		go g.startCountdown()
 		//})
 	}
 
