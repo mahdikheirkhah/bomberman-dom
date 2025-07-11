@@ -68,6 +68,7 @@ function renderPlayerPanel(player) {
 
 // Render the game grid
 function renderGameGrid(panel, players) {
+    const { playerAnimation } = store.getState();
     const borderedPanel = [];
     const numRows = panel.length + 2;
     const numCols = panel[0].length + 2;
@@ -84,13 +85,25 @@ function renderGameGrid(panel, players) {
     }
 
     const playerElements = players.map(player => {
-        const left = player.xlocation + cellSize; // Adjust for center coordinates and border
-        const top = player.yLocation + cellSize;  // Adjust for center coordinates and border
+        const x = player.xlocation + cellSize; // Adjust for border
+        const y = player.yLocation + cellSize;  // Adjust for border
+        const animation = playerAnimation.get(player.index) || { isMoving: false };
+
+        const playerClasses = [
+            'player',
+            animation.isMoving ? 'moving' : 'stopped'
+        ].join(' ');
+
+        const spriteClasses = [
+            'player-sprite',
+            player.color,
+            `face-${player.DirectionFace}`
+        ].join(' ');
 
         return createElement('div', {
-            class: `player ${player.color}`,
-            style: `left: ${left}px; top: ${top}px;`
-        });
+            class: playerClasses,
+            style: `transform: translate(${x}px, ${y}px);`
+        }, createElement('div', { class: spriteClasses }));
     });
 
     return createElement('div', { class: 'game-grid' },
