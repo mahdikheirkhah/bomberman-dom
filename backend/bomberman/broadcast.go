@@ -99,9 +99,9 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 	if g.NumberOfPlayers == MinNumberOfPlayers {
 		log.Println("Minimum number of players reached. Starting countdown.")
 		// Start countdown only once
-		once.Do(func() {
+		//once.Do(func() {
 			go g.startCountdown()
-		})
+		//})
 	}
 
 	if g.NumberOfPlayers == MaxNumberOfPlayers {

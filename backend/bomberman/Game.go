@@ -1,6 +1,7 @@
 package bomberman
 
 import (
+	"fmt"
 	"math/rand"
 	"sync"
 	"time"
@@ -190,6 +191,19 @@ func (g *GameBoard) RandomStart() {
 			row, col := pos[0], pos[1]
 			g.Panel[row][col] = "" // empty cell
 		}
+	}
+
+	// Print panel to console
+	fmt.Println("Game board:")
+	for _, line := range g.Panel {
+		lineForPrint := ""
+		for _, char := range line {
+			if char == "" {
+				char = "·"
+			}
+			lineForPrint += char
+		}
+		fmt.Println(lineForPrint)
 	}
 }
 

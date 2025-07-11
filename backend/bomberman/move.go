@@ -254,9 +254,9 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 		}
 	}
 
-	// Update row/column
-	player.Row = player.YLocation / cellSize
-	player.Column = player.XLocation / cellSize
+	// Update row/column based on the player's center
+	player.Row = (player.YLocation + PlayerSize/2) / cellSize
+	player.Column = (player.XLocation + PlayerSize/2) / cellSize
 
 	// Check if we hit something
 	if collision := g.FindCollision(playerIndex); collision != "" {
