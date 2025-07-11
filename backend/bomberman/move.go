@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const movementTolerance = 20
+
 type MovePlayerMsg struct {
 	MsgType     string `json:"MT"`
 	XLocation   int    `json:"XL"`
@@ -166,13 +168,12 @@ func (g *GameBoard) SendMoveMsg(playerIndex int) {
 func (g *GameBoard) FindCollision(playerIndex int) string {
 	player := g.Players[playerIndex]
 	cellSize := int(g.CellSize)
-	playerSize := 32 // As requested
 
 	// Player's bounding box corners
 	topLeftX, topLeftY := player.XLocation, player.YLocation
-	topRightX, topRightY := player.XLocation+playerSize-1, player.YLocation
-	bottomLeftX, bottomLeftY := player.XLocation, player.YLocation+playerSize-1
-	bottomRightX, bottomRightY := player.XLocation+playerSize-1, player.YLocation+playerSize-1
+	topRightX, topRightY := player.XLocation+PlayerSize-1, player.YLocation
+	bottomLeftX, bottomLeftY := player.XLocation, player.YLocation+PlayerSize-1
+	bottomRightX, bottomRightY := player.XLocation+PlayerSize-1, player.YLocation+PlayerSize-1
 
 	// Convert corner coordinates to grid cells
 	topLeftRow, topLeftCol := topLeftY/cellSize, topLeftX/cellSize
@@ -238,8 +239,8 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 		}
 	case "d":
 		player.YLocation += step
-		if player.YLocation > NumberOfRows*cellSize {
-			player.YLocation = NumberOfRows*cellSize - 1
+		if player.YLocation+PlayerSize > NumberOfRows*cellSize {
+			player.YLocation = NumberOfRows*cellSize - PlayerSize
 		}
 	case "l":
 		player.XLocation -= step
@@ -248,8 +249,8 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 		}
 	case "r":
 		player.XLocation += step
-		if player.XLocation > NumberOfColumns*cellSize {
-			player.XLocation = NumberOfColumns*cellSize - 1
+		if player.XLocation+PlayerSize > NumberOfColumns*cellSize {
+			player.XLocation = NumberOfColumns*cellSize - PlayerSize
 		}
 	}
 
@@ -259,12 +260,50 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 
 	// Check if we hit something
 	if collision := g.FindCollision(playerIndex); collision != "" {
-		// Revert position
-		player.XLocation = originalX
-		player.YLocation = originalY
-		player.Row = originalY / cellSize
-		player.Column = originalX / cellSize
-		return false
+		// If moving horizontally, check for vertical tolerance
+		if direction == "l" || direction == "r" {
+			// Check if the player is slightly off-center vertically
+			verticalOffset := player.YLocation % cellSize
+			if verticalOffset <= movementTolerance {
+				// Snap to the grid and allow movement
+				player.YLocation -= verticalOffset
+			} else if cellSize-verticalOffset <= movementTolerance {
+				// Snap to the grid and allow movement
+				player.YLocation += cellSize - verticalOffset
+			} else {
+				// Revert position if no tolerance is met
+				player.XLocation = originalX
+				player.YLocation = originalY
+				return false
+			}
+		} else if direction == "u" || direction == "d" {
+			// Check if the player is slightly off-center horizontally
+			horizontalOffset := player.XLocation % cellSize
+			if horizontalOffset <= movementTolerance {
+				// Snap to the grid and allow movement
+				player.XLocation -= horizontalOffset
+			} else if cellSize-horizontalOffset <= movementTolerance {
+				// Snap to the grid and allow movement
+				player.XLocation += cellSize - horizontalOffset
+			} else {
+				// Revert position if no tolerance is met
+				player.XLocation = originalX
+				player.YLocation = originalY
+				return false
+			}
+		} else {
+			// Revert position for any other collision
+			player.XLocation = originalX
+			player.YLocation = originalY
+			return false
+		}
+
+		// After snapping, check for collision again to prevent getting stuck
+		if g.FindCollision(playerIndex) != "" {
+			player.XLocation = originalX
+			player.YLocation = originalY
+			return false
+		}
 	}
 
 	return true

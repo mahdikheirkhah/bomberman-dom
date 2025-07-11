@@ -30,7 +30,7 @@ type Player struct {
 	StopMoveChan      chan struct{} `json:"-"` // Channel to signal the player's movement goroutine to stop
 }
 
-const PlayerSize = 32
+const PlayerSize = 48
 
 func (g *GameBoard) CreatePlayer(name string) error {
 	var player Player
@@ -48,7 +48,7 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	player.StepSize = StepSize
 	player.BombDelay = MiliBombDelay * time.Millisecond
 	player.BombRange = BombRange
-	player.NumberOfBombs = 1
+	player.NumberOfBombs = 3
 	player.NumberOfUsedBombs = 0
 	player.IsDead = false
 	g.Players = append(g.Players, player)

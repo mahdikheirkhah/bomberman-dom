@@ -138,4 +138,13 @@ router.setDefaultHandler(() => store.setState({ currentView: 'start' }));
 
 createApp(App, document.getElementById('app'));
 
+const { ws } = store.getState();
+const path = router.getCurrentPath();
+
+if (!ws && path && path !== '/') {
+    router.navigate('/');
+} else {
+    router.init();
+}
+
 export { APIUrl };
