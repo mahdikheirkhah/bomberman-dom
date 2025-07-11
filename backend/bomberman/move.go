@@ -214,6 +214,20 @@ func (g *GameBoard) FindCollision(playerIndex int) string {
 		}
 	}
 
+	// Check for player collisions
+	for i, otherPlayer := range g.Players {
+		if i == playerIndex || otherPlayer.IsDead {
+			continue
+		}
+
+		if player.XLocation < otherPlayer.XLocation+PlayerSize &&
+			player.XLocation+PlayerSize > otherPlayer.XLocation &&
+			player.YLocation < otherPlayer.YLocation+PlayerSize &&
+			player.YLocation+PlayerSize > otherPlayer.YLocation {
+			return "P" // Collision with another player
+		}
+	}
+
 	return ""
 }
 func (g *GameBoard) FindDistanceToBorder(playerIndex int, borderName string) int {
