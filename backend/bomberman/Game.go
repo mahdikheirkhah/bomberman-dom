@@ -213,5 +213,6 @@ func InitGame() *GameBoard {
 		PlayersConnections: make(map[int]*websocket.Conn),
 		BroadcastChannel:   make(chan interface{}, 100),
 	}
+	g.StartBombWatcher()
 	return g
 }

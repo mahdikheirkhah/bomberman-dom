@@ -30,6 +30,7 @@ export function handleWebSocket() {
 
 	ws.onmessage = (event) => {
 		const message = JSON.parse(event.data);
+		const { gameData, playerAnimation, chatMessages } = store.getState();
 
         // The backend sends messages with either a 'type' or an 'MT' property.
         // We handle them accordingly.
@@ -69,8 +70,38 @@ export function handleWebSocket() {
                 case 'explosion':
                     store.setState({ gameData: { ...store.getState().gameData, panel: message.panel } });
                     break;
-                case 'playerDead':
-                    store.setState({ gameData: { ...store.getState().gameData, players: message.players } });
+                case 'PD':
+                    if (gameData && gameData.players) {
+                        const updatedPlayers = gameData.players.map(p => {
+                            if (p.index === message.player.index) {
+                                return { ...message.player, lives: 0 }; // Update player data and ensure lives are 0
+                            }
+                            return p;
+                        });
+                        store.setState({ gameData: { ...gameData, players: updatedPlayers } });
+                    }
+                    break;
+                case 'PLD':
+                    if (gameData && gameData.players) {
+                        const updatedPlayers = gameData.players.map(p => {
+                            if (p.index === message.playerIndex) {
+                                return { ...p, lives: message.lives };
+                            }
+                            return p;
+                        });
+
+                        const animationState = playerAnimation.get(message.playerIndex) || { isMoving: false };
+                        animationState.isHurt = true;
+                        playerAnimation.set(message.playerIndex, animationState);
+
+                        setTimeout(() => {
+                            animationState.isHurt = false;
+                            playerAnimation.set(message.playerIndex, animationState);
+                            store.setState({ playerAnimation: new Map(playerAnimation) });
+                        }, 500); // Animation duration
+
+                        store.setState({ gameData: { ...gameData, players: updatedPlayers }, playerAnimation: new Map(playerAnimation) });
+                    }
                     break;
                 case 'gameOver':
                     store.setState({ currentView: 'start', gameStarted: false, gameData: null, countdown: null, players: [], chatMessages: [] });
@@ -82,7 +113,6 @@ export function handleWebSocket() {
         if (message.MT) {
             switch (message.MT) {
                 case 'M': // Player Move
-                    const { gameData, playerAnimation } = store.getState();
                     if (gameData && gameData.players) {
                         const updatedPlayers = gameData.players.map(player => {
                             if (player.index === message.PI) {
@@ -113,11 +143,31 @@ export function handleWebSocket() {
                     }
                     break;
                 case 'BA':
-                    const { gameData: gameDataBomb } = store.getState();
-                    if (gameDataBomb && gameDataBomb.panel) {
-                        const newPanel = [...gameDataBomb.panel];
+                    if (gameData && gameData.panel) {
+                        const newPanel = [...gameData.panel];
                         newPanel[message.R][message.C] = 'B';
-                        store.setState({ gameData: { ...gameDataBomb, panel: newPanel } });
+                        store.setState({ gameData: { ...gameData, panel: newPanel } });
+                    }
+                    break;
+                case 'EXC':
+                    console.log('Explosion message received:', message);
+                    if (gameData && gameData.panel) {
+                        const newPanel = [...gameData.panel];
+                        newPanel[message.bombRow][message.bombCol] = 'E';
+
+                        message.positions.forEach(pos => {
+                            newPanel[pos.row][pos.col] = 'E';
+                        });
+                        store.setState({ gameData: { ...gameData, panel: newPanel } });
+                    }
+                    break;
+                case 'OF':
+                    if (gameData && gameData.panel) {
+                        const newPanel = [...gameData.panel];
+                        message.positions.forEach(pos => {
+                            newPanel[pos.row][pos.col] = '';
+                        });
+                        store.setState({ gameData: { ...gameData, panel: newPanel } });
                     }
                     break;
             }
