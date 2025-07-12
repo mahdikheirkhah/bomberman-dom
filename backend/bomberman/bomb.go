@@ -261,6 +261,22 @@ func (g *GameBoard) ApplyExplosion(bomb Bomb) {
 
 	// Calculate the actual positions affected by this bomb's explosion
 	affectedPositions := g.CalculateBombRange(bomb.Row, bomb.Column, player.BombRange)
+
+	// Check for chain reactions with other bombs
+	for i := range g.Bombs {
+		// Skip the bomb that is currently exploding
+		if g.Bombs[i].Row == bomb.Row && g.Bombs[i].Column == bomb.Column {
+			continue
+		}
+
+		for _, pos := range affectedPositions {
+			if g.Bombs[i].Row == pos.Row && g.Bombs[i].Column == pos.Col {
+				// This bomb is in the blast radius. Trigger it to explode almost immediately.
+				g.Bombs[i].ExplosionTime = time.Now()
+				break // Move to the next bomb in g.Bombs once a match is found
+			}
+		}
+	}
 	var msg ExploadeCellsMsg
 	msg.MsgType = "EXC" // Exploaded Cells
 	msg.BombRow = bomb.Row
