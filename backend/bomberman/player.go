@@ -39,7 +39,7 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	}
 	player.Index = g.NumberOfPlayers
 	player.Name = name
-	player.Lives = 5
+	player.Lives = 3
 	player.Score = 0
 	player.Color = g.FindColor()
 	player.Row = g.FindStartRowLocation()
