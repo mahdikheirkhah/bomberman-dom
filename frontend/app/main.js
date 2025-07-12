@@ -146,15 +146,7 @@ export function handleWebSocket() {
                     if (gameData && gameData.panel) {
                         const newPanel = [...gameData.panel];
                         newPanel[message.R][message.C] = 'B';
-
-                        const updatedPlayers = gameData.players.map(p => {
-                            if (p.index === message.PI) {
-                                return { ...p, numberOfUsedBombs: p.numberOfUsedBombs + 1 };
-                            }
-                            return p;
-                        });
-
-                        store.setState({ gameData: { ...gameData, panel: newPanel, players: updatedPlayers } });
+                        store.setState({ gameData: { ...gameData, panel: newPanel } });
                     }
                     break;
                 case 'EXC':

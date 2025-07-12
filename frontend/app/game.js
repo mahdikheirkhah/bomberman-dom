@@ -60,7 +60,7 @@ function renderPlayerPanel(player) {
         createElement('div', { class: `player-avatar ${player.color}` }),
         createElement('div', { class: 'player-info' },
             createElement('h3', {}, player.name),
-            createElement('p', {}, `Bombs: ${player.numberOfBombs - player.numberOfUsedBombs}`),
+            createElement('p', {}, `Bombs: ${player.numberOfBombs}`),
             createElement('p', {}, `Lives: ${player.lives}`)
         )
     );
