@@ -60,7 +60,7 @@ function renderPlayerPanel(player) {
         createElement('div', { class: `player-avatar ${player.color}` }),
         createElement('div', { class: 'player-info' },
             createElement('h3', {}, player.name),
-            createElement('p', {}, `Bombs: ${player.numberOfBombs}`),
+            createElement('p', {}, `Bombs: ${player.numberOfBombs - player.numberOfUsedBombs}`),
             createElement('p', {}, `Lives: ${player.lives}`)
         )
     );
@@ -84,14 +84,15 @@ function renderGameGrid(panel, players) {
         }
     }
 
-    const playerElements = players.map(player => {
+    const playerElements = players.filter(player => !player.isDead).map(player => {
         const x = player.xlocation + cellSize; // Adjust for border
         const y = player.yLocation + cellSize;  // Adjust for border
-        const animation = playerAnimation.get(player.index) || { isMoving: false };
+        const animation = playerAnimation.get(player.index) || { isMoving: false, isHurt: false };
 
         const playerClasses = [
             'player',
-            animation.isMoving ? 'moving' : 'stopped'
+            animation.isMoving ? 'moving' : 'stopped',
+            animation.isHurt ? 'hurt' : ''
         ].join(' ');
 
         const spriteClasses = [
@@ -114,6 +115,8 @@ function renderGameGrid(panel, players) {
                         return createElement('div', { class: 'grid-cell' },
                             createElement('img', { src: '/public/bomb.svg', class: 'bomb-image' })
                         );
+                    } else if (cell === 'E') {
+                        return createElement('div', { class: 'grid-cell E' });
                     } else {
                         return createElement('div', { class: `grid-cell ${cell}` });
                     }

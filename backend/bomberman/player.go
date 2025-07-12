@@ -6,7 +6,7 @@ import (
 )
 
 const StepSize = 5
-const MiliBombDelay = 500
+const BombDelay = 3
 const BombRange = 2
 
 type Player struct {
@@ -22,7 +22,7 @@ type Player struct {
 	IsDead            bool          `json:"isDead"`
 	NumberOfBombs     int           `json:"numberOfBombs"`
 	NumberOfUsedBombs int           `json:"numberOfUsedBombs"`
-	BombDelay         time.Duration `json:"bombDelay"`
+	BombDelay         time.Duration `json:"-"`
 	BombRange         int           `json:"bombRange"`
 	StepSize          int           `json:"stepSize"`
 	DirectionFace     string        `json:"DirectionFace"`
@@ -39,16 +39,16 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	}
 	player.Index = g.NumberOfPlayers
 	player.Name = name
-	player.Lives = 3
+	player.Lives = 5
 	player.Score = 0
 	player.Color = g.FindColor()
 	player.Row = g.FindStartRowLocation()
 	player.Column = g.FindStartColLocation()
 	player.XLocation, player.YLocation = player.Column*int(g.CellSize), player.Row*int(g.CellSize)
 	player.StepSize = StepSize
-	player.BombDelay = MiliBombDelay * time.Millisecond
+	player.BombDelay = BombDelay * time.Second
 	player.BombRange = BombRange
-	player.NumberOfBombs = 10
+	player.NumberOfBombs = 5
 	player.NumberOfUsedBombs = 0
 	player.IsDead = false
 	g.Players = append(g.Players, player)
