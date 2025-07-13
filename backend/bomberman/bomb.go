@@ -191,6 +191,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: row, Col: bombCol})
 		if g.Panel[row][bombCol] == "D" { // Stop after destroying a destructible block
+			g.CreatePowerupWithChance(row, bombCol) // Chance to spawn a powerup when a destructible block is hit
 			break
 		}
 	}
@@ -202,6 +203,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: row, Col: bombCol})
 		if g.Panel[row][bombCol] == "D" {
+			g.CreatePowerupWithChance(row, bombCol)
 			break
 		}
 	}
@@ -213,6 +215,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: col})
 		if g.Panel[bombRow][col] == "D" {
+			g.CreatePowerupWithChance(bombRow, col)
 			break
 		}
 	}
@@ -224,6 +227,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: col})
 		if g.Panel[bombRow][col] == "D" {
+			g.CreatePowerupWithChance(bombRow, col)
 			break
 		}
 	}
@@ -313,6 +317,14 @@ func (g *GameBoard) ClearExpiredExplosions() {
 				// Only clear the cell if it's still marked as "Ex".
 				// This prevents clearing a cell that has been re-exploded by another bomb.
 				if g.Panel[info.Position.Row][info.Position.Col] == "Ex" {
+					PowerupIndex := g.FindPowerupAt(info.Position.Row, info.Position.Col)
+					if PowerupIndex != -1 {
+						if !g.Powerups[PowerupIndex].IsHidden {
+							g.RemovePowerup(PowerupIndex) // Remove visible powerup before clearing cell
+						} else {
+							g.ShowPowerup(PowerupIndex)
+						}
+					}
 					g.Panel[info.Position.Row][info.Position.Col] = ""
 					msg.MsgType = "OF" // Turn Off Fire
 					msg.Positions = append(msg.Positions, Position{Row: info.Position.Row, Col: info.Position.Col})

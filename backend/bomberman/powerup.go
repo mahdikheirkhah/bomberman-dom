@@ -32,7 +32,13 @@ func (g *GameBoard) ShowPowerup(PowerUpIndex int) {
 	}, -1)
 }
 
-func (g *GameBoard) CreatePowerup(row, column int) {
+func (g *GameBoard) CreatePowerupWithChance(row, column int) {
+	if rand.Float64() > 0.4 { // 40% chance to create a powerup
+		return
+	}
+	if g.FindPowerupAt(row, column) != -1 {
+		return // Powerup already exists at this location
+	}
 	var Powerup Powerup
 	Powerup.Row = row
 	Powerup.Column = column
