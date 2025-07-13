@@ -107,6 +107,17 @@ export function handleWebSocket() {
                     store.setState({ currentView: 'start', gameStarted: false, gameData: null, countdown: null, players: [], chatMessages: [] });
                     router.navigate('/');
                     break;
+                case 'PR': // Player Respawn
+                    if (gameData && gameData.players) {
+                        const updatedPlayers = gameData.players.map(p => {
+                            if (p.index === message.playerIndex) {
+                                return { ...p, xlocation: message.xlocation, yLocation: message.yLocation };
+                            }
+                            return p;
+                        });
+                        store.setState({ gameData: { ...gameData, players: updatedPlayers } });
+                    }
+                    break;
             }
         }
 
