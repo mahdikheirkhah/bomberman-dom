@@ -29,6 +29,8 @@ type Player struct {
 	StepSize          int           `json:"stepSize"`
 	DirectionFace     string        `json:"DirectionFace"`
 	IsMoving          bool          `json:"isMoving"`
+	JustRespawned     bool          `json:"justRespawned"`
+	LastDamageTime    time.Time     `json:"lastDamageTime"`
 	StopMoveChan      chan struct{} `json:"-"` // Channel to signal the player's movement goroutine to stop
 }
 
