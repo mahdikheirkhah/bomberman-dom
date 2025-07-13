@@ -17,6 +17,8 @@ type Player struct {
 	Color             string        `json:"color"`
 	Row               int           `json:"row"`
 	Column            int           `json:"column"`
+	InitialRow        int           `json:"initialRow"`
+	InitialColumn     int           `json:"initialColumn"`
 	XLocation         int           `json:"xlocation"`
 	YLocation         int           `json:"yLocation"`
 	IsDead            bool          `json:"isDead"`
@@ -44,6 +46,8 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	player.Color = g.FindColor()
 	player.Row = g.FindStartRowLocation()
 	player.Column = g.FindStartColLocation()
+	player.InitialRow = player.Row
+	player.InitialColumn = player.Column
 	player.XLocation, player.YLocation = player.Column*int(g.CellSize), player.Row*int(g.CellSize)
 	player.StepSize = StepSize
 	player.BombDelay = BombDelay * time.Second

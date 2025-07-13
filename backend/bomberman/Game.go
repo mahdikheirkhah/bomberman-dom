@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -16,9 +17,15 @@ const CellSize = 50
 
 var Colors = []string{"G", "Y", "R", "B"}
 
+type PlayerRespawn struct {
+	PlayerIndex int
+	RespawnTime time.Time
+}
+
 type GameBoard struct {
 	Players            []Player                              `json:"players"`
 	Bombs              []Bomb                                `json:"bombs"`
+	PendingRespawns    []PlayerRespawn                       `json:"-"`
 	NumberOfPlayers    int                                   `json:"numberOfPlayers"`
 	Panel              [NumberOfRows][NumberOfColumns]string `json:"panel"` // Ex -> Exploade , W -> Wall, D -> Destructible, ""(empty) -> empty cell, B -> Bomb
 	CellSize           int                                   `json:"cellSize"`

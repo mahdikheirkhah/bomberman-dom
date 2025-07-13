@@ -56,12 +56,12 @@ function setupEventListeners() {
 
 // Render a single player panel
 function renderPlayerPanel(player) {
+    const avatarClass = `player-avatar ${player.color}${player.lives <= 0 ? ' dead' : ''}`;
     return createElement('div', { class: 'player-card' },
-        createElement('div', { class: `player-avatar ${player.color}` }),
+        createElement('div', { class: avatarClass }),
         createElement('div', { class: 'player-info' },
             createElement('h3', {}, player.name),
-            createElement('p', {}, '💣'.repeat(player.numberOfBombs)),
-            createElement('p', {}, '❤️'.repeat(player.lives))
+            createElement('p', {}, player.lives > 0 ? '❤️'.repeat(player.lives) : 'Dead 💀')
         )
     );
 }
