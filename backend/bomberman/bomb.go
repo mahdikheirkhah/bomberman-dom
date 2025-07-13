@@ -91,6 +91,13 @@ func (g *GameBoard) HandleBombMessage(msgMap map[string]interface{}) {
 	g.SendMsgToChannel(msg, playerIndex)
 }
 
+func (g *GameBoard) RespawnPlayer(playerIndex int) {
+	g.Players[playerIndex].Row = g.Players[playerIndex].InitialRow
+	g.Players[playerIndex].Column = g.Players[playerIndex].InitialColumn
+	g.Players[playerIndex].XLocation = g.Players[playerIndex].Column * g.CellSize
+	g.Players[playerIndex].YLocation = g.Players[playerIndex].Row * g.CellSize
+}
+
 // CheckExplosion iterates through players and reduces lives if they are on an "Ex" cell.
 func (g *GameBoard) CheckExplosion() {
 	for i := range g.Players {
@@ -113,7 +120,12 @@ func (g *GameBoard) CheckExplosion() {
 			if g.Players[i].Lives <= 0 {
 				g.PlayerDeath(i)
 			} else {
-				// Player was hit but is not dead, broadcast PLD message to everyone.
+				// Player was hit but is not dead, add to respawn queue.
+				g.PendingRespawns = append(g.PendingRespawns, PlayerRespawn{
+					PlayerIndex: i,
+					RespawnTime: time.Now().Add(BombExplosionDuration),
+				})
+
 				msg := PlayerExplosionMsg{
 					Type:        "PLD", // player live decrease
 					Lives:       g.Players[i].Lives,
@@ -338,6 +350,36 @@ func (g *GameBoard) ClearExpiredExplosions() {
 	g.ExplodedCells = remainingExplodedCells // Update the list with only unexpired cells
 }
 
+func (g *GameBoard) ProcessRespawns() {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+
+	var remainingRespawns []PlayerRespawn
+	now := time.Now()
+
+	for _, respawn := range g.PendingRespawns {
+		if now.After(respawn.RespawnTime) {
+			g.RespawnPlayer(respawn.PlayerIndex)
+			player := g.Players[respawn.PlayerIndex]
+			msg := struct {
+				Type        string `json:"type"`
+				PlayerIndex int    `json:"playerIndex"`
+				XLocation   int    `json:"xlocation"`
+				YLocation   int    `json:"yLocation"`
+			}{
+				Type:        "PR", // Player Respawn
+				PlayerIndex: respawn.PlayerIndex,
+				XLocation:   player.XLocation,
+				YLocation:   player.YLocation,
+			}
+			g.SendMsgToChannel(msg, -1)
+		} else {
+			remainingRespawns = append(remainingRespawns, respawn)
+		}
+	}
+	g.PendingRespawns = remainingRespawns
+}
+
 // StartBombWatcher starts a goroutine that periodically checks for bomb explosions
 // and clears expired exploded cells.
 func (g *GameBoard) StartBombWatcher() {
@@ -349,6 +391,7 @@ func (g *GameBoard) StartBombWatcher() {
 		for range ticker.C {
 			g.checkBombs()             // Process bombs that are due to explode
 			g.ClearExpiredExplosions() // Clear cells whose explosion effect has timed out
+			g.ProcessRespawns()        // Process pending respawns
 		}
 	}()
 }
