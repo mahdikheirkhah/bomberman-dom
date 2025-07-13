@@ -27,15 +27,6 @@ type Bomb struct {
 	InitialIntersection bool      `json:"initialIntersection"`
 }
 
-// Powerup represents an item that can be collected by players.
-type Powerup struct {
-	Type     string `json:"type"`
-	Value    int    `json:"value"`
-	Row      int    `json:"row"`
-	Column   int    `json:"column"`
-	IsHidden bool   `json:"isHidden"`
-}
-
 // ExplodedCellInfo tracks a cell that has been exploded and its scheduled clear time.
 type ExplodedCellInfo struct {
 	Position  Position
@@ -323,7 +314,7 @@ func (g *GameBoard) ClearExpiredExplosions() {
 				// This prevents clearing a cell that has been re-exploded by another bomb.
 				if g.Panel[info.Position.Row][info.Position.Col] == "Ex" {
 					g.Panel[info.Position.Row][info.Position.Col] = ""
-										msg.MsgType = "OF" // Turn Off Fire
+					msg.MsgType = "OF" // Turn Off Fire
 					msg.Positions = append(msg.Positions, Position{Row: info.Position.Row, Col: info.Position.Col})
 				}
 			}
