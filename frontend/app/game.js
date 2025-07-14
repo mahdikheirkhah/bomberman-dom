@@ -16,6 +16,11 @@ const pressedKeys = new Set();
 
 // Player movement and bomb placement
 const handleKeyEvent = (e, isKeyDown) => {
+    const chatInput = document.querySelector('.chat-input-form input');
+    if (chatInput && document.activeElement === chatInput) {
+        return;
+    }
+
     if (e.repeat) return;
 
     const moveKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
@@ -52,6 +57,29 @@ const getDirection = (key) => {
 function setupEventListeners() {
     document.addEventListener('keydown', (e) => handleKeyEvent(e, true));
     document.addEventListener('keyup', (e) => handleKeyEvent(e, false));
+    window.addEventListener('resize', handleResize);
+}
+
+function handleResize() {
+    const gameArea = document.querySelector('.main-game-area');
+    const gameGrid = document.querySelector('.game-grid');
+
+    if (!gameArea || !gameGrid) return;
+
+    const { gameData } = store.getState();
+    if (!gameData || !gameData.panel || gameData.panel.length === 0) return;
+
+    const numCols = gameData.panel[0].length + 2; // +2 for borders
+    const numRows = gameData.panel.length + 2;   // +2 for borders
+    const gridWidth = numCols * cellSize;
+    const gridHeight = numRows * cellSize;
+
+    const areaWidth = gameArea.clientWidth;
+    const areaHeight = gameArea.clientHeight;
+
+    const scale = Math.min(areaWidth / gridWidth, areaHeight / gridHeight);
+
+    gameGrid.style.transform = `scale(${scale})`;
 }
 
 // Render a single player panel
@@ -149,6 +177,8 @@ function renderGameGrid(panel, players) {
 
 // Render the chat area
 function renderChat(messages) {
+    const { playerId } = store.getState();
+
     const handleSubmit = (e) => {
         e.preventDefault();
         const input = e.target.elements.message;
@@ -158,14 +188,30 @@ function renderChat(messages) {
         }
     };
 
+    const renderMessage = (msg) => {
+        const { playerIndex } = store.getState();
+        const isSent = msg.senderIndex === playerIndex;
+        const bubbleClass = isSent ? 'message-bubble sent' : 'message-bubble received';
+        const sender = isSent ? 'You' : msg.player;
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        return createElement('div', { class: 'chat-message' },
+            createElement('div', { class: bubbleClass },
+                createElement('div', { class: 'message-sender', style: `color: ${msg.color}` }, sender),
+                createElement('div', { class: 'message-content' }, msg.message),
+                createElement('div', { class: 'message-timestamp' }, timestamp)
+            )
+        );
+    };
+
     return createElement('div', { class: 'game-chat' },
-        createElement('h3', {}, 'Chat'),
+        createElement('div', { class: 'chat-header' }, 'Game Chat'),
         createElement('div', { class: 'chat-messages' },
-            ...messages.map(msg => createElement('p', {}, createElement('b', {}, `${msg.player}: `), msg.message))
+            ...messages.map(renderMessage)
         ),
-        createElement('form', { onsubmit: handleSubmit },
+        createElement('form', { class: 'chat-input-form', onsubmit: handleSubmit },
             createElement('input', { type: 'text', name: 'message', placeholder: 'Type a message...' }),
-            createElement('button', { type: 'submit' }, 'Send')
+            createElement('button', { type: 'submit' }, '➤')
         )
     );
 }
@@ -186,6 +232,9 @@ export default function Game() {
             gameStarted ? createElement('h1', {}, 'Game in Progress') : null
         );
     }
+
+    // Request animation frame to ensure the grid is rendered before resizing
+    requestAnimationFrame(handleResize);
 
     const { players, panel } = gameData;
 

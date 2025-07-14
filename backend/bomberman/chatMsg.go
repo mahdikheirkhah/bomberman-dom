@@ -30,6 +30,7 @@ func (g *GameBoard) HandleChatMessage(msgMap map[string]interface{}) {
 	msg.Type = "CM" // chat message
 	msg.Name = g.Players[playerIndex].Name
 	msg.Color = g.Players[playerIndex].Color
+	msg.SenderIndex = playerIndex
 	msg.Content = Content
 	msg.Date = time.Now()
 	g.SendMsgToChannel(msg, playerIndex)

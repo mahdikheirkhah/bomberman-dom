@@ -79,11 +79,7 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 	log.Printf("Player %s connected successfully as player %d\n", name, playerIndex)
 	g.Mu.Unlock()
 
-	stateMsg := StateMsg{
-		Type:  "GameState",
-		State: "PlayerAccepted",
-	}
-	g.SendMsgToChannel(stateMsg, playerIndex)
+	g.SendPlayerAccepted(playerIndex)
 
 	// Send the current list of players to all clients
 	playerListMsg := map[string]interface{}{
