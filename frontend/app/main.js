@@ -3,7 +3,7 @@ import Start from './start.js';
 import Lobby from './lobby.js';
 import Game from './game.js';
 
-const APIUrl = 'localhost:8080';
+const APIUrl = `${window.location.hostname}:8080`;
 
 // Initialize store
 store.setState({

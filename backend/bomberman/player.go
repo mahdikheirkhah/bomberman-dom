@@ -22,6 +22,7 @@ type Player struct {
 	XLocation         int           `json:"xlocation"`
 	YLocation         int           `json:"yLocation"`
 	IsDead            bool          `json:"isDead"`
+	IsHurt            bool          `json:"isHurt"`
 	NumberOfBombs     int           `json:"numberOfBombs"`
 	NumberOfUsedBombs int           `json:"numberOfUsedBombs"`
 	BombDelay         time.Duration `json:"-"`
@@ -55,6 +56,7 @@ func (g *GameBoard) CreatePlayer(name string) error {
 	player.NumberOfBombs = 3
 	player.NumberOfUsedBombs = 0
 	player.IsDead = false
+	player.IsHurt = false
 	g.Players = append(g.Players, player)
 
 	g.NumberOfPlayers++

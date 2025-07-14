@@ -3,7 +3,6 @@ package bomberman
 import (
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -11,12 +10,7 @@ import (
 
 var Upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		origin := r.Header.Get("Origin")
-		// Allow any localhost origin (with or without port)
-		if strings.HasPrefix(origin, "http://localhost") {
-			return true
-		}
-		return false
+		return true // Allow all connections
 	},
 }
 
