@@ -75,6 +75,17 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
+    background: radial-gradient(circle, #199a9ed1 0%, #004878 100%);
+}
+
+.game-grid.explosion {
+    animation: explosion-pulse 0.5s ease-in-out;
+}
+
+@keyframes explosion-pulse {
+    0% { background-size: 100% 100%; }
+    50% { background-size: 150% 150%; }
+    100% { background-size: 100% 100%; }
 }
 
 @keyframes walk-animation {

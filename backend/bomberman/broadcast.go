@@ -31,8 +31,8 @@ type StateMsg struct {
 
 var LobbyMsg bool
 
-var lobbyCountdownTimer = 5 // 20 for production
-var startCountdownTimer = 3 // 10 for production
+var lobbyCountdownTimer = 1 // 20 for production
+var startCountdownTimer = 1 // 10 for production
 
 func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling new WS connection")

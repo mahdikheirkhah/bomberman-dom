@@ -95,6 +95,26 @@ function renderGameGrid(panel, players) {
             animation.isHurt ? 'hurt' : ''
         ].join(' ');
 
+        if (animation.isHurt) {
+            const gameGrid = document.querySelector('.game-grid');
+            if (gameGrid) {
+                const playerSize = 48; // from css
+                const explosionX = x + playerSize / 2;
+                const explosionY = y + playerSize / 2;
+
+                const defaultBackground = 'radial-gradient(circle, #199a9ed1 0%, #004878 100%)';
+                const explosionBackground = `radial-gradient(circle at ${explosionX}px ${explosionY}px, #8e0404 0%, #199a9ed1 50%, #004878 100%)`;
+
+                gameGrid.style.background = explosionBackground;
+                gameGrid.classList.add('explosion');
+
+                setTimeout(() => {
+                    gameGrid.style.background = defaultBackground;
+                    gameGrid.classList.remove('explosion');
+                }, 500); // Match animation duration
+            }
+        }
+
         const spriteClasses = [
             'player-sprite',
             player.color,
