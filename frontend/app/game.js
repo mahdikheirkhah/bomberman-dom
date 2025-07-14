@@ -205,6 +205,7 @@ function renderChat(messages) {
     };
 
     return createElement('div', { class: 'game-chat' },
+        createElement('div', { class: 'resize-handle', onmousedown: onMouseDown }),
         createElement('div', { class: 'chat-header' }, 'Game Chat'),
         createElement('div', { class: 'chat-messages' },
             ...messages.map(renderMessage)
@@ -214,6 +215,25 @@ function renderChat(messages) {
             createElement('button', { type: 'submit' }, '➤')
         )
     );
+}
+
+function onMouseDown(e) {
+    e.preventDefault();
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+}
+
+function onMouseMove(e) {
+    const chat = document.querySelector('.game-chat');
+    if (chat) {
+        const newWidth = window.innerWidth - e.clientX;
+        chat.style.width = `${newWidth}px`;
+    }
+}
+
+function onMouseUp() {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
 }
 
 // Main Game component
