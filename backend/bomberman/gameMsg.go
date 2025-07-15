@@ -47,37 +47,6 @@ func CheckForPlayer(msg interface{}, playerIndex int) interface{} {
 	return msgMap
 }
 func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) {
-	defer func() {
-		delete(g.PlayersConnections, playerIndex)
-		g.Players[playerIndex].Lives = 0
-		g.NumberOfPlayers--
-		g.Players[playerIndex].IsDead = true
-		g.Players[playerIndex].IsMoving = false
-		g.Players[playerIndex].StopMoveChan <- struct{}{}
-		log.Printf("Player %d disconnected\n", playerIndex)
-		g.SendMsgToChannel(struct {
-			Type  string `json:"type"`
-			Index int    `json:"index"`
-		}{
-			Type:  "PlayerDisconnected",
-			Index: playerIndex,
-		}, -1)
-		g.CheckGameEnd()
-		// After removing the player, check if the game should be restarted
-		// if g.IsStarted && len(g.PlayersConnections) == 0 {
-		// 	log.Println("All players disconnected. Restarting game.")
-		// 	// Reset game state safely without replacing the mutex or channel
-		// 	g.Players = nil
-		// 	g.Bombs = nil
-		// 	g.NumberOfPlayers = 0
-		// 	g.IsStarted = false
-		// 	g.ExplodedCells = nil
-		// 	g.RandomStart() // Re-create the panel
-		// }
-
-		conn.Close()
-		log.Printf("Connection closed for player %d\n", playerIndex)
-	}()
 
 	for {
 		var msg map[string]interface{}
@@ -90,6 +59,21 @@ func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) 
 		msg["fromPlayer"] = playerIndex
 		g.ChooseHandlerForMessages(msg)
 	}
+	log.Printf("Player %d disconnected\n", playerIndex)
+	delete(g.PlayersConnections, playerIndex)
+	log.Printf("Player %d lives before disconnect: %d\n", playerIndex, g.Players[playerIndex].Lives)
+	g.PlayerDeath(playerIndex)
+
+	g.SendMsgToChannel(struct {
+		Type  string `json:"type"`
+		Index int    `json:"index"`
+	}{
+		Type:  "PlayerDisconnected",
+		Index: playerIndex,
+	}, -1)
+
+	conn.Close()
+	log.Printf("Connection closed for player %d\n", playerIndex)
 }
 func (g *GameBoard) SendMsgToChannel(msg any, playerIndex int) {
 	select {

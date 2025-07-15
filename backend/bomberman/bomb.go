@@ -197,7 +197,14 @@ func (g *GameBoard) PeriodicPlayerDamageCheck() {
 func (g *GameBoard) PlayerDeath(playerIndex int) {
 	g.NumberOfPlayers--
 	g.Players[playerIndex].IsDead = true
-
+	g.Players[playerIndex].IsMoving = false
+	if g.Players[playerIndex].StopMoveChan != nil {
+		close(g.Players[playerIndex].StopMoveChan)
+		g.Players[playerIndex].StopMoveChan = nil
+	}
+	g.Players[playerIndex].JustRespawned = false
+	g.Players[playerIndex].LastDamageTime = time.Time{} // Reset last damage time
+	g.Players[playerIndex].Lives = 0
 	msg := PLayerDeath{
 		Type:   "PD",
 		Player: g.Players[playerIndex],
