@@ -260,7 +260,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: row, Col: bombCol})
 		if g.Panel[row][bombCol] == "D" {
-			// g.CreatePowerupWithChance(row, bombCol) // Uncomment if you have this function
+			g.CreatePowerupWithChance(row, bombCol) // Uncomment if you have this function
 			break
 		}
 	}
@@ -271,7 +271,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: row, Col: bombCol})
 		if g.Panel[row][bombCol] == "D" {
-			// g.CreatePowerupWithChance(row, bombCol) // Uncomment if you have this function
+			g.CreatePowerupWithChance(row, bombCol) // Uncomment if you have this function
 			break
 		}
 	}
@@ -282,7 +282,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: col})
 		if g.Panel[bombRow][col] == "D" {
-			// g.CreatePowerupWithChance(bombRow, col) // Uncomment if you have this function
+			g.CreatePowerupWithChance(bombRow, col) // Uncomment if you have this function
 			break
 		}
 	}
@@ -293,7 +293,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: col})
 		if g.Panel[bombRow][col] == "D" {
-			// g.CreatePowerupWithChance(bombRow, col) // Uncomment if you have this function
+			g.CreatePowerupWithChance(bombRow, col) // Uncomment if you have this function
 			break
 		}
 	}
@@ -369,6 +369,15 @@ func (g *GameBoard) ClearExpiredExplosions() {
 			if info.Position.Row >= 0 && info.Position.Row < len(g.Panel) &&
 				info.Position.Col >= 0 && info.Position.Col < len(g.Panel[0]) {
 				if g.Panel[info.Position.Row][info.Position.Col] == "Ex" {
+					powerupIndex := g.FindPowerupAt(info.Position.Row, info.Position.Col)
+					log.Println("PWRUP INDEX", powerupIndex)
+					if powerupIndex != -1 {
+						if g.Powerups[powerupIndex].IsHidden {
+							g.ShowPowerup(powerupIndex)
+						} else {
+							g.RemovePowerup(powerupIndex)
+						}
+					}
 					// g.FindPowerupAt, g.RemovePowerup, g.ShowPowerup calls here if you have them
 					g.Panel[info.Position.Row][info.Position.Col] = ""
 					msg.MsgType = "OF"

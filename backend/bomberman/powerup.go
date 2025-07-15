@@ -1,6 +1,9 @@
 package bomberman
 
-import "math/rand"
+import (
+	"log"
+	"math/rand"
+)
 
 // Powerup represents an item that can be collected by players.
 type Powerup struct {
@@ -14,6 +17,7 @@ type Powerup struct {
 var PowerupTypes = []string{"ExtraBomb", "BombRange", "ExtraLife", "SpeedBoost"}
 
 func (g *GameBoard) ShowPowerup(PowerUpIndex int) {
+	log.Println("Showing powerup ", PowerUpIndex)
 	if PowerUpIndex < 0 || PowerUpIndex >= len(g.Powerups) {
 		return
 	}
@@ -33,10 +37,12 @@ func (g *GameBoard) ShowPowerup(PowerUpIndex int) {
 }
 
 func (g *GameBoard) CreatePowerupWithChance(row, column int) {
-	if rand.Float64() > 0.4 { // 40% chance to create a powerup
-		return
-	}
+	// if rand.Float64() > 0.95 { // 40% chance to create a powerup
+	// 	return
+	// }
+	log.Println("CreatePowerupWithChance")
 	if g.FindPowerupAt(row, column) != -1 {
+		log.Println("Powerup already exists at this location")
 		return // Powerup already exists at this location
 	}
 	var Powerup Powerup
@@ -54,6 +60,7 @@ func (g *GameBoard) CreatePowerupWithChance(row, column int) {
 	case "SpeedBoost":
 		Powerup.Value = 2
 	}
+	log.Println("Powerup added ", Powerup)
 	g.Powerups = append(g.Powerups, Powerup)
 }
 
@@ -118,7 +125,7 @@ func (g *GameBoard) EatPowerup(playerIndex, PowerupIndex int) {
 
 func (g *GameBoard) FindPowerupAt(row, column int) int {
 	for i, powerup := range g.Powerups {
-		if powerup.Row == row && powerup.Column == column && !powerup.IsHidden {
+		if powerup.Row == row && powerup.Column == column {
 			return i
 		}
 	}
