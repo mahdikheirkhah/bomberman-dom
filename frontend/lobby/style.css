@@ -1,0 +1,105 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #d0f0ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  transition: background 0.5s;
+}
+
+body.with-bg {
+  background-image: url('https://media.giphy.com/media/3o7abldj0b3rxrZUxW/giphy.gif');
+  background-size: cover;
+  background-position: center;
+}
+
+.controls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(255,255,255,0.8);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.lobby-panel {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px 30px;
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+  text-align: center;
+  min-width: 320px;
+  transition: all 0.3s ease;
+}
+
+body:not(.panel-separated) .lobby-panel {
+  background: none;
+  box-shadow: none;
+}
+
+.players {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f2f2f2;
+  padding: 10px 15px;
+  border-radius: 10px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+.hidden {
+  display: none;
+}
+
+.lobby-actions button {
+  margin: 0 10px;
+  padding: 10px 20px;
+  font-size: 1em;
+}
+
+.countdown {
+  font-size: 1.5em;
+  color: #d13b3b;
+  margin-top: 15px;
+}
+
+/* Cartoon styles for the waiting panel */
+
+.cartoon-overlay {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(6px);
+    border: 3px solid #ff69b4;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 3px 3px 0px #000;
+    font-family: "Comic Sans MS", "Chalkboard SE", sans-serif;
+    color: #222;
+}
+
+.cartoon-separate {
+    background: #fff8c4;
+    border: 4px dashed #ff8c00;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 4px 4px 0px #000;
+    font-family: "Comic Sans MS", "Chalkboard SE", sans-serif;
+    color: #222;
+}
+.cartoon-overlay,
+.cartoon-separate {
+    transition: all 0.3s ease;
+}
