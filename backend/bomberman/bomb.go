@@ -203,6 +203,7 @@ func (g *GameBoard) PlayerDeath(playerIndex int) {
 		Player: g.Players[playerIndex],
 	}
 	g.SendMsgToChannel(msg, -1)
+	g.CheckGameEnd()
 }
 
 func (g *GameBoard) HasExploaded(row, col int) bool {

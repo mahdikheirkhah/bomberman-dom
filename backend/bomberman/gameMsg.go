@@ -25,6 +25,7 @@ func (g *GameBoard) StartBroadcaster() {
 			}
 		}
 	}
+	log.Println("Broadcaster channel closed, exiting broadcaster")
 }
 
 func CheckForPlayer(msg interface{}, playerIndex int) interface{} {
@@ -47,27 +48,36 @@ func CheckForPlayer(msg interface{}, playerIndex int) interface{} {
 }
 func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) {
 	defer func() {
-		g.Mu.Lock()
 		delete(g.PlayersConnections, playerIndex)
-
+		g.Players[playerIndex].Lives = 0
+		g.NumberOfPlayers--
+		g.Players[playerIndex].IsDead = true
+		g.Players[playerIndex].IsMoving = false
+		g.Players[playerIndex].StopMoveChan <- struct{}{}
+		log.Printf("Player %d disconnected\n", playerIndex)
+		g.SendMsgToChannel(struct {
+			Type  string `json:"type"`
+			Index int    `json:"index"`
+		}{
+			Type:  "PlayerDisconnected",
+			Index: playerIndex,
+		}, -1)
+		g.CheckGameEnd()
 		// After removing the player, check if the game should be restarted
-		if g.IsStarted && len(g.PlayersConnections) == 0 {
-			log.Println("All players disconnected. Restarting game.")
-			// Reset game state safely without replacing the mutex or channel
-			g.Players = nil
-			g.Bombs = nil
-			g.NumberOfPlayers = 0
-			g.IsStarted = false
-			g.ExplodedCells = nil
-			g.RandomStart() // Re-create the panel
-		}
-		g.Mu.Unlock()
+		// if g.IsStarted && len(g.PlayersConnections) == 0 {
+		// 	log.Println("All players disconnected. Restarting game.")
+		// 	// Reset game state safely without replacing the mutex or channel
+		// 	g.Players = nil
+		// 	g.Bombs = nil
+		// 	g.NumberOfPlayers = 0
+		// 	g.IsStarted = false
+		// 	g.ExplodedCells = nil
+		// 	g.RandomStart() // Re-create the panel
+		// }
 
 		conn.Close()
 		log.Printf("Connection closed for player %d\n", playerIndex)
 	}()
-
-
 
 	for {
 		var msg map[string]interface{}
@@ -123,8 +133,6 @@ func (g *GameBoard) ChooseHandlerForMessages(msg interface{}) {
 		g.HandleBombMessage(msgMap)
 	case "c": // Chat
 		g.HandleChatMessage(msgMap)
-	case "p": // Powerup (placeholder)
-		// Handle powerup logic here
 	default:
 		log.Println("Unknown msgType:", msgType)
 	}
