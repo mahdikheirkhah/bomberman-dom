@@ -95,7 +95,7 @@ function renderPlayerPanel(player) {
 }
 
 // Render the game grid
-function renderGameGrid(panel, players) {
+function renderGameGrid(panel, players, powerups) {
     const { playerAnimation } = store.getState();
     const borderedPanel = [];
     const numRows = panel.length + 2;
@@ -155,6 +155,33 @@ function renderGameGrid(panel, players) {
         }, createElement('div', { class: spriteClasses }));
     });
 
+    const powerupElements = powerups.map(powerup => {
+        const x = powerup.column * cellSize + cellSize; // Adjust for border
+        const y = powerup.row * cellSize + cellSize;  // Adjust for border
+        let powerUpImage;
+        let additionalElement = null;
+        switch (powerup.type) {
+            case 'ExtraBomb':
+                powerUpImage = '/public/extrab.webp';
+                break;
+            case 'BombRange':
+                powerUpImage = '/public/extrab.webp';
+                additionalElement = createElement('div', { class: 'power-up-plus' }, '+');
+                break;
+            case 'ExtraLife':
+                powerUpImage = '/public/life.webp';
+                break;
+            case 'SpeedBoost':
+                powerUpImage = '/public/fast.webp';
+                break;
+        }
+
+        return createElement('div', { class: 'power-up', style: `transform: translate(${x}px, ${y}px);` },
+            createElement('img', { src: powerUpImage, class: 'power-up-image' }),
+            additionalElement
+        );
+    });
+
     return createElement('div', { class: 'game-grid' },
         ...borderedPanel.map(row =>
             createElement('div', { class: 'grid-row' },
@@ -171,7 +198,8 @@ function renderGameGrid(panel, players) {
                 })
             )
         ),
-        ...playerElements
+        ...playerElements,
+        ...powerupElements
     );
 }
 
@@ -238,7 +266,7 @@ function onMouseUp() {
 
 // Main Game component
 export default function Game() {
-    const { countdown, gameStarted, gameData, chatMessages, gameListenersAttached } = store.getState();
+    const { countdown, gameStarted, gameData, chatMessages, gameListenersAttached, powerups } = store.getState();
 
     if (gameStarted && !gameListenersAttached) {
         setupEventListeners();
@@ -263,7 +291,7 @@ export default function Game() {
             ...players.map(renderPlayerPanel)
         ),
         createElement('div', { class: 'main-game-area' },
-            renderGameGrid(panel, players)
+            renderGameGrid(panel, players, powerups)
         ),
         renderChat(chatMessages || [])
     );
