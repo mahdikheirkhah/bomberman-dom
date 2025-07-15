@@ -17,7 +17,6 @@ type Powerup struct {
 var PowerupTypes = []string{"ExtraBomb", "BombRange", "ExtraLife", "SpeedBoost"}
 
 func (g *GameBoard) ShowPowerup(PowerUpIndex int) {
-	log.Println("Showing powerup ", PowerUpIndex)
 	if PowerUpIndex < 0 || PowerUpIndex >= len(g.Powerups) {
 		return
 	}
@@ -40,7 +39,6 @@ func (g *GameBoard) CreatePowerupWithChance(row, column int) {
 	// if rand.Float64() > 0.95 { // 40% chance to create a powerup
 	// 	return
 	// }
-	log.Println("CreatePowerupWithChance")
 	if g.FindPowerupAt(row, column) != -1 {
 		log.Println("Powerup already exists at this location")
 		return // Powerup already exists at this location
@@ -89,7 +87,7 @@ func (g *GameBoard) EatPowerup(playerIndex, PowerupIndex int) {
 	if powerup.IsHidden {
 		return
 	}
-	g.Powerups = append(g.Powerups[:PowerupIndex], g.Powerups[PowerupIndex+1:]...)
+	g.RemovePowerup(PowerupIndex)
 	player := &g.Players[playerIndex]
 	switch powerup.Type {
 	case "ExtraBomb":

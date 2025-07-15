@@ -187,6 +187,10 @@ func (g *GameBoard) FindCollision(playerIndex int) string {
 		row, col := cell[0], cell[1]
 		if row >= 0 && row < NumberOfRows && col >= 0 && col < NumberOfColumns {
 			cellContent := g.Panel[row][col]
+			powerupIndex := g.FindPowerupAt(row,col)
+			if cellContent == "" && powerupIndex != -1 {
+				g.EatPowerup(playerIndex, powerupIndex)
+			}
 			// FindCollision should report *all* collisions, including "Ex".
 			// It's up to the *caller* of FindCollision to decide what to do with "Ex".
 			if cellContent != "" { // Report any non-empty cell content

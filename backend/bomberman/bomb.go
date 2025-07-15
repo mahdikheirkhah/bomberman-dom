@@ -370,7 +370,6 @@ func (g *GameBoard) ClearExpiredExplosions() {
 				info.Position.Col >= 0 && info.Position.Col < len(g.Panel[0]) {
 				if g.Panel[info.Position.Row][info.Position.Col] == "Ex" {
 					powerupIndex := g.FindPowerupAt(info.Position.Row, info.Position.Col)
-					log.Println("PWRUP INDEX", powerupIndex)
 					if powerupIndex != -1 {
 						if g.Powerups[powerupIndex].IsHidden {
 							g.ShowPowerup(powerupIndex)
