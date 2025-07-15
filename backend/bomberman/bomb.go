@@ -6,8 +6,10 @@ import (
 	"time"
 )
 
-// BombExplosionDuration defines how long cells stay 'Ex' after an explosion before clearing.
 const BombExplosionDuration = 1 * time.Second
+const PlayerInvulnerabilityDuration = 1 * time.Second // How long player is invulnerable after respawn
+
+// Player struct (add these fields if they're not there)
 
 // Position represents a row and column in the game grid.
 type Position struct {
@@ -20,20 +22,11 @@ type Position struct {
 type Bomb struct {
 	Row                 int       `json:"row"`
 	Column              int       `json:"column"`
-	XLocation           int       `json:"xlocation"`     // Assuming these are for rendering
-	YLocation           int       `json:"yLocation"`     // Assuming these are for rendering
-	ExplosionTime       time.Time `json:"explosionTime"` // When the bomb will explode
-	OwnPlayerIndex      int       `json:"playerIndex"`   // ID of the player who placed this bomb
+	XLocation           int       `json:"xlocation"`
+	YLocation           int       `json:"yLocation"`
+	ExplosionTime       time.Time `json:"explosionTime"`
+	OwnPlayerIndex      int       `json:"playerIndex"`
 	InitialIntersection bool      `json:"initialIntersection"`
-}
-
-// Powerup represents an item that can be collected by players.
-type Powerup struct {
-	Type     string `json:"type"`
-	Value    int    `json:"value"`
-	Row      int    `json:"row"`
-	Column   int    `json:"column"`
-	IsHidden bool   `json:"isHidden"`
 }
 
 // ExplodedCellInfo tracks a cell that has been exploded and its scheduled clear time.
@@ -41,6 +34,7 @@ type ExplodedCellInfo struct {
 	Position  Position
 	ClearTime time.Time // When this cell should revert from "Ex" to ""
 }
+
 type ExploadeCellsMsg struct {
 	MsgType   string     `json:"MT"`
 	Positions []Position `json:"positions"`
@@ -96,52 +90,105 @@ func (g *GameBoard) RespawnPlayer(playerIndex int) {
 	g.Players[playerIndex].Column = g.Players[playerIndex].InitialColumn
 	g.Players[playerIndex].XLocation = g.Players[playerIndex].Column * g.CellSize
 	g.Players[playerIndex].YLocation = g.Players[playerIndex].Row * g.CellSize
+	g.Players[playerIndex].JustRespawned = true
+	g.Players[playerIndex].LastDamageTime = time.Now() // Reset damage time on respawn
+	time.AfterFunc(PlayerInvulnerabilityDuration, func() {
+		g.Mu.Lock()
+		g.Players[playerIndex].JustRespawned = false
+		g.Mu.Unlock()
+	})
 }
 
-// CheckExplosion iterates through players and reduces lives if they are on an "Ex" cell.
-func (g *GameBoard) CheckExplosion() {
+// PlayerHitByExplosion checks if a player is currently within any of the given explosion positions.
+// This is for immediate blast damage.
+func (g *GameBoard) PlayerHitByExplosion(playerIndex int, affectedPositions []Position) bool {
+	player := &g.Players[playerIndex]
+	if player.IsDead || player.JustRespawned {
+		return false
+	}
+
+	playerCenterRow := (player.YLocation + PlayerSize/2) / int(g.CellSize)
+	playerCenterCol := (player.XLocation + PlayerSize/2) / int(g.CellSize)
+
+	for _, pos := range affectedPositions {
+		if playerCenterRow == pos.Row && playerCenterCol == pos.Col {
+			return true
+		}
+	}
+	return false
+}
+
+// DamagePlayer handles the logic for a player taking damage.
+func (g *GameBoard) DamagePlayer(playerIndex int) {
+	player := &g.Players[playerIndex]
+	if player.IsDead || player.JustRespawned {
+		return
+	}
+
+	// NEW: Check if player was recently damaged to prevent spamming
+	if time.Since(player.LastDamageTime) < BombExplosionDuration/2 { // Small cooldown
+		return
+	}
+
+	player.Lives--
+	log.Printf("Player %d hit! Lives remaining: %d\n", playerIndex, player.Lives)
+	player.LastDamageTime = time.Now() // Update last damage time
+
+	if player.IsMoving {
+		player.IsMoving = false
+		if player.StopMoveChan != nil {
+			close(player.StopMoveChan)
+			player.StopMoveChan = nil
+		}
+	}
+
+	if player.Lives <= 0 {
+		g.PlayerDeath(playerIndex)
+	} else {
+		g.PendingRespawns = append(g.PendingRespawns, PlayerRespawn{
+			PlayerIndex: playerIndex,
+			RespawnTime: time.Now().Add(BombExplosionDuration),
+		})
+
+		msg := PlayerExplosionMsg{
+			Type:        "PLD",
+			Lives:       player.Lives,
+			Color:       player.Color,
+			PlayerIndex: playerIndex,
+		}
+		g.SendMsgToChannel(msg, -1)
+	}
+}
+
+// PeriodicPlayerDamageCheck (NEW FUNCTION)
+// This function will be called repeatedly by the bomb watcher.
+func (g *GameBoard) PeriodicPlayerDamageCheck() {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
+	// Loop through all players
 	for i := range g.Players {
-		if g.Players[i].IsDead || g.Players[i].IsHurt {
-			continue
+		player := &g.Players[i]
+		if player.IsDead || player.JustRespawned {
+			continue // Skip dead or invulnerable players
 		}
 
-		collision := g.FindCollision(i)
-		if collision == "Ex" {
-			g.Players[i].IsHurt = true
-			time.AfterFunc(1*time.Second, func() {
-				g.Mu.Lock()
-				defer g.Mu.Unlock()
-				if i < len(g.Players) {
-					g.Players[i].IsHurt = false
+		// Check if player is on an 'Ex' (exploded) cell
+		// We use the player's current grid cell for this check
+		playerCellRow := (player.YLocation + PlayerSize/2) / int(g.CellSize)
+		playerCellCol := (player.XLocation + PlayerSize/2) / int(g.CellSize)
+
+		if playerCellRow >= 0 && playerCellRow < NumberOfRows &&
+			playerCellCol >= 0 && playerCellCol < NumberOfColumns {
+
+			if g.Panel[playerCellRow][playerCellCol] == "Ex" {
+				// Player is on an 'Ex' cell, now check if they should take damage
+				// Use BombExplosionDuration as a general cooldown. This means a player
+				// will only take damage from a fire cell once per full explosion duration,
+				// even if they run back and forth.
+				if time.Since(player.LastDamageTime) > BombExplosionDuration {
+					log.Printf("Player %d walked into fire at [%d,%d]! Applying damage.", i, playerCellRow, playerCellCol)
+					g.DamagePlayer(i)
 				}
-			})
-
-			g.Players[i].Lives--
-
-			if g.Players[i].IsMoving {
-				g.Players[i].IsMoving = false
-				if g.Players[i].StopMoveChan != nil {
-					close(g.Players[i].StopMoveChan)
-					g.Players[i].StopMoveChan = nil // Mark as closed
-				}
-			}
-
-			if g.Players[i].Lives <= 0 {
-				g.PlayerDeath(i)
-			} else {
-				// Player was hit but is not dead, add to respawn queue.
-				g.PendingRespawns = append(g.PendingRespawns, PlayerRespawn{
-					PlayerIndex: i,
-					RespawnTime: time.Now().Add(BombExplosionDuration),
-				})
-
-				msg := PlayerExplosionMsg{
-					Type:        "PLD", // player live decrease
-					Lives:       g.Players[i].Lives,
-					Color:       g.Players[i].Color,
-					PlayerIndex: i,
-				}
-				g.SendMsgToChannel(msg, -1)
 			}
 		}
 	}
@@ -152,33 +199,30 @@ func (g *GameBoard) PlayerDeath(playerIndex int) {
 	g.Players[playerIndex].IsDead = true
 
 	msg := PLayerDeath{
-		Type:   "PD", // player dead
+		Type:   "PD",
 		Player: g.Players[playerIndex],
 	}
 	g.SendMsgToChannel(msg, -1)
 }
 
-// HasExploaded checks if a given position on the game panel is currently marked as "Ex".
 func (g *GameBoard) HasExploaded(row, col int) bool {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
 
 	if row < 0 || row >= len(g.Panel) || col < 0 || col >= len(g.Panel[0]) {
-		return false // Position is out of bounds
+		return false
 	}
 	return g.Panel[row][col] == "Ex"
 }
 
-// CanCreateBomb checks if a player is allowed to place another bomb.
 func (g *GameBoard) CanCreateBomb(playerIndex int) bool {
 
 	if playerIndex < 0 || playerIndex >= len(g.Players) {
-		return false // Invalid player index
+		return false
 	}
 	return g.Players[playerIndex].NumberOfUsedBombs < g.Players[playerIndex].NumberOfBombs
 }
 
-// CreateBomb creates a new bomb at the player's current position.
 func (g *GameBoard) CreateBomb(playerIndex int) (int, error) {
 
 	if playerIndex < 0 || playerIndex >= len(g.Players) {
@@ -189,7 +233,6 @@ func (g *GameBoard) CreateBomb(playerIndex int) (int, error) {
 		return -1, errors.New("can not create a new bomb: player has reached bomb limit")
 	}
 
-	// Increment the count of bombs used by this player
 	g.Players[playerIndex].NumberOfUsedBombs++
 
 	var bomb Bomb
@@ -198,7 +241,7 @@ func (g *GameBoard) CreateBomb(playerIndex int) (int, error) {
 	bomb.XLocation = bomb.Column * g.CellSize
 	bomb.YLocation = bomb.Row * g.CellSize
 	bomb.ExplosionTime = time.Now().Add(g.Players[playerIndex].BombDelay)
-	bomb.OwnPlayerIndex = playerIndex // Associate bomb with the player who placed it
+	bomb.OwnPlayerIndex = playerIndex
 	bomb.InitialIntersection = true
 
 	g.Bombs = append(g.Bombs, bomb)
@@ -206,54 +249,51 @@ func (g *GameBoard) CreateBomb(playerIndex int) (int, error) {
 	return bombIndex, nil
 }
 
-// CalculateBombRange determines all grid positions that will be affected by a bomb explosion.
-// It does NOT modify the game board; it only calculates the positions.
 func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Position {
 	var affectedPositions []Position
 
-	// Always include the bomb's own position
 	affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: bombCol})
 
-	// Check explosion range upwards
 	for row := bombRow - 1; row >= 0 && bombRow-row <= bombRange; row-- {
-		if g.Panel[row][bombCol] == "W" { // Stop if a wall is encountered
+		if g.Panel[row][bombCol] == "W" {
 			break
 		}
 		affectedPositions = append(affectedPositions, Position{Row: row, Col: bombCol})
-		if g.Panel[row][bombCol] == "D" { // Stop after destroying a destructible block
+		if g.Panel[row][bombCol] == "D" {
+			g.CreatePowerupWithChance(row, bombCol) // Uncomment if you have this function
 			break
 		}
 	}
 
-	// Check explosion range downwards
 	for row := bombRow + 1; row < len(g.Panel) && row-bombRow <= bombRange; row++ {
 		if g.Panel[row][bombCol] == "W" {
 			break
 		}
 		affectedPositions = append(affectedPositions, Position{Row: row, Col: bombCol})
 		if g.Panel[row][bombCol] == "D" {
+			g.CreatePowerupWithChance(row, bombCol) // Uncomment if you have this function
 			break
 		}
 	}
 
-	// Check explosion range to the left
 	for col := bombCol - 1; col >= 0 && bombCol-col <= bombRange; col-- {
 		if g.Panel[bombRow][col] == "W" {
 			break
 		}
 		affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: col})
 		if g.Panel[bombRow][col] == "D" {
+			g.CreatePowerupWithChance(bombRow, col) // Uncomment if you have this function
 			break
 		}
 	}
 
-	// Check explosion range to the right
 	for col := bombCol + 1; col < len(g.Panel[0]) && col-bombCol <= bombRange; col++ {
 		if g.Panel[bombRow][col] == "W" {
 			break
 		}
 		affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: col})
 		if g.Panel[bombRow][col] == "D" {
+			g.CreatePowerupWithChance(bombRow, col) // Uncomment if you have this function
 			break
 		}
 	}
@@ -261,11 +301,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 	return affectedPositions
 }
 
-// ApplyExplosion marks cells as 'Ex' or "" (if destructible) and schedules them for clearing.
-// It also decrements the bomb count for the player who placed it.
 func (g *GameBoard) ApplyExplosion(bomb Bomb) {
-
-	// Find the player who placed this bomb to get their current bomb range
 	var player *Player
 	for i := range g.Players {
 		if i == bomb.OwnPlayerIndex {
@@ -274,58 +310,53 @@ func (g *GameBoard) ApplyExplosion(bomb Bomb) {
 		}
 	}
 	if player == nil {
-		// Log an error: Player not found, perhaps disconnected or an invalid ID.
-		// This bomb's explosion won't decrement a player's bomb count.
 		log.Printf("Player with index %d not found for bomb explosion.", bomb.OwnPlayerIndex)
 		return
 	}
 
-	// Calculate the actual positions affected by this bomb's explosion
 	affectedPositions := g.CalculateBombRange(bomb.Row, bomb.Column, player.BombRange)
 
-	// Check for chain reactions with other bombs
 	for i := range g.Bombs {
-		// Skip the bomb that is currently exploding
 		if g.Bombs[i].Row == bomb.Row && g.Bombs[i].Column == bomb.Column {
 			continue
 		}
 
 		for _, pos := range affectedPositions {
 			if g.Bombs[i].Row == pos.Row && g.Bombs[i].Column == pos.Col {
-				// This bomb is in the blast radius. Trigger it to explode almost immediately.
 				g.Bombs[i].ExplosionTime = time.Now()
-				break // Move to the next bomb in g.Bombs once a match is found
+				break
 			}
 		}
 	}
+
 	var msg ExploadeCellsMsg
-	msg.MsgType = "EXC" // Exploaded Cells
+	msg.MsgType = "EXC"
 	msg.BombRow = bomb.Row
 	msg.BombCol = bomb.Column
 	for _, pos := range affectedPositions {
-		// Ensure the position is within the game board boundaries
 		if pos.Row < 0 || pos.Row >= len(g.Panel) || pos.Col < 0 || pos.Col >= len(g.Panel[0]) {
-			continue // Skip out-of-bounds positions
+			continue
 		}
 
 		cell := &g.Panel[pos.Row][pos.Col]
-		if *cell != "W" { // If it's not a solid wall, it should explode. This includes "D" blocks.
-			// TODO: If *cell == "D", consider spawning a powerup here.
-			*cell = "Ex" // Mark as exploded
+		if *cell != "W" {
+			*cell = "Ex"
 			g.ExplodedCells = append(g.ExplodedCells, ExplodedCellInfo{Position: pos, ClearTime: time.Now().Add(BombExplosionDuration)})
 			msg.Positions = append(msg.Positions, Position{Row: pos.Row, Col: pos.Col, CellOnFire: true})
 		}
 	}
 	g.SendMsgToChannel(msg, -1)
 
-	// Decrement the number of bombs currently used by the player
+	// IMMEDIATE DAMAGE: Check and damage players caught in THIS SPECIFIC explosion.
+	for i := range g.Players {
+		if g.PlayerHitByExplosion(i, affectedPositions) {
+			g.DamagePlayer(i)
+		}
+	}
+
 	player.NumberOfUsedBombs--
-	// Check if any players were caught in the explosion and update their lives/status
-	g.CheckExplosion()
 }
 
-// ClearExpiredExplosions iterates through the list of exploded cells and
-// reverts them to empty ("") if their clear time has passed.
 func (g *GameBoard) ClearExpiredExplosions() {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
@@ -335,28 +366,32 @@ func (g *GameBoard) ClearExpiredExplosions() {
 	var msg ExploadeCellsMsg
 	for _, info := range g.ExplodedCells {
 		if now.After(info.ClearTime) {
-			// Time to clear this cell
-			// Ensure position is still within bounds before modifying the panel
-
 			if info.Position.Row >= 0 && info.Position.Row < len(g.Panel) &&
 				info.Position.Col >= 0 && info.Position.Col < len(g.Panel[0]) {
-				// Only clear the cell if it's still marked as "Ex".
-				// This prevents clearing a cell that has been re-exploded by another bomb.
 				if g.Panel[info.Position.Row][info.Position.Col] == "Ex" {
+					powerupIndex := g.FindPowerupAt(info.Position.Row, info.Position.Col)
+					log.Println("PWRUP INDEX", powerupIndex)
+					if powerupIndex != -1 {
+						if g.Powerups[powerupIndex].IsHidden {
+							g.ShowPowerup(powerupIndex)
+						} else {
+							g.RemovePowerup(powerupIndex)
+						}
+					}
+					// g.FindPowerupAt, g.RemovePowerup, g.ShowPowerup calls here if you have them
 					g.Panel[info.Position.Row][info.Position.Col] = ""
-										msg.MsgType = "OF" // Turn Off Fire
+					msg.MsgType = "OF"
 					msg.Positions = append(msg.Positions, Position{Row: info.Position.Row, Col: info.Position.Col})
 				}
 			}
 		} else {
-			// This cell has not yet expired, keep it in the list
 			remainingExplodedCells = append(remainingExplodedCells, info)
 		}
 	}
 	if msg.MsgType == "OF" {
 		g.SendMsgToChannel(msg, -1)
 	}
-	g.ExplodedCells = remainingExplodedCells // Update the list with only unexpired cells
+	g.ExplodedCells = remainingExplodedCells
 }
 
 func (g *GameBoard) ProcessRespawns() {
@@ -376,7 +411,7 @@ func (g *GameBoard) ProcessRespawns() {
 				XLocation   int    `json:"xlocation"`
 				YLocation   int    `json:"yLocation"`
 			}{
-				Type:        "PR", // Player Respawn
+				Type:        "PR",
 				PlayerIndex: respawn.PlayerIndex,
 				XLocation:   player.XLocation,
 				YLocation:   player.YLocation,
@@ -389,44 +424,39 @@ func (g *GameBoard) ProcessRespawns() {
 	g.PendingRespawns = remainingRespawns
 }
 
-// StartBombWatcher starts a goroutine that periodically checks for bomb explosions
-// and clears expired exploded cells.
 func (g *GameBoard) StartBombWatcher() {
 	go func() {
-		// Check every 100 milliseconds for bombs to explode and cells to clear
-		ticker := time.NewTicker(100 * time.Millisecond)
-		defer ticker.Stop() // Ensure the ticker is stopped when the goroutine exits
+		ticker := time.NewTicker(100 * time.Millisecond) // Check every 100ms
+		defer ticker.Stop()
 
 		for range ticker.C {
-			g.checkBombs()             // Process bombs that are due to explode
-			g.ClearExpiredExplosions() // Clear cells whose explosion effect has timed out
-			g.ProcessRespawns()        // Process pending respawns
+			//g.Mu.Lock() // Lock for the entire loop iteration
+			g.checkBombs()
+			g.ClearExpiredExplosions()
+			g.ProcessRespawns()
+			g.PeriodicPlayerDamageCheck() // NEW: Call the periodic damage check here
+			//g.Mu.Unlock()
 		}
 	}()
 }
 
-// checkBombs processes bombs that have reached their explosion time.
 func (g *GameBoard) checkBombs() {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
+	// This function already acquires its own lock, so no need for g.Mu.Lock() around it in StartBombWatcher
+	// However, if you're calling it from StartBombWatcher within a g.Mu.Lock() block,
+	// it would cause a deadlock. Let's adjust StartBombWatcher to lock around the *whole* tick.
+	// (See StartBombWatcher definition above)
 
 	var remainingBombs []Bomb
 	now := time.Now()
 
 	for _, bomb := range g.Bombs {
 		if now.After(bomb.ExplosionTime) {
-			// This bomb is ready to explode
 			g.ApplyExplosion(bomb)
-			// This bomb is now "used up" and will not be added back to remainingBombs
 		} else {
-			// This bomb has not yet exploded, keep it for the next check
 			remainingBombs = append(remainingBombs, bomb)
 		}
 	}
-	g.Bombs = remainingBombs // Update the list of active bombs
+	g.Bombs = remainingBombs
 }
-
-// Note: The original BombRowRange, BombColRange, and BombExploisonTime constants
-// are no longer directly used in the explosion logic if Player.BombRange and
-// BombExplosionDuration are the source of truth. You might consider removing them
-// if they are truly redundant to avoid confusion.

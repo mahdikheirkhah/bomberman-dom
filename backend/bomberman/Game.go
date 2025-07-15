@@ -30,6 +30,7 @@ type GameBoard struct {
 	NumberOfPlayers    int                                   `json:"numberOfPlayers"`
 	Panel              [NumberOfRows][NumberOfColumns]string `json:"panel"` // Ex -> Exploade , W -> Wall, D -> Destructible, ""(empty) -> empty cell, B -> Bomb
 	CellSize           int                                   `json:"cellSize"`
+	Powerups           []Powerup                             `json:"powerups"`
 	IsStarted          bool
 	ExplodedCells      []ExplodedCellInfo `json:"explodedCells"`
 	PlayersConnections map[int]*websocket.Conn

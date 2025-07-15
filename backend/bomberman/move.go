@@ -25,9 +25,12 @@ func (g *GameBoard) HandleMoveStartMessage(playerIndex int, direction string) {
 		log.Printf("Player %d is dead, cannot start movement.\n", playerIndex)
 		return
 	}
+
+	// NEW LOGIC: Only prevent movement if the player is currently on a *non-traversable* collision type.
+	// "Ex" (exploded cells) should be traversable.
 	collision := g.FindCollision(playerIndex)
-	if collision == "Ex" || collision == "B" || collision == "D" || collision == "W" { // Check if player is on an exploded cell
-		log.Printf("Player %d is on an exploded cell, cannot start movement.\n", playerIndex)
+	if collision == "B" || collision == "D" || collision == "W" || collision == "P" { // Add "P" for player collision if applicable here
+		log.Printf("Player %d cannot start movement due to collision with: %s\n", playerIndex, collision)
 		return
 	}
 
@@ -35,7 +38,6 @@ func (g *GameBoard) HandleMoveStartMessage(playerIndex int, direction string) {
 	player.DirectionFace = direction
 
 	// Start a new movement goroutine only if one isn't already running
-	// Check if the channel is nil or if it was previously closed and needs recreation
 	if player.StopMoveChan == nil {
 		player.StopMoveChan = make(chan struct{}) // Create a new stop channel
 		go g.playerMoveLoop(playerIndex)          // Start the continuous movement loop
@@ -79,16 +81,9 @@ func (g *GameBoard) playerMoveLoop(playerIndex int) {
 				return
 			}
 
-			// Check collision before moving
-			if collision := g.FindCollision(playerIndex); collision == "Ex" || collision == "B" || collision == "D" || collision == "W" {
-				player.IsMoving = false
-				if player.StopMoveChan != nil {
-					close(player.StopMoveChan)
-					player.StopMoveChan = nil
-				}
-				g.Mu.Unlock()
-				return
-			}
+			// NEW LOGIC: Check collision *after* attempting a move.
+			// The current player's cell can be "Ex", but they should still be able to move *from* it.
+			// The actual blocking logic should primarily be within MovePlayer.
 
 			// Perform movement
 			moved := g.MovePlayer(playerIndex, player.DirectionFace)
@@ -103,6 +98,7 @@ func (g *GameBoard) playerMoveLoop(playerIndex int) {
 				}
 				g.SendMsgToChannel(msg, playerIndex)
 			} else {
+				// If MovePlayer returns false, it means the player hit an impassable object.
 				player.IsMoving = false
 				if player.StopMoveChan != nil {
 					close(player.StopMoveChan)
@@ -126,8 +122,6 @@ func (g *GameBoard) playerMoveLoop(playerIndex int) {
 }
 
 // HandleMoveMessage (original, now superseded by MS/ME) - Kept for reference or if still used for single moves
-// This function is now only called if msgType is "M" (single move), not "MS" or "ME".
-// If you only want continuous movement, you might remove this or adapt it.
 func (g *GameBoard) HandleMoveMessage(msgMap map[string]interface{}) {
 	playerIndex, ok := msgMap["fromPlayer"].(int)
 	if !ok {
@@ -141,12 +135,12 @@ func (g *GameBoard) HandleMoveMessage(msgMap map[string]interface{}) {
 		return
 	}
 
-	// g.Mu.Lock()
+	// g.Mu.Lock() // Consider if a lock is needed here if it's a single, non-looping move
 	// defer g.Mu.Unlock()
 
 	player := &g.Players[playerIndex]
-	if player.IsDead || g.HasExploaded(player.Row, player.Column) {
-		log.Printf("Player %d is dead or on exploded cell, cannot move.\n", playerIndex)
+	if player.IsDead { // Removed the HasExploaded check as "Ex" cells should be traversable.
+		log.Printf("Player %d is dead, cannot move.\n", playerIndex)
 		return
 	}
 
@@ -183,9 +177,9 @@ func (g *GameBoard) FindCollision(playerIndex int) string {
 
 	// Use a map to check unique cells to avoid redundant checks
 	cellsToCheck := map[[2]int]bool{
-		{topLeftRow, topLeftCol}:       true,
-		{topRightRow, topRightCol}:     true,
-		{bottomLeftRow, bottomLeftCol}: true,
+		{topLeftRow, topLeftCol}:         true,
+		{topRightRow, topRightCol}:       true,
+		{bottomLeftRow, bottomLeftCol}:   true,
 		{bottomRightRow, bottomRightCol}: true,
 	}
 
@@ -193,7 +187,9 @@ func (g *GameBoard) FindCollision(playerIndex int) string {
 		row, col := cell[0], cell[1]
 		if row >= 0 && row < NumberOfRows && col >= 0 && col < NumberOfColumns {
 			cellContent := g.Panel[row][col]
-			if cellContent != "" {
+			// FindCollision should report *all* collisions, including "Ex".
+			// It's up to the *caller* of FindCollision to decide what to do with "Ex".
+			if cellContent != "" { // Report any non-empty cell content
 				return cellContent
 			}
 		}
@@ -201,16 +197,16 @@ func (g *GameBoard) FindCollision(playerIndex int) string {
 
 	// Check for bomb collisions
 	for _, bomb := range g.Bombs {
+		// Only consider active bombs that are not the player's own initial bomb placement
+		if bomb.OwnPlayerIndex == playerIndex && bomb.InitialIntersection {
+			continue // Player can initially pass through their own bomb
+		}
+
 		if player.XLocation < bomb.XLocation+cellSize &&
 			player.XLocation+PlayerSize > bomb.XLocation &&
 			player.YLocation < bomb.YLocation+cellSize &&
 			player.YLocation+PlayerSize > bomb.YLocation {
-			// Collision with a bomb
-			if bomb.OwnPlayerIndex == playerIndex && bomb.InitialIntersection {
-				// Player can pass through their own bomb initially
-				continue
-			}
-			return "B" // Treat as a solid block
+			return "B" // Collision with a bomb
 		}
 	}
 
@@ -220,6 +216,7 @@ func (g *GameBoard) FindCollision(playerIndex int) string {
 			continue
 		}
 
+		// Calculate collision for actual player bounding boxes, not just cell centers
 		if player.XLocation < otherPlayer.XLocation+PlayerSize &&
 			player.XLocation+PlayerSize > otherPlayer.XLocation &&
 			player.YLocation < otherPlayer.YLocation+PlayerSize &&
@@ -228,8 +225,9 @@ func (g *GameBoard) FindCollision(playerIndex int) string {
 		}
 	}
 
-	return ""
+	return "" // No collision
 }
+
 func (g *GameBoard) FindDistanceToBorder(playerIndex int, borderName string) int {
 	row := g.Players[playerIndex].Row
 	col := g.Players[playerIndex].Column
@@ -260,6 +258,7 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 	originalX := player.XLocation
 	originalY := player.YLocation
 
+	// Temporarily move the player to the new potential position
 	switch direction {
 	case "u":
 		player.YLocation -= step
@@ -283,59 +282,55 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 		}
 	}
 
-	// Update row/column based on the player's center
+	// Update row/column based on the player's center for current *potential* position
 	player.Row = (player.YLocation + PlayerSize/2) / cellSize
 	player.Column = (player.XLocation + PlayerSize/2) / cellSize
 
-	// Check if we hit something
-	if collision := g.FindCollision(playerIndex); collision != "" {
-		// If moving horizontally, check for vertical tolerance
-		if direction == "l" || direction == "r" {
-			// Check if the player is slightly off-center vertically
+	// Check if we hit an *impassable* object after the tentative move
+	if collision := g.FindCollision(playerIndex); collision != "" && collision != "Ex" { // "Ex" cells are ignored here, which is correct.
+		// If collision occurs with an impassable object (W, B, D, P), attempt snapping
+		// If snapping doesn't resolve it, revert position.
+
+		// Snapping logic to align with grid if close enough, and re-check collision
+		movedBySnap := false
+		if direction == "l" || direction == "r" { // Moving horizontally, check vertical alignment
 			verticalOffset := player.YLocation % cellSize
 			if verticalOffset <= movementTolerance {
-				// Snap to the grid and allow movement
 				player.YLocation -= verticalOffset
+				movedBySnap = true
 			} else if cellSize-verticalOffset <= movementTolerance {
-				// Snap to the grid and allow movement
 				player.YLocation += cellSize - verticalOffset
-			} else {
-				// Revert position if no tolerance is met
-				player.XLocation = originalX
-				player.YLocation = originalY
-				return false
+				movedBySnap = true
 			}
-		} else if direction == "u" || direction == "d" {
-			// Check if the player is slightly off-center horizontally
+		} else if direction == "u" || direction == "d" { // Moving vertically, check horizontal alignment
 			horizontalOffset := player.XLocation % cellSize
 			if horizontalOffset <= movementTolerance {
-				// Snap to the grid and allow movement
 				player.XLocation -= horizontalOffset
+				movedBySnap = true
 			} else if cellSize-horizontalOffset <= movementTolerance {
-				// Snap to the grid and allow movement
 				player.XLocation += cellSize - horizontalOffset
-			} else {
-				// Revert position if no tolerance is met
-				player.XLocation = originalX
-				player.YLocation = originalY
-				return false
+				movedBySnap = true
 			}
-		} else {
-			// Revert position for any other collision
-			player.XLocation = originalX
-			player.YLocation = originalY
-			return false
 		}
 
-		// After snapping, check for collision again to prevent getting stuck
-		if g.FindCollision(playerIndex) != "" {
+		// After potential snap, re-check for collision with impassable objects
+		if newCollision := g.FindCollision(playerIndex); newCollision != "" && newCollision != "Ex" {
+			// Still colliding with an impassable object even after snapping.
+			// Revert to original position.
+			player.XLocation = originalX
+			player.YLocation = originalY
+			return false
+		} else if !movedBySnap && (collision == "W" || collision == "B" || collision == "D" || collision == "P") {
+			// If not snapped and collided with a wall/bomb/destructible/player, revert.
+			// This handles cases where player is directly hitting a wall without being "off-center".
 			player.XLocation = originalX
 			player.YLocation = originalY
 			return false
 		}
+		// If collision was with an "Ex" cell (which is allowed) or snapping resolved it, continue.
 	}
 
-	// Update bomb intersection status
+	// Update bomb intersection status (this logic is fine)
 	for i := range g.Bombs {
 		bomb := &g.Bombs[i]
 		if bomb.OwnPlayerIndex == playerIndex && bomb.InitialIntersection {
@@ -349,5 +344,5 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 		}
 	}
 
-	return true
+	return true // Movement successful
 }
