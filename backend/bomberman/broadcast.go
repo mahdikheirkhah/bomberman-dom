@@ -3,7 +3,6 @@ package bomberman
 import (
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -11,12 +10,7 @@ import (
 
 var Upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		origin := r.Header.Get("Origin")
-		// Allow any localhost origin (with or without port)
-		if strings.HasPrefix(origin, "http://localhost") {
-			return true
-		}
-		return false
+		return true // Allow all connections
 	},
 }
 
@@ -31,8 +25,8 @@ type StateMsg struct {
 
 var LobbyMsg bool
 
-var lobbyCountdownTimer = 5 // 20 for production
-var startCountdownTimer = 3 // 10 for production
+var lobbyCountdownTimer = 1 // 20 for production
+var startCountdownTimer = 1 // 10 for production
 
 func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling new WS connection")
@@ -79,11 +73,7 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 	log.Printf("Player %s connected successfully as player %d\n", name, playerIndex)
 	g.Mu.Unlock()
 
-	stateMsg := StateMsg{
-		Type:  "GameState",
-		State: "PlayerAccepted",
-	}
-	g.SendMsgToChannel(stateMsg, playerIndex)
+	g.SendPlayerAccepted(playerIndex)
 
 	// Send the current list of players to all clients
 	playerListMsg := map[string]interface{}{

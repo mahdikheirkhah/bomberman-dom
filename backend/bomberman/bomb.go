@@ -101,12 +101,21 @@ func (g *GameBoard) RespawnPlayer(playerIndex int) {
 // CheckExplosion iterates through players and reduces lives if they are on an "Ex" cell.
 func (g *GameBoard) CheckExplosion() {
 	for i := range g.Players {
-		if g.Players[i].IsDead {
+		if g.Players[i].IsDead || g.Players[i].IsHurt {
 			continue
 		}
 
 		collision := g.FindCollision(i)
 		if collision == "Ex" {
+			g.Players[i].IsHurt = true
+			time.AfterFunc(1*time.Second, func() {
+				g.Mu.Lock()
+				defer g.Mu.Unlock()
+				if i < len(g.Players) {
+					g.Players[i].IsHurt = false
+				}
+			})
+
 			g.Players[i].Lives--
 
 			if g.Players[i].IsMoving {

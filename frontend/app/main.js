@@ -3,7 +3,7 @@ import Start from './start.js';
 import Lobby from './lobby.js';
 import Game from './game.js';
 
-const APIUrl = 'localhost:8080';
+const APIUrl = `${window.location.hostname}:8080`;
 
 // Initialize store
 store.setState({
@@ -48,9 +48,10 @@ export function handleWebSocket() {
                         router.navigate("/game");
                     } else if (message.state === 'GameStarted') {
                         store.setState({ countdown: null, gameStarted: true });
-                    } else if (message.state === 'PlayerAccepted') {
-                        store.setState({ currentView: 'lobby', playerId: message.playerId });
                     }
+                    break;
+                case 'PlayerAccepted':
+                    store.setState({ currentView: 'lobby', playerIndex: message.index });
                     break;
                 case 'gameStart':
                     store.setState({ gameData: { players: message.players, panel: message.panel } });
@@ -61,7 +62,7 @@ export function handleWebSocket() {
                     break;
                 case 'CM':
                     const { chatMessages } = store.getState();
-                    store.setState({ chatMessages: [...chatMessages, { player: message.name, message: message.content }] });
+                    store.setState({ chatMessages: [...chatMessages, { player: message.name, message: message.content, senderIndex: message.senderIndex, color: message.color }] });
                     break;
                 case 'playerUpdate':
                     store.setState({ gameData: { ...store.getState().gameData, players: message.players, panel: message.panel } });

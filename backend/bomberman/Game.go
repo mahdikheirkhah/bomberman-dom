@@ -2,6 +2,7 @@ package bomberman
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -209,6 +210,25 @@ func (g *GameBoard) RandomStart() {
 			lineForPrint += char
 		}
 		fmt.Println(lineForPrint)
+	}
+}
+
+func (g *GameBoard) SendPlayerAccepted(playerIndex int) {
+	msg := map[string]interface{}{
+		"type":  "PlayerAccepted",
+		"index": playerIndex,
+	}
+
+	conn, ok := g.PlayersConnections[playerIndex]
+	if !ok {
+		log.Printf("error: no connection for player index %d", playerIndex)
+		return
+	}
+
+	err := conn.WriteJSON(msg)
+	if err != nil {
+		log.Printf("error writing json to player %d: %v", playerIndex, err)
+		conn.Close()
 	}
 }
 
