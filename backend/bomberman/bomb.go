@@ -163,6 +163,8 @@ func (g *GameBoard) DamagePlayer(playerIndex int) {
 // PeriodicPlayerDamageCheck (NEW FUNCTION)
 // This function will be called repeatedly by the bomb watcher.
 func (g *GameBoard) PeriodicPlayerDamageCheck() {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
 	// Loop through all players
 	for i := range g.Players {
 		player := &g.Players[i]
@@ -419,17 +421,19 @@ func (g *GameBoard) StartBombWatcher() {
 		defer ticker.Stop()
 
 		for range ticker.C {
-			g.Mu.Lock() // Lock for the entire loop iteration
+			//g.Mu.Lock() // Lock for the entire loop iteration
 			g.checkBombs()
 			g.ClearExpiredExplosions()
 			g.ProcessRespawns()
 			g.PeriodicPlayerDamageCheck() // NEW: Call the periodic damage check here
-			g.Mu.Unlock()
+			//g.Mu.Unlock()
 		}
 	}()
 }
 
 func (g *GameBoard) checkBombs() {
+	g.Mu.Lock()
+	defer g.Mu.Unlock()
 	// This function already acquires its own lock, so no need for g.Mu.Lock() around it in StartBombWatcher
 	// However, if you're calling it from StartBombWatcher within a g.Mu.Lock() block,
 	// it would cause a deadlock. Let's adjust StartBombWatcher to lock around the *whole* tick.
