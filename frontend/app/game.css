@@ -1,4 +1,104 @@
+.start-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 5vh;
+    box-sizing: border-box;
+}
+
+.start-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+.start-form input[type="text"] {
+    padding: 15px 25px;
+    font-size: 1.2em;
+    color: #fff;
+    background-color: #3e3e3e;
+    border: 2px solid #c0c0c0;
+    border-radius: 50px;
+    text-align: center;
+    font-family: 'Supercell-Magic', sans-serif; /* A font that looks like Clash Royale's font */
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+.start-form input[type="text"]::placeholder {
+    color: #a0a0a0;
+}
+
+.start-form input[type="text"]:focus {
+    outline: none;
+    border-color: #ffdd00;
+    box-shadow: 0 0 15px rgba(255, 221, 0, 0.7);
+}
+
+.join-button {
+    padding: 15px 35px;
+    font-size: 1.5em;
+    color: #fff;
+    background: linear-gradient(180deg, #ffb800 0%, #ff8c00 100%);
+    border: 3px solid #fff;
+    border-radius: 50px;
+    font-family: 'Supercell-Magic', sans-serif;
+    font-weight: bold;
+    text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    margin-top: 10px;
+}
+
+.join-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.join-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* Adding a font that resembles the Clash Royale font */
+@import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
+
 body {
+    font-family: 'Lilita One', cursive; /* Apply to the whole body for consistency */
+    background-color: rgb(136, 222, 253);
+    margin: 0px;
+}
+
+.bg-blur {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('/public/cover.jpg') center/cover no-repeat;
+    filter: blur(8px);
+    z-index: -1;
+    overflow: hidden;
+}
+
+.bg-main {
+    margin: 0 auto;
+    height: 100vh;
+    width: calc(100vh * 16 / 9); /* Assuming 16:9 aspect ratio for cover.jpg */
+    max-width: 100vw;
+    background: url('/public/cover.jpg') center/contain no-repeat;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
     overflow: hidden;
 }
 
@@ -10,6 +110,9 @@ body {
     padding: 20px;
     height: 100vh;
     box-sizing: border-box;
+    background: url('/public/bg.webp') repeat center center fixed;
+    background-size: 60px;
+    background-color: teal;
 }
 
 .player-panels {
