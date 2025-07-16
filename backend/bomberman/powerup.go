@@ -14,6 +14,10 @@ type Powerup struct {
 	IsHidden bool   `json:"isHidden"`
 }
 
+const MaxBombsPowerup = 5
+const MaxBombRangePowerup = 5
+const MaxSpeedPowerup = 20
+
 var PowerupTypes = []string{"ExtraBomb", "BombRange", "ExtraLife", "SpeedBoost"}
 
 func (g *GameBoard) ShowPowerup(PowerUpIndex int) {
@@ -91,19 +95,14 @@ func (g *GameBoard) EatPowerup(playerIndex, PowerupIndex int) {
 	player := &g.Players[playerIndex]
 	switch powerup.Type {
 	case "ExtraBomb":
+		if player.NumberOfBombs >= MaxBombsPowerup {
+			return
+		}
 		player.NumberOfBombs += powerup.Value
-		g.SendMsgToChannel(struct {
-			Type              string `json:"type"`
-			Player            int    `json:"player"`
-			NumberOfBombs     int    `json:"numberOfBombs"`
-			NumberOfUsedBombs int    `json:"numberOfUsedBombs"`
-		}{
-			Type:              "EatBombPowerup",
-			Player:            playerIndex,
-			NumberOfBombs:     player.NumberOfBombs,
-			NumberOfUsedBombs: player.NumberOfUsedBombs,
-		}, -1)
 	case "BombRange":
+		if player.BombRange >= MaxBombRangePowerup {
+			return
+		}
 		player.BombRange += powerup.Value
 	case "ExtraLife":
 		player.Lives += powerup.Value
@@ -117,6 +116,9 @@ func (g *GameBoard) EatPowerup(playerIndex, PowerupIndex int) {
 			NumberOfLives: player.Lives,
 		}, -1)
 	case "SpeedBoost":
+		if player.StepSize >= MaxSpeedPowerup {
+			return
+		}
 		player.StepSize += powerup.Value
 	}
 }
