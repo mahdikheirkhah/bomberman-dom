@@ -71,10 +71,11 @@ func (g *GameBoard) HandleBombMessage(msgMap map[string]interface{}) {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
 	bombIndex, err := g.CreateBomb(playerIndex)
-	if err != nil {
+	if err != nil || bombIndex == -1 {
 		log.Println("Error creating bomb:", err)
 		return
 	}
+	log.Println("Bomb created by player", playerIndex, "at", g.Bombs[bombIndex].Row, g.Bombs[bombIndex].Column)
 	var msg PlantBomb
 	msg.MsgType = "BA" //Bomb Accepted
 	msg.Column = g.Bombs[bombIndex].Column
@@ -229,7 +230,7 @@ func (g *GameBoard) CanCreateBomb(playerIndex int) bool {
 		return false
 	}
 	for i := range g.Bombs {
-		if g.Bombs[i].XLocation == g.Players[playerIndex].XLocation && g.Bombs[i].YLocation == g.Players[playerIndex].YLocation {
+		if g.Bombs[i].Row == g.Players[playerIndex].Row && g.Bombs[i].Column == g.Players[playerIndex].Column {
 			log.Printf("Player %s cannot place bomb: already a bomb at this location.\n", g.Players[playerIndex].Name)
 			return false
 		}
@@ -465,6 +466,7 @@ func (g *GameBoard) checkBombs() {
 	now := time.Now()
 
 	for _, bomb := range g.Bombs {
+
 		if now.After(bomb.ExplosionTime) {
 			g.ApplyExplosion(bomb)
 		} else {
