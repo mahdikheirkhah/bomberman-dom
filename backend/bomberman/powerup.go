@@ -41,9 +41,9 @@ func (g *GameBoard) ShowPowerup(PowerUpIndex int) {
 
 func (g *GameBoard) CreatePowerupWithChance(row, column int) {
 	// 30% chance to create a powerup
-	// if rand.Float64() > 0.3 {
-	// 	return
-	// }
+	if rand.Float64() > 0.3 {
+		return
+	}
 
 	// Check if a powerup already exists at this location
 	if g.FindPowerupAt(row, column) != -1 {

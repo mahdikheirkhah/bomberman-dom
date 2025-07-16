@@ -30,6 +30,11 @@ func (g *GameBoard) HandleMoveStartMessage(playerIndex int, direction string) {
 		return
 	}
 
+	if player.IsHurt {
+		log.Printf("Player %d is hurt, cannot start movement.\n", playerIndex)
+		return
+	}
+
 	// NEW LOGIC: Only prevent movement if the player is currently on a *non-traversable* collision type.
 	// "Ex" (exploded cells) should be traversable.
 	collision := g.FindCollision(playerIndex)
@@ -85,7 +90,7 @@ func (g *GameBoard) playerMoveLoop(playerIndex int) {
 			}
 
 			player := &g.Players[playerIndex]
-			if !player.IsMoving || player.IsDead {
+			if !player.IsMoving || player.IsDead || player.IsHurt{
 				g.Mu.Unlock()
 				return
 			}
@@ -196,7 +201,7 @@ func (g *GameBoard) FindCollision(playerIndex int) string {
 		row, col := cell[0], cell[1]
 		if row >= 0 && row < NumberOfRows && col >= 0 && col < NumberOfColumns {
 			cellContent := g.Panel[row][col]
-			powerupIndex := g.FindPowerupAt(row,col)
+			powerupIndex := g.FindPowerupAt(row, col)
 			if cellContent == "" && powerupIndex != -1 {
 				g.EatPowerup(playerIndex, powerupIndex)
 			}
