@@ -62,7 +62,7 @@ func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) 
 	log.Printf("Player %d disconnected\n", playerIndex)
     delete(g.PlayersConnections, playerIndex)
     g.Mu.Lock()
-    if playerIndex < len(g.Players) && g.Players[playerIndex].Lives > 0 {
+    if playerIndex < len(g.Players) {
         log.Printf("Player %d lives before disconnect: %d\n", playerIndex, g.Players[playerIndex].Lives)
         g.PlayerDeath(playerIndex)
     }
