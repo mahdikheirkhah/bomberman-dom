@@ -18,6 +18,7 @@ store.setState({
 	chatMessages: [],
 	gameListenersAttached: false, // Add this flag
 	playerAnimation: new Map(), // For client-side animation
+	powerups: [], // Add this line
 });
 
 const playerMoveTimers = new Map();
@@ -70,6 +71,34 @@ export function handleWebSocket() {
                 case 'bombUpdate':
                 case 'explosion':
                     store.setState({ gameData: { ...store.getState().gameData, panel: message.panel } });
+                    break;
+                case 'AddPowerup':
+                    store.setState({ powerups: [...store.getState().powerups, message.powerup] });
+                    break;
+                case 'RemovePowerup':
+                    store.setState({ powerups: store.getState().powerups.filter(p => p.row !== message.row || p.column !== message.column) });
+                    break;
+                case 'EatBombPowerup':
+                    if (gameData && gameData.players) {
+                        const updatedPlayers = gameData.players.map(p => {
+                            if (p.index === message.player) {
+                                return { ...p, NumberOfBombs: message.numberOfBombs, NumberOfUsedBombs: message.numberOfUsedBombs };
+                            }
+                            return p;
+                        });
+                        store.setState({ gameData: { ...gameData, players: updatedPlayers } });
+                    }
+                    break;
+                case 'EatLifePowerup':
+                    if (gameData && gameData.players) {
+                        const updatedPlayers = gameData.players.map(p => {
+                            if (p.index === message.player) {
+                                return { ...p, lives: message.numberOfLives };
+                            }
+                            return p;
+                        });
+                        store.setState({ gameData: { ...gameData, players: updatedPlayers } });
+                    }
                     break;
                 case 'PD':
                     if (gameData && gameData.players) {
