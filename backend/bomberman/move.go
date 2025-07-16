@@ -20,6 +20,10 @@ func (g *GameBoard) HandleMoveStartMessage(playerIndex int, direction string) {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
 
+	if !g.IsStarted {
+		return
+	}
+
 	player := &g.Players[playerIndex]
 	if player.IsDead {
 		log.Printf("Player %d is dead, cannot start movement.\n", playerIndex)
@@ -74,6 +78,11 @@ func (g *GameBoard) playerMoveLoop(playerIndex int) {
 		select {
 		case <-ticker.C:
 			g.Mu.Lock() // Hold lock for entire operation
+
+			if !g.IsStarted {
+				g.Mu.Unlock()
+				return
+			}
 
 			player := &g.Players[playerIndex]
 			if !player.IsMoving || player.IsDead {
