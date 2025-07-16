@@ -64,41 +64,103 @@ export default function Lobby() {
             gameStatus.dom.textContent = 'Connection error';
         };
     }
+const countdownTimer = createElement('div', {
+    id: 'countdown',
+    style: 'display: none; font-size: 24px; color: white; margin-top: 10px;'
+}, 'Starting in: ', createElement('span', { id: 'countdown-timer' }, '5'), 's');
 
-    function updatePlayerList(players) {
-        playerListContainer.dom.innerHTML = '';
+let countdownInterval = null;
+let countdownSeconds = 5;
 
-        players.forEach((player, index) => {
-            const isHost = index === 0;
-            const isYou = player.id === currentPlayerId;
+function startCountdown() {
+    const countdownEl = document.getElementById('countdown');
+    const timerEl = document.getElementById('countdown-timer');
 
-            let label = isHost ? '👑 Host' : '🧍 Player';
-            if (isYou) label += ' (You)';
+    if (countdownInterval) return;
 
-            const playerDiv = createElement('div', {
-                class: `player ${isHost ? 'host' : ''}`,
-                'data-testid': `player-${player.id}`
-            }, `${label}: ${player.name}`);
+    countdownSeconds = 5;
+    countdownEl.style.display = 'block';
+    timerEl.textContent = countdownSeconds;
 
-            playerListContainer.dom.appendChild(playerDiv.dom || playerDiv);
+    countdownInterval = setInterval(() => {
+        countdownSeconds--;
+        timerEl.textContent = countdownSeconds;
+
+        if (countdownSeconds <= 0) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+            router.navigate('/game'); // or trigger game start
+        }
+    }, 1000);
+}
+
+function stopCountdown() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        const countdownEl = document.getElementById('countdown');
+        if (countdownEl) countdownEl.style.display = 'none';
+    }
+}
+// // function toggleReady(playerId) {
+//     fetch(`http://${APIUrl}/api/toggle-ready`, {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ playerId })
+//     });
+// // }
+const statusDot = createElement('span', {
+  class: `status-indicator ${player.ready ? 'status-ready' : 'status-waiting'}`
+});
+
+const playerDiv = createElement('div', {
+  class: `player-card ${isYou ? 'you' : ''}`
+}, avatar, name, statusDot);
+
+function updatePlayerList(players) {
+    playerListContainer.dom.innerHTML = '';
+
+    let readyCount = 0;
+
+    players.forEach((player, index) => {
+        const isHost = index === 0;
+        const isYou = player.id === currentPlayerId;
+        const isReady = player.ready; // assuming your WebSocket message includes this field
+        if (isReady) readyCount++;
+
+        const avatar = createElement('img', {
+            src: `public/assets/penguin${index + 1}.png`,
+            class: 'player-avatar'
         });
 
-        if (players.length >= 2 && players[0].id === currentPlayerId) {
-            const startBtn = createElement('button', {
-                id: 'start-game',
-                onclick: () => {
-                    fetch(`http://${APIUrl}/api/start`, { method: 'POST' });
-                }
-            }, 'Start Game');
-            playerListContainer.dom.appendChild(startBtn.dom || startBtn);
-        }
-    }
+        const name = createElement('span', {
+            class: 'player-name'
+        }, `${player.name}${isHost ? ' 👑' : ''}${isYou ? ' (You)' : ''}`);
 
-    // Leave lobby button
-    const leaveButton = createElement('button', {
-        id: 'leave-lobby',
-        onclick: () => {
-            location.reload(); // or implement a route
+        const statusDot = createElement('span', {
+            class: `status-indicator ${isReady ? 'status-ready' : 'status-waiting'}`
+        });
+
+        const playerDiv = createElement('div', {
+            class: `player-card ${isYou ? 'you' : ''}`,
+            onclick: isYou ? () => toggleReady(player.id) : null
+        }, avatar, name, statusDot);
+
+        playerListContainer.dom.appendChild(playerDiv.dom || playerDiv);
+    });
+
+    if (readyCount >= 2 && players.find(p => p.id === currentPlayerId)?.ready) {
+        startCountdown(); // you'll define this
+    } else {
+        stopCountdown();
+    }
+}
+
+// Leave lobby button
+const leaveButton = createElement('button', {
+    id: 'leave-lobby',
+    onclick: () => {
+        location.reload(); // or implement a route
         }
     }, 'Leave Lobby');
 
@@ -131,6 +193,7 @@ export default function Lobby() {
         createElement('p', {}, 'Game Status: ', gameStatus),
         createElement('h3', {}, 'Players in the lobby:'),
         playerListContainer,
+        countdownTimer,
         leaveButton
     );
 

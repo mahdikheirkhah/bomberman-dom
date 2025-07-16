@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bomberman Lobby</title>
+  <title> Bomboino Lobby</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      background: url('public/bg.jpeg') no-repeat  center fixed;
+      background: url('lobby/images/lobbyTimer.gif') no-repeat  center fixed;
       background-size: cover;
       font-family: 'Press Start 2P', cursive;
       color: white;
@@ -59,15 +59,31 @@
 </head>
 <body>
   <div class="lobby-box">
-    <h1>💣 Bomberman Lobby 💣</h1>
+    <h1> Bomboino Lobby </h1>
     <div class="waiting">Waiting for players to join...</div>
-    <div class="player-list">
-      <div class="player">🧍‍♂️ Player 1 (You)</div>
-      <div class="player">⏳ Player 2</div>
-      <div class="player">⏳ Player 3</div>
-      <div class="player">⏳ Player 4</div>
-    </div>
+     <div class="player-list">
+  <div class="player-box" id="player1">
+    <img class="avatar" src="lobby/images/black-penguin.png" alt="Player 1 Avatar" />
+    <span class="player-name">Player 1 (You)</span>
+    <button class="ready-toggle" onclick="toggleReady(this)">Ready</button>
   </div>
+
+  <div class="player-box" id="player2">
+    <img class="avatar" src="lobby/images/red-penguin.png" alt="Player 2 Avatar" />
+    <span class="player-name">Player 2</span>
+    <button class="ready-toggle" onclick="toggleReady(this)">Ready</button>
+  </div>
+  
+  <div class="player-box" id="player3">
+    <img class="avatar" src="lobby/images/blue-penguin.png" alt="Player 3 Avatar" />
+    <span class="player-name">Player 3</span>
+    <button class="ready-toggle" onclick="toggleReady(this)">Ready</button>
+  </div>
+  <div class="player-box" id="player4">
+    <img class="avatar" src="lobby/images/green-penguin.png" alt="Player 4 Avatar" />
+    <span class="player-name">Player 4</span>
+    <button class="ready-toggle" onclick="toggleReady(this)">Ready</button>
+</div>
 </body>
 </html>
 <audio autoplay loop>
@@ -80,33 +96,20 @@
     window.location.href = 'game.html'; // Or actual game URL
   }
 </script>
-<script>
-  // Simulate player joining
-  let players = ['Player 1 (You)', 'Player 2', 'Player 3', 'Player 4'];
-  let playerList = document.querySelector('.player-list');
 
-  function updatePlayerList() {
-    playerList.innerHTML = '';
-    players.forEach(player => {
-      let playerDiv = document.createElement('div');
-      playerDiv.className = 'player';
-      playerDiv.textContent = `🧍‍♂️ ${player}`;
-      playerList.appendChild(playerDiv);
-    });
-  }
 
   // Simulate players joining every few seconds
-  setTimeout(() => {
-    players[1] = 'Player 2';
-    updatePlayerList();
-  }, 2000);
+  // // setTimeout(() => {
+  //   players[1] = 'Player 2';
+  //   updatePlayerList();
+  // }, 2000);
 
-  setTimeout(() => {
-    players[2] = 'Player 3';
-    updatePlayerList();
-  }, 4000);
+  // setTimeout(() => {
+  //   players[2] = 'Player 3';
+  //   updatePlayerList();
+  // }, 4000);
 
-  setTimeout(() => {
-    players[3] = 'Player 4';
-    updatePlayerList();
-  }, 6000);
+  // setTimeout(() => {
+  //   players[3] = 'Player 4';
+  //   updatePlayerList();
+  // }, 6000);
