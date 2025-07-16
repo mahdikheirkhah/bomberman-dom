@@ -420,7 +420,7 @@ func (g *GameBoard) ProcessRespawns() {
 		if now.After(respawn.RespawnTime) {
 			g.RespawnPlayer(respawn.PlayerIndex)
 			player := g.Players[respawn.PlayerIndex]
-			player.IsHurt = false
+			g.Players[respawn.PlayerIndex].IsHurt = false
 			msg := struct {
 				Type        string `json:"type"`
 				PlayerIndex int    `json:"playerIndex"`
