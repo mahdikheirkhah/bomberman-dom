@@ -24,7 +24,6 @@ type StateMsg struct {
 	State string `json:"state"`
 }
 
-var once sync.Once
 var LobbyMsg bool
 
 var lobbyCountdownTimer = 1 // 20 for production
@@ -85,7 +84,7 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 	g.SendMsgToChannel(playerListMsg, -1) // -1 sends to all
 
 	go g.HandlePlayerMessages(playerIndex, conn)
-
+	var once sync.Once
 	if g.NumberOfPlayers == MinNumberOfPlayers {
 		log.Println("Minimum number of players reached. Starting countdown.")
 		// Start countdown only once

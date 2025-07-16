@@ -244,3 +244,53 @@ func InitGame() *GameBoard {
 	g.StartBombWatcher()
 	return g
 }
+func (g *GameBoard) CheckGameEnd() {
+	livePlayers := 0
+	var lastPlayer Player
+	for _, player := range g.Players {
+		if player.Lives > 0 {
+			livePlayers++
+			lastPlayer = player
+			log.Printf("Player %s is alive with %d lives\n", player.Name, player.Lives)
+		}
+	}
+	if livePlayers <= 1 && g.IsStarted {
+		log.Println("Game end checker started")
+		g.IsStarted = false
+		msg := map[string]interface{}{
+			"type":   "GameState",
+			"state":  "GameOver",
+			"winner": lastPlayer.Index,
+			"player": lastPlayer,
+		}
+		g.SendMsgToChannel(msg, -1)
+		log.Printf("Game over! Winner is player %d\n", lastPlayer.Index)
+		go func() {
+			time.Sleep(10 * time.Second)
+			g.ResetGame()
+		}()
+	}
+}
+func (g *GameBoard) ResetGame() {
+	g.Mu.Lock()
+	for conn := range g.PlayersConnections {
+		g.PlayersConnections[conn].Close()
+	}
+	g.Players = []Player{}
+	g.Bombs = []Bomb{}
+	g.Powerups = []Powerup{}
+	g.PendingRespawns = []PlayerRespawn{}
+	g.NumberOfPlayers = 0
+	g.IsStarted = false
+	g.ExplodedCells = []ExplodedCellInfo{}
+	g.CellSize = CellSize
+	g.BroadcastChannel = make(chan interface{}, 100)
+	g.PlayersConnections = make(map[int]*websocket.Conn)
+	g.Panel = [NumberOfRows][NumberOfColumns]string{}
+	g.RandomStart()
+	LobbyMsg = false
+	g.Mu.Unlock()
+	go g.StartBombWatcher()
+	go g.StartBroadcaster()
+	log.Println("Game reset. Waiting for players to join.")
+}
