@@ -2,15 +2,15 @@ package main
 
 import (
 	"backend/bomberman"
-	"fmt"
 	"log"
 	"net/http"
 )
 
 func main() {
 	game := bomberman.InitGame()
-	game.StartBroadcaster()
-	fmt.Println(game.Panel)
+	game.RandomStart()
+	go game.StartBroadcaster()
+
 	// Bind the /ws route
 	http.HandleFunc("/ws", game.HandleWSConnections)
 
