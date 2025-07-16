@@ -157,6 +157,7 @@ func (g *GameBoard) DamagePlayer(playerIndex int) {
 			Color:       player.Color,
 			PlayerIndex: playerIndex,
 		}
+		g.Players[playerIndex].IsHurt = true
 		g.SendMsgToChannel(msg, -1)
 	}
 }
@@ -419,6 +420,7 @@ func (g *GameBoard) ProcessRespawns() {
 		if now.After(respawn.RespawnTime) {
 			g.RespawnPlayer(respawn.PlayerIndex)
 			player := g.Players[respawn.PlayerIndex]
+			player.IsHurt = false
 			msg := struct {
 				Type        string `json:"type"`
 				PlayerIndex int    `json:"playerIndex"`
