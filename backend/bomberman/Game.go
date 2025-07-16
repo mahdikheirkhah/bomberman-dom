@@ -273,6 +273,9 @@ func (g *GameBoard) CheckGameEnd() {
 }
 func (g *GameBoard) ResetGame() {
 	g.Mu.Lock()
+	for conn := range g.PlayersConnections {
+		g.PlayersConnections[conn].Close()
+	}
 	g.Players = []Player{}
 	g.Bombs = []Bomb{}
 	g.Powerups = []Powerup{}
@@ -280,9 +283,6 @@ func (g *GameBoard) ResetGame() {
 	g.NumberOfPlayers = 0
 	g.IsStarted = false
 	g.ExplodedCells = []ExplodedCellInfo{}
-	for conn := range g.PlayersConnections {
-		g.PlayersConnections[conn].Close()
-	}
 	g.CellSize = CellSize
 	g.BroadcastChannel = make(chan interface{}, 100)
 	g.PlayersConnections = make(map[int]*websocket.Conn)
