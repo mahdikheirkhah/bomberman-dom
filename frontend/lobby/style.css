@@ -1,7 +1,7 @@
 body {
   margin: 0;
   padding: 0;
-  background: url('lobbypublic/images/background.jpg') no-repeat center center fixed;
+  background: url('./images/lobbyTimer.gif') no-repeat center center fixed;
   background-size: cover;
   font-family: 'Press Start 2P', cursive;
   color: white;
