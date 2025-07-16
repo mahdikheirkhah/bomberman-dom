@@ -71,10 +71,11 @@ func (g *GameBoard) HandleBombMessage(msgMap map[string]interface{}) {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
 	bombIndex, err := g.CreateBomb(playerIndex)
-	if err != nil {
+	if err != nil || bombIndex == -1 {
 		log.Println("Error creating bomb:", err)
 		return
 	}
+	log.Println("Bomb created by player", playerIndex, "at", g.Bombs[bombIndex].Row, g.Bombs[bombIndex].Column)
 	var msg PlantBomb
 	msg.MsgType = "BA" //Bomb Accepted
 	msg.Column = g.Bombs[bombIndex].Column
@@ -228,6 +229,12 @@ func (g *GameBoard) CanCreateBomb(playerIndex int) bool {
 	if playerIndex < 0 || playerIndex >= len(g.Players) {
 		return false
 	}
+	for i := range g.Bombs {
+		if g.Bombs[i].Row == g.Players[playerIndex].Row && g.Bombs[i].Column == g.Players[playerIndex].Column {
+			log.Printf("Player %s cannot place bomb: already a bomb at this location.\n", g.Players[playerIndex].Name)
+			return false
+		}
+	}
 	return g.Players[playerIndex].NumberOfUsedBombs < g.Players[playerIndex].NumberOfBombs
 }
 
@@ -268,7 +275,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: row, Col: bombCol})
 		if g.Panel[row][bombCol] == "D" {
-			g.CreatePowerupWithChance(row, bombCol) // Uncomment if you have this function
+			g.CreatePowerupWithChance(row, bombCol)
 			break
 		}
 	}
@@ -279,7 +286,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: row, Col: bombCol})
 		if g.Panel[row][bombCol] == "D" {
-			g.CreatePowerupWithChance(row, bombCol) // Uncomment if you have this function
+			g.CreatePowerupWithChance(row, bombCol)
 			break
 		}
 	}
@@ -290,7 +297,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: col})
 		if g.Panel[bombRow][col] == "D" {
-			g.CreatePowerupWithChance(bombRow, col) // Uncomment if you have this function
+			g.CreatePowerupWithChance(bombRow, col)
 			break
 		}
 	}
@@ -301,7 +308,7 @@ func (g *GameBoard) CalculateBombRange(bombRow, bombCol, bombRange int) []Positi
 		}
 		affectedPositions = append(affectedPositions, Position{Row: bombRow, Col: col})
 		if g.Panel[bombRow][col] == "D" {
-			g.CreatePowerupWithChance(bombRow, col) // Uncomment if you have this function
+			g.CreatePowerupWithChance(bombRow, col)
 			break
 		}
 	}
@@ -459,6 +466,7 @@ func (g *GameBoard) checkBombs() {
 	now := time.Now()
 
 	for _, bomb := range g.Bombs {
+
 		if now.After(bomb.ExplosionTime) {
 			g.ApplyExplosion(bomb)
 		} else {
