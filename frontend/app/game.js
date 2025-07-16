@@ -274,7 +274,18 @@ export default function Game() {
     }
 
     if (!gameStarted || !gameData) {
-        return createElement('div', { class: 'game-container' },
+        const countdownNumber = countdown > 10 ? 10 : countdown;
+        return createElement('div', { class: 'game-container countdown-bg' },
+            createElement('img', { src: '/public/ice1.png', class: 'ice-image ice1' }),
+            createElement('img', { src: '/public/ice2.png', class: 'ice-image ice2' }),
+            createElement('div', { class: 'ice-image ice3-container' },
+                createElement('img', { src: '/public/ice3.png', class: 'ice3-image' }),
+                createElement('div', { class: 'screen-container' },
+                    createElement('img', { src: '/public/screen.png', class: 'screen-image' }),
+                    countdown !== null ? createElement('img', { src: `/public/${countdownNumber}.png`, class: 'countdown-number' }) : null
+                )
+            ),
+            createElement('img', { src: '/public/ice4.png', class: 'ice-image ice4' }),
             createElement('h1', {}, 'Bmbrmn'),
             countdown !== null ? createElement('h2', {}, `Game starting in ${countdown}s`) : null,
             gameStarted ? createElement('h1', {}, 'Game in Progress') : null

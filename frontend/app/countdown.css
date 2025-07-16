@@ -1,0 +1,64 @@
+.countdown-bg {
+    background-image: url('/public/countdownBG.jpg');
+    background-size: cover;
+    background-position: center;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+.ice-image {
+    position: absolute;
+    max-width: 70%; /* Adjust as needed */
+    height: auto;
+}
+
+.ice1 {
+    top: 5%;
+    left: 5%;
+}
+
+.ice2 {
+    top: 35%;
+    right: 1%;
+}
+
+.ice3-image {
+    width: 100%;
+}
+
+.ice4 {
+    bottom: 0px;
+    right: 0px;
+}
+
+.ice3-container {
+    bottom: 100px;
+    left: 0px;
+    position: absolute;
+    width: 60%;
+}
+
+
+
+.screen-container {
+    position: absolute;
+    top: 10%; 
+    left: 15%;
+    width: 70%;
+    transform: translate(7%, -93%);
+}
+
+.screen-image {
+    width: 30%;
+}
+
+.countdown-number {
+    position: absolute;
+    /* top: 50%;
+    left: 50%; */
+    transform: translate(-110%, 43%);
+    width: 20%;
+    height: auto;
+}
