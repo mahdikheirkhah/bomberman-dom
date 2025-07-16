@@ -121,7 +121,7 @@ body {
     justify-content: center;
     gap: 20px;
     padding-bottom: 20px;
-    border-bottom: 1px solid #ccc;
+    /* border-bottom: 1px solid #ccc; */
 }
 
 .player-card {
@@ -177,6 +177,8 @@ body {
     flex-direction: column;
     position: relative;
     background: radial-gradient(circle, #199a9ed1 0%, #004878 100%);
+    align-self: flex-start;
+    transform-origin: top;
 }
 
 .game-grid.explosion {
