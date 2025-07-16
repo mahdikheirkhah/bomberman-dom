@@ -34,8 +34,8 @@ type GameBoard struct {
 	IsStarted          bool
 	ExplodedCells      []ExplodedCellInfo `json:"explodedCells"`
 	PlayersConnections map[int]*websocket.Conn
-
-	BroadcastChannel chan interface{}
+	powerupChosen      map[string]int
+	BroadcastChannel   chan interface{}
 
 	Mu sync.Mutex
 }
@@ -240,6 +240,7 @@ func InitGame() *GameBoard {
 		NumberOfPlayers:    0,
 		PlayersConnections: make(map[int]*websocket.Conn),
 		BroadcastChannel:   make(chan interface{}, 100),
+		powerupChosen:      make(map[string]int),
 	}
 	g.StartBombWatcher()
 	return g
@@ -288,6 +289,7 @@ func (g *GameBoard) ResetGame() {
 	g.PlayersConnections = make(map[int]*websocket.Conn)
 	g.Panel = [NumberOfRows][NumberOfColumns]string{}
 	g.RandomStart()
+	g.powerupChosen = make(map[string]int)
 	LobbyMsg = false
 	g.Mu.Unlock()
 	go g.StartBombWatcher()

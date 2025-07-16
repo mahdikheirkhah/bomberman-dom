@@ -40,30 +40,75 @@ func (g *GameBoard) ShowPowerup(PowerUpIndex int) {
 }
 
 func (g *GameBoard) CreatePowerupWithChance(row, column int) {
-	if rand.Float64() > 0.3 { // 30% chance to create a powerup
-		return
-	}
+	// 30% chance to create a powerup
+	// if rand.Float64() > 0.3 {
+	// 	return
+	// }
+
+	// Check if a powerup already exists at this location
 	if g.FindPowerupAt(row, column) != -1 {
 		log.Println("Powerup already exists at this location")
-		return // Powerup already exists at this location
+		return
 	}
-	var Powerup Powerup
-	Powerup.Row = row
-	Powerup.Column = column
-	Powerup.IsHidden = true
-	Powerup.Type = PowerupTypes[rand.Intn(len(PowerupTypes))]
-	switch Powerup.Type {
+
+	// Calculate weights for each powerup type
+	// Powerups chosen less frequently will have higher weights
+	weights := make(map[string]float64)
+	totalWeight := 0.0
+
+	// Calculate inverse frequency as weight. Add 1 to denominator to avoid division by zero
+	// and to ensure even types with 0 count have a weight.
+	for _, pType := range PowerupTypes {
+		// The lower the count, the higher the weight
+		weight := 1.0 / float64(g.powerupChosen[pType]+1)
+		weights[pType] = weight
+		totalWeight += weight
+	}
+
+	// Generate a random number within the total weight
+	r := rand.Float64() * totalWeight
+
+	// Select the powerup type based on weighted chance
+	var chosenType string
+	currentWeightSum := 0.0
+	for _, pType := range PowerupTypes {
+		currentWeightSum += weights[pType]
+		if r <= currentWeightSum {
+			chosenType = pType
+			break
+		}
+	}
+
+	// If for some reason no type was chosen (shouldn't happen with correct weights),
+	// fall back to a simple random selection.
+	if chosenType == "" {
+		chosenType = PowerupTypes[rand.Intn(len(PowerupTypes))]
+	}
+
+	// Create the powerup instance
+	var powerup Powerup
+	powerup.Row = row
+	powerup.Column = column
+	powerup.IsHidden = true
+	powerup.Type = chosenType
+
+	// Increment the count for the chosen powerup type
+	g.powerupChosen[powerup.Type]++
+
+	// Assign value based on type
+	switch powerup.Type {
 	case "ExtraBomb":
-		Powerup.Value = 1
+		powerup.Value = 1
 	case "BombRange":
-		Powerup.Value = 1
+		powerup.Value = 1
 	case "ExtraLife":
-		Powerup.Value = 1
+		powerup.Value = 1
 	case "SpeedBoost":
-		Powerup.Value = 2
+		powerup.Value = 2
 	}
-	log.Println("Powerup added ", Powerup)
-	g.Powerups = append(g.Powerups, Powerup)
+
+	log.Println("Powerup added:", powerup)
+	g.Powerups = append(g.Powerups, powerup)
 }
 
 func (g *GameBoard) RemovePowerup(PowerupIndex int) {
