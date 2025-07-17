@@ -13,6 +13,7 @@ func main() {
 
 	// Bind the /ws route
 	http.HandleFunc("/ws", game.HandleWSConnections)
+	http.HandleFunc("/checkName", game.CheckNameHandler)
 
 	// Start the server
 	log.Println("Server started at :8080")

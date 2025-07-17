@@ -37,15 +37,6 @@ type Player struct {
 
 const PlayerSize = 48
 
-func (g *GameBoard) IsPlayerNameTaken(name string) bool {
-	for _, p := range g.Players {
-		if p.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
 func (g *GameBoard) CreatePlayer(name string) error {
 	var player Player
 	if !g.CanCreateNewPlayer() {
