@@ -134,7 +134,7 @@ export function handleWebSocket() {
                     }
                     break;
                 case 'gameOver':
-                    store.setState({ currentView: 'start', gameStarted: false, gameData: null, countdown: null, players: [], chatMessages: [] });
+                    store.setState({ currentView: 'start', gameStarted: false, gameData: null, countdown: null, players: [] });
                     router.navigate('/');
                     break;
                 case 'PR': // Player Respawn

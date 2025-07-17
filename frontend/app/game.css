@@ -298,6 +298,7 @@ body {
     position: relative; /* Needed for the handle */
     min-width: 250px; /* Minimum chat width */
     max-width: 600px; /* Maximum chat width */
+    z-index: 10000; /* Ensure chat is above other elements */
 }
 
 .resize-handle {
@@ -430,6 +431,15 @@ body {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+
+.countdown-bg .game-chat {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    height: 400px;
+
+}
 
 .bomb-image {
     width: 98%;

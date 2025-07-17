@@ -1,7 +1,8 @@
 import { createElement, store } from '../framework/framework.js';
+import { renderChat } from './chat.js';
 
 export default function Lobby() {
-    const { players, countdown, playerId } = store.getState();
+    const { players, countdown, playerId, chatMessages } = store.getState();
 
     const playerList = players.map(player => {
         const isYou = player.name === playerId;
@@ -11,8 +12,6 @@ export default function Lobby() {
     const playersJoined = players.length;
 
     return createElement('div', { class: 'countdown-bg' },
-        createElement('link', { rel: 'stylesheet', href: '/app/countdown.css' }),
-        createElement('link', { rel: 'stylesheet', href: '/app/modal.css' }),
         createElement('img', { src: '/public/ice1.png', class: 'ice-image ice1' }),
         createElement('img', { src: '/public/ice2.png', class: 'ice-image ice2' }),
         createElement('div', { class: 'ice3-container' },
@@ -28,6 +27,7 @@ export default function Lobby() {
                 countdown !== null ? createElement('h3', {}, `Waiting for more players ${countdown}s`) : null,
                 createElement('div', { id: 'player-list' }, ...playerList)
             )
-        )
+        ),
+        renderChat(chatMessages || [])
     );
 }
