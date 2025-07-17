@@ -274,54 +274,78 @@ export default function Game() {
     }
 
     if (!gameStarted || !gameData) {
-        const countdownNumber = countdown > 10 ? 10 : countdown;
+            const countdownNumber = countdown > 10 ? 10 : countdown;
 
-        if (!window.penguinInterval) {
-            let x = 0;
-            let direction = 'right';
-            window.penguinInterval = setInterval(() => {
-                const penguin = document.querySelector('.penguin');
-                if (penguin) {
-                    penguin.classList.add('moving');
+            const powerupTypes = [
+                { name: 'Extra Bomb', image: '/public/extrab.webp', description: 'Increases bomb capacity by one.' },
+                { name: 'Bomb Range', image: '/public/extrab.webp', description: 'Increases bomb explosion range.', plus: true },
+                { name: 'Extra Life', image: '/public/life.webp', description: 'Grants an extra life.' },
+                { name: 'Speed Boost', image: '/public/fast.webp', description: 'Increases movement speed.' }
+            ];
 
-                    if (direction === 'right' && x >= 150) {
-                        direction = 'left';
-                    } else if (direction === 'left' && x <= 0) {
-                        direction = 'right';
-                    }
+            const powerupElements = powerupTypes.map(powerup => {
+                return createElement('div', { class: 'powerup-item' },
+                    createElement('img', { src: powerup.image }),
+                    createElement('span', {}, `${powerup.name}: ${powerup.description}`),
+                    powerup.plus ? createElement('div', { class: 'power-up-plus' }, '+') : null
+                );
+            });
 
-                    if (direction === 'right') {
-                        x += 1;
-                        penguin.classList.remove('face-l');
-                        penguin.classList.add('face-r');
-                    } else {
-                        x -= 1;
-                        penguin.classList.remove('face-r');
-                        penguin.classList.add('face-l');
-                    }
-
-                    penguin.style.transform = `translateX(${x}px)`;
-                }
-            }, 20); // более частые и мелкие шаги
-        }
-
-
-
-        return createElement('div', { class: 'game-container countdown-bg' },
-            createElement('img', { src: '/public/ice1.png', class: 'ice-image ice1' }),
-            createElement('img', { src: '/public/ice2.png', class: 'ice-image ice2' }),
-            createElement('div', { class: 'ice-image ice3-container' },
-                createElement('img', { src: '/public/ice3.png', class: 'ice3-image' }),
-                createElement('div', { class: 'screen-container' },
-                    createElement('img', { src: '/public/screen.png', class: 'screen-image' }),
-                    countdown !== null ? createElement('img', { src: `/public/${countdownNumber}.png`, class: 'countdown-number' }) : null
+            const modal = createElement('div', { id: 'instructions-modal', class: 'modal' },
+                createElement('div', { class: 'modal-content' },
+                    createElement('h2', {}, 'How to Play'),
+                    createElement('p', {}, 'Use the arrow keys to move your penguin.'),
+                    createElement('p', {}, 'Press the spacebar to drop a bomb.'),
+                    createElement('h2', {}, 'Power-ups'),
+                    createElement('div', { id: 'powerups-container' }, ...powerupElements)
                 )
-            ),
-            createElement('div', { class: 'ice-image ice4-container' },
-                createElement('img', { src: '/public/ice4.png', class: 'ice4-image' }),
-                createElement('div', { class: 'penguin face-r' })
-            )
-        );
+            );
+
+            if (!window.penguinInterval) {
+                let x = 0;
+                let direction = 'right';
+                window.penguinInterval = setInterval(() => {
+                    const penguin = document.querySelector('.penguin');
+                    if (penguin) {
+                        penguin.classList.add('moving');
+
+                        if (direction === 'right' && x >= 150) {
+                            direction = 'left';
+                        } else if (direction === 'left' && x <= 0) {
+                            direction = 'right';
+                        }
+
+                        if (direction === 'right') {
+                            x += 1;
+                            penguin.classList.remove('face-l');
+                            penguin.classList.add('face-r');
+                        } else {
+                            x -= 1;
+                            penguin.classList.remove('face-r');
+                            penguin.classList.add('face-l');
+                        }
+
+                        penguin.style.transform = `translateX(${x}px)`;
+                    }
+                }, 20); // более частые и мелкие шаги
+            }
+
+            return createElement('div', { class: 'game-container countdown-bg' },
+                modal,
+                createElement('img', { src: '/public/ice1.png', class: 'ice-image ice1' }),
+                createElement('img', { src: '/public/ice2.png', class: 'ice-image ice2' }),
+                createElement('div', { class: 'ice-image ice3-container' },
+                    createElement('img', { src: '/public/ice3.png', class: 'ice3-image' }),
+                    createElement('div', { class: 'screen-container' },
+                        createElement('img', { src: '/public/screen.png', class: 'screen-image' }),
+                        countdown !== null ? createElement('img', { src: `/public/${countdownNumber}.png`, class: 'countdown-number' }) : null
+                    )
+                ),
+                createElement('div', { class: 'ice-image ice4-container' },
+                    createElement('img', { src: '/public/ice4.png', class: 'ice4-image' }),
+                    createElement('div', { class: 'penguin face-r' })
+                )
+            );
     }
 
     // Request animation frame to ensure the grid is rendered before resizing
