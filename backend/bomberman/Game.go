@@ -15,6 +15,8 @@ const NumberOfColumns = 13
 const MaxNumberOfPlayers = 4
 const MinNumberOfPlayers = 2
 const CellSize = 50
+var lobbyCountdownTimer = 10  // 20 for production
+var startCountdownTimer = 10 // 10 for production
 
 var Colors = []string{"G", "Y", "R", "B"}
 

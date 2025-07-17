@@ -278,7 +278,7 @@ export default function Game() {
 
             const powerupTypes = [
                 { name: 'Extra Bomb', image: '/public/extrab.webp', description: 'Increases bomb capacity by one.' },
-                { name: 'Bomb Range', image: '/public/extrab.webp', description: 'Increases bomb explosion range.', plus: true },
+                { name: 'Bomb Range', image: '/public/extrab.webp', description: 'Increases bomb explosion range.' },
                 { name: 'Extra Life', image: '/public/life.webp', description: 'Grants an extra life.' },
                 { name: 'Speed Boost', image: '/public/fast.webp', description: 'Increases movement speed.' }
             ];
@@ -286,8 +286,7 @@ export default function Game() {
             const powerupElements = powerupTypes.map(powerup => {
                 return createElement('div', { class: 'powerup-item' },
                     createElement('img', { src: powerup.image }),
-                    createElement('span', {}, `${powerup.name}: ${powerup.description}`),
-                    powerup.plus ? createElement('div', { class: 'power-up-plus' }, '+') : null
+                    createElement('span', {}, `${powerup.name}: ${powerup.description}`)
                 );
             });
 
@@ -297,7 +296,7 @@ export default function Game() {
                     createElement('p', {}, 'Use the arrow keys to move your penguin.'),
                     createElement('p', {}, 'Press the spacebar to drop a bomb.'),
                     createElement('h2', {}, 'Power-ups'),
-                    createElement('div', { id: 'powerups-container' }, ...powerupElements)
+                    createElement('div', { id: 'powerups-container', class: 'powerups-container' }, ...powerupElements)
                 )
             );
 
@@ -327,7 +326,7 @@ export default function Game() {
 
                         penguin.style.transform = `translateX(${x}px)`;
                     }
-                }, 20); // более частые и мелкие шаги
+                }, 20); 
             }
 
             return createElement('div', { class: 'game-container countdown-bg' },

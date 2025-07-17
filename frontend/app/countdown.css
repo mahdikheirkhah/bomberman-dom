@@ -1,3 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Supercell-Magic:wght@400;700&display=swap');
+
+body {
+    font-family: 'Supercell-Magic', sans-serif;
+}
+
 .countdown-bg {
     background-image: url('/public/countdownBG.jpg');
     background-size: cover;
@@ -37,14 +43,18 @@
     right: 0px;
     position: absolute;
     /* width: 30%; */
-    width: auto; /* Можно указать конкретно, если хочешь */
+    width: auto;
+    /* Можно указать конкретно, если хочешь */
     height: auto;
 }
 
 .ice4-image {
-    width: 400px;  /* фиксированная ширина */
-    height: auto; /* фиксированная высота */
-    object-fit: contain; /* или cover, если хочешь контролировать поведение */
+    width: 400px;
+    /* фиксированная ширина */
+    height: auto;
+    /* фиксированная высота */
+    object-fit: contain;
+    /* или cover, если хочешь контролировать поведение */
 }
 
 
@@ -102,4 +112,16 @@
 
 .penguin.moving {
     animation: walk-animation 0.2s steps(2) infinite;
+}
+
+.powerups-container {
+    text-align: left;
+    padding-left: 3rem;
+}
+
+.powerup-item {
+    display: flex;
+    align-items: center;
+    margin: 0 15px;
+    gap: 15px;
 }

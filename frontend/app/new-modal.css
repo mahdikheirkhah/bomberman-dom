@@ -27,10 +27,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* backdrop-filter: blur(8px); */
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
 }
 
 .modal-content {
+    background-image: url('/public/cover.jpg');
     background-size: cover;
     background-position: center;
     padding: 20px;
@@ -39,11 +41,10 @@ body {
     width: 90%;
     max-width: 550px;
     color: #fff;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0,0,0,0.5);
     text-align: center;
     position: relative;
     transform: scale(0.95);
-    background-color: rgba(0, 0, 0, 0.6);
     animation: modal-enter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
@@ -52,7 +53,6 @@ body {
         opacity: 0;
         transform: scale(0.8);
     }
-
     to {
         opacity: 1;
         transform: scale(1);

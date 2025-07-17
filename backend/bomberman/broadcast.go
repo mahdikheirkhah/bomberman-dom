@@ -29,8 +29,6 @@ type StateMsg struct {
 
 var LobbyMsg bool
 
-var lobbyCountdownTimer = 1  // 20 for production
-var startCountdownTimer = 10 // 10 for production
 
 // CheckNameHandler handles HTTP requests to check if a player name is already taken or if the game is started.
 // It expects a 'name' query parameter.
