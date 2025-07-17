@@ -27,20 +27,20 @@ const joinHandler = async (e) => {
 
 export default function Start() {
 	const { error } = store.getState();
-
+console.log(error)
 	return createElement('div', { class: 'start-wrapper' },
 		createElement('div', { class: 'bg-blur' }),
 		createElement('div', { class: 'bg-main' },
 			createElement('div', { class: 'start-container' },
 				createElement('div', { class: 'start-form' },
+					createElement('p', { class: error==='' ? 'hidden' : 'error-message' }, error),
 					createElement('input', {
 						type: 'text',
 						id: 'name-input',
 						placeholder: 'Enter your name',
 						onkeydown: joinHandler
 					}),
-					createElement('button', { class: 'join-button', onclick: joinHandler }, 'Join Game'),
-					error ? createElement('p', { class: 'error' }, error) : null
+					createElement('button', { class: 'join-button', onclick: joinHandler}, 'Join Game')
 				)
 			)
 		)

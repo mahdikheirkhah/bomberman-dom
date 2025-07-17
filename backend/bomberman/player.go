@@ -37,10 +37,24 @@ type Player struct {
 
 const PlayerSize = 48
 
+func (g *GameBoard) IsPlayerNameTaken(name string) bool {
+	for _, p := range g.Players {
+		if p.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 func (g *GameBoard) CreatePlayer(name string) error {
 	var player Player
 	if !g.CanCreateNewPlayer() {
 		return errors.New("max number of players of has been reached")
+	}
+	for _, p := range g.Players {
+		if p.Name == name {
+			return errors.New("player name is already taken")
+		}
 	}
 	player.Index = g.NumberOfPlayers
 	player.Name = name
