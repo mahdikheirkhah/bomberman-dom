@@ -1,0 +1,105 @@
+.countdown-bg {
+    background-image: url('/public/countdownBG.jpg');
+    background-size: cover;
+    background-position: center;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+.ice-image {
+    position: absolute;
+    max-width: 70%;
+    /* Adjust as needed */
+    height: auto;
+    width: 70%;
+}
+
+.ice1 {
+    top: 5%;
+    left: 5%;
+}
+
+.ice2 {
+    top: 35%;
+    right: 1%;
+}
+
+.ice3-image {
+    width: 100%;
+    z-index: 100;
+    position: relative;
+}
+
+.ice4-container {
+    bottom: 0px;
+    right: 0px;
+    position: absolute;
+    /* width: 30%; */
+    width: auto; /* Можно указать конкретно, если хочешь */
+    height: auto;
+}
+
+.ice4-image {
+    width: 400px;  /* фиксированная ширина */
+    height: auto; /* фиксированная высота */
+    object-fit: contain; /* или cover, если хочешь контролировать поведение */
+}
+
+
+.ice3-container {
+    bottom: 100px;
+    left: 0px;
+    position: absolute;
+    width: 60%;
+}
+
+
+
+.screen-container {
+    position: absolute;
+    top: 10%;
+    left: 15%;
+    width: 70%;
+    transform: translate(7%, -93%);
+}
+
+.screen-image {
+    width: 30%;
+}
+
+
+.countdown-number {
+    position: absolute;
+    /* top: 50%;
+    left: 50%; */
+    transform: translate(-110%, 43%);
+    width: 20%;
+    height: auto;
+}
+
+.penguin {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    background-image: url('/public/G.png');
+    background-size: 192px 96px;
+    background-repeat: no-repeat;
+    bottom: 100px;
+    left: 40px;
+    transition: transform 0.2s linear;
+    will-change: transform;
+}
+
+.penguin.face-r {
+    background-position-x: -96px;
+}
+
+.penguin.face-l {
+    background-position-x: -48px;
+}
+
+.penguin.moving {
+    animation: walk-animation 0.2s steps(2) infinite;
+}

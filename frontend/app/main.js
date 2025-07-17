@@ -216,9 +216,9 @@ export function handleWebSocket() {
 	};
 
 	ws.onclose = (event) => {
-		console.log('Websocket connection closed for player ', name)
+		console.log('Websocket connection closed for player ')
 		if (event.code === 1008) {
-			store.setState({ error: 'Game is full' });
+			store.setState({ error: event.reason });
 		} else {
 			store.setState({ error: 'Connection lost' });
 		}

@@ -26,8 +26,8 @@ type StateMsg struct {
 
 var LobbyMsg bool
 
-var lobbyCountdownTimer = 1 // 20 for production
-var startCountdownTimer = 1 // 10 for production
+var lobbyCountdownTimer = 1  // 20 for production
+var startCountdownTimer = 10 // 10 for production
 
 func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling new WS connection")
@@ -59,12 +59,20 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 	}
 
 	g.Mu.Lock()
+	if g.IsPlayerNameTaken(name) {
+		g.Mu.Unlock()
+		log.Println("Player name is already taken")
+		conn.WriteControl(websocket.CloseMessage,
+			websocket.FormatCloseMessage(1008, "Player name is already taken"),
+			time.Now().Add(time.Second))
+		return
+	}
 	err = g.CreatePlayer(name)
 	if err != nil {
 		g.Mu.Unlock()
 		log.Println("Error creating player:", err)
 		conn.WriteControl(websocket.CloseMessage,
-			websocket.FormatCloseMessage(1008, "Error creating player"),
+			websocket.FormatCloseMessage(1008, err.Error()),
 			time.Now().Add(time.Second))
 		return
 	}

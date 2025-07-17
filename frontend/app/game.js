@@ -274,15 +274,63 @@ export default function Game() {
     }
 
     if (!gameStarted || !gameData) {
-        return createElement('div', { class: 'game-container' },
-            createElement('h1', {}, 'Bmbrmn'),
-            countdown !== null ? createElement('h2', {}, `Game starting in ${countdown}s`) : null,
-            gameStarted ? createElement('h1', {}, 'Game in Progress') : null
+        const countdownNumber = countdown > 10 ? 10 : countdown;
+
+        if (!window.penguinInterval) {
+            let x = 0;
+            let direction = 'right';
+            window.penguinInterval = setInterval(() => {
+                const penguin = document.querySelector('.penguin');
+                if (penguin) {
+                    penguin.classList.add('moving');
+
+                    if (direction === 'right' && x >= 150) {
+                        direction = 'left';
+                    } else if (direction === 'left' && x <= 0) {
+                        direction = 'right';
+                    }
+
+                    if (direction === 'right') {
+                        x += 1;
+                        penguin.classList.remove('face-l');
+                        penguin.classList.add('face-r');
+                    } else {
+                        x -= 1;
+                        penguin.classList.remove('face-r');
+                        penguin.classList.add('face-l');
+                    }
+
+                    penguin.style.transform = `translateX(${x}px)`;
+                }
+            }, 20); // более частые и мелкие шаги
+        }
+
+
+
+        return createElement('div', { class: 'game-container countdown-bg' },
+            createElement('img', { src: '/public/ice1.png', class: 'ice-image ice1' }),
+            createElement('img', { src: '/public/ice2.png', class: 'ice-image ice2' }),
+            createElement('div', { class: 'ice-image ice3-container' },
+                createElement('img', { src: '/public/ice3.png', class: 'ice3-image' }),
+                createElement('div', { class: 'screen-container' },
+                    createElement('img', { src: '/public/screen.png', class: 'screen-image' }),
+                    countdown !== null ? createElement('img', { src: `/public/${countdownNumber}.png`, class: 'countdown-number' }) : null
+                )
+            ),
+            createElement('div', { class: 'ice-image ice4-container' },
+                createElement('img', { src: '/public/ice4.png', class: 'ice4-image' }),
+                createElement('div', { class: 'penguin face-r' })
+            )
         );
     }
 
     // Request animation frame to ensure the grid is rendered before resizing
     requestAnimationFrame(handleResize);
+
+    if (window.penguinInterval) {
+        clearInterval(window.penguinInterval);
+        window.penguinInterval = null;
+    }
 
     const { players, panel } = gameData;
 

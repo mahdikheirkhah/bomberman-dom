@@ -1,3 +1,7 @@
+.hidden {
+    display: none;
+}
+
 .start-container {
     height: 100vh;
     display: flex;
@@ -66,6 +70,18 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
+.error-message {
+    color: #ffdd00; /* Bright yellow for visibility */
+    font-family: 'Supercell-Magic', sans-serif;
+    font-size: 1.1em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    margin-top: 15px;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: 2px solid #ffdd00;
+}
+
 /* Adding a font that resembles the Clash Royale font */
 @import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
 
@@ -121,7 +137,7 @@ body {
     justify-content: center;
     gap: 20px;
     padding-bottom: 20px;
-    border-bottom: 1px solid #ccc;
+    /* border-bottom: 1px solid #ccc; */
 }
 
 .player-card {
@@ -177,6 +193,8 @@ body {
     flex-direction: column;
     position: relative;
     background: radial-gradient(circle, #199a9ed1 0%, #004878 100%);
+    align-self: flex-start;
+    transform-origin: top;
 }
 
 .game-grid.explosion {
