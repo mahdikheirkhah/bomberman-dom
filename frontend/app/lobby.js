@@ -15,5 +15,25 @@ export default function Lobby() {
 		createElement('div', { id: 'player-list' }, ...playerList)
 	);
 }
+const chatForm = document.getElementById('chat-form');
+const chatMessages = document.getElementById('chat-messages');
+const chatInput = document.getElementById('chat-input');
+
+chatForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const message = chatInput.value.trim();
+  if (message === '') return;
+
+  // Create message element
+  const messageElement = document.createElement('div');
+  messageElement.textContent = message;
+  messageElement.classList.add('chat-message');
+
+  chatMessages.appendChild(messageElement);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  chatInput.value = '';
+});
 
 

@@ -5,92 +5,57 @@
   <title> Bomboino Lobby</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <link rel="stylesheet" href="./style.css">
-  <!-- <style>
-    body {
-      background: url('lobby/images/lobbyTimer.gif') no-repeat  center fixed;
-      background-size: cover;
-      font-family: 'Press Start 2P', cursive;
-      color: white;
-      text-align: center;
-      padding: 50px;
-      margin: 0;
 
-    }
-
-    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
-    .lobby-box {
-      background: rgba(0, 0, 0, 0.7);
-      border: 4px dashed #fff;
-      padding: 30px;
-      border-radius: 20px;
-      display: inline-block;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% {
-        box-shadow: 0 0 15px red;
-      }
-      50% {
-        box-shadow: 0 0 25px yellow;
-      }
-    }
-
-    .waiting {
-      font-size: 20px;
-      margin-top: 20px;
-      animation: blink 1s infinite;
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    .player-list {
-      text-align: left;
-      margin-top: 30px;
-    }
-
-    .player {
-      margin: 10px 0;
-    }
-  </style> -->
+ <!-- <title>lobby chatbox</title>
+   <lnk rel="stylesheet" href="style.css" /> -->
 </head>
 <body>
+  <!-- <div class="lobby">
+    <h2>Lobby</h2>
+    <div class="chatbox">
+      <div id="chat-messages" class="chat-messages"></div>
+      <form id="chat-form">
+        <input type="text" id="chat-input" placeholder="Type your message..." required />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+  <script src="script.js"></script> -->
+
   <div class="lobby-box">
-    <h1> Bomboino Lobby </h1>
+
+    <h1 class="title"> Bomberguin Lobby </h1> 
+  
     <div class="waiting">Waiting for players to join...</div>
      <div class="player-list">
   <div class="player-box" id="player1">
-    <img class="avatar" src="lobby/images/black-penguin.png" alt="Player 1 Avatar" />
+    <img class="avatar" src="./images/yellow-penguin.webp" alt="Player 1 Avatar" />
     <span class="player-name">Player 1 (You)</span>
-    <button class="ready-toggle" onclick="toggleReady(this)">Ready</button>
+    <!-- <button class="ready-toggle" onclick="toggleReady(this)">Ready</button> -->
   </div>
 
   <div class="player-box" id="player2">
-    <img class="avatar" src="lobby/images/red-penguin.png" alt="Player 2 Avatar" />
+    <img class="avatar" src="./images/red-penguin.png" alt="Player 2 Avatar" />
     <span class="player-name">Player 2</span>
-    <button class="ready-toggle" onclick="toggleReady(this)">Ready</button>
+    <!-- <button class="ready-toggle" onclick="toggleReady(this)">Ready</button> -->
   </div>
   
   <div class="player-box" id="player3">
-    <img class="avatar" src="lobby/images/blue-penguin.png" alt="Player 3 Avatar" />
+    <img class="avatar" src="./images/blue-penguin.png" alt="Player 3 Avatar" />
     <span class="player-name">Player 3</span>
-    <button class="ready-toggle" onclick="toggleReady(this)">Ready</button>
+    <!-- <button class="ready-toggle" onclick="toggleReady(this)">Ready</button> -->
   </div>
   <div class="player-box" id="player4">
-    <img class="avatar" src="lobby/images/green-penguin.png" alt="Player 4 Avatar" />
+    <img class="avatar" src="./images/green-penguin.png" alt="Player 4 Avatar" />
     <span class="player-name">Player 4</span>
-    <button class="ready-toggle" onclick="toggleReady(this)">Ready</button>
+    <!-- <button class="ready-toggle" onclick="toggleReady(this)">Ready</button> -->
 </div>
 </body>
 </html>
 <audio autoplay loop>
   <source src="your-music-file.mp3" type="audio/mpeg">
 </audio>
-<button onclick="startGame()">Start Game</button>
+<button onclick="startGame()" class="start-game-button">Start Game</button>
 
 <script>
   function startGame() {
