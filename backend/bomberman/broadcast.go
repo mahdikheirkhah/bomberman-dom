@@ -2,8 +2,10 @@ package bomberman
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -50,6 +52,7 @@ func (g *GameBoard) CheckNameHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("CheckNameHandler: Received request to check name availability.")
 
 	name := r.URL.Query().Get("name")
+	name = strings.TrimSpace(name)
 	if name == "" {
 		log.Println("CheckNameHandler: Missing 'name' query parameter.")
 		w.WriteHeader(http.StatusBadRequest)
@@ -59,24 +62,23 @@ func (g *GameBoard) CheckNameHandler(w http.ResponseWriter, r *http.Request) {
 
 	g.Mu.Lock() // Acquire a read lock to check IsStarted and IsPlayerNameTaken
 	isStarted := g.IsStarted
-	nameTaken := g.IsPlayerNameTaken(name)
+	UUID, err := g.CreatePlayer(name)
+
 	g.Mu.Unlock() // Release the read lock immediately after reading state
 
 	// Prepare the response
 	response := make(map[string]interface{}) // Use interface{} to allow mixed types
 
 	if isStarted {
-		response["isTaken"] = true
 		response["reason"] = "game_already_started"
 		w.WriteHeader(http.StatusConflict) // 409 Conflict
 		log.Printf("CheckNameHandler: Game already started. Name '%s' cannot join.", name)
-	} else if nameTaken {
-		response["isTaken"] = true
-		response["reason"] = "name_already_in_use"
+	} else if err != nil {
+		response["reason"] = err.Error()
 		w.WriteHeader(http.StatusConflict) // 409 Conflict
-		log.Printf("CheckNameHandler: Name '%s' is already in use.", name)
+		log.Printf("CheckNameHandler: Name '%s' cannot join: %s", name, err.Error())
 	} else {
-		response["isTaken"] = false
+		response["uuid"] = UUID
 		w.WriteHeader(http.StatusOK) // 200 OK
 		log.Printf("CheckNameHandler: Name '%s' is available.", name)
 	}
@@ -89,18 +91,6 @@ func (g *GameBoard) CheckNameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *GameBoard) IsPlayerNameTaken(name string) bool {
-	if len(g.LobbyPlayers) > MaxNumberOfPlayers {
-		return true // game is full
-	}
-	for _, p := range g.LobbyPlayers {
-		if p.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
 func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling new WS connection")
 
@@ -111,30 +101,31 @@ func (g *GameBoard) HandleWSConnections(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	name := r.URL.Query().Get("name")
-	if name == "" {
-		log.Println("Player name is missing from query parameters")
+	UUID := r.URL.Query().Get("UUID")
+	if UUID == "" {
+		log.Println("Player UUID is missing from query parameters")
 		// http.Error(w, "Player name is required as a query parameter", http.StatusBadRequest)
 		conn.WriteControl(websocket.CloseMessage,
-			websocket.FormatCloseMessage(1008, "Player name is missing from query parameters"),
+			websocket.FormatCloseMessage(1008, "Player UUID is missing from query parameters"),
 			time.Now().Add(time.Second))
 		return
 
 	}
+
 	g.Mu.Lock()
-	err = g.CreatePlayer(name)
-	if err != nil {
+	playerIndex := g.GetPlayerByUUID(UUID)
+	if playerIndex == -1 {
 		g.Mu.Unlock()
-		log.Println("Error creating player:", err)
+		errMsg := fmt.Sprintf("Error finding player with UUID %s", UUID)
+		log.Println(errMsg)
 		conn.WriteControl(websocket.CloseMessage,
-			websocket.FormatCloseMessage(1008, err.Error()),
+			websocket.FormatCloseMessage(1008, errMsg),
 			time.Now().Add(time.Second))
 		return
 	}
-	playerIndex := g.NumberOfPlayers - 1
 
 	g.PlayersConnections[playerIndex] = conn
-	log.Printf("Player %s connected successfully as player %d\n", name, playerIndex)
+	log.Printf("Player %s connected successfully as player %d\n", g.Players[playerIndex].Name, playerIndex)
 	g.Mu.Unlock()
 
 	g.SendPlayerAccepted(playerIndex)

@@ -25,7 +25,6 @@ type PlayerRespawn struct {
 
 type GameBoard struct {
 	Players            []Player                              `json:"players"`
-	LobbyPlayers       []Player                              `json:"lobbyPlayers"`
 	Bombs              []Bomb                                `json:"bombs"`
 	PendingRespawns    []PlayerRespawn                       `json:"-"`
 	NumberOfPlayers    int                                   `json:"numberOfPlayers"`
@@ -279,7 +278,6 @@ func (g *GameBoard) ResetGame() {
 		g.PlayersConnections[conn].Close()
 	}
 	g.Players = []Player{}
-	g.LobbyPlayers = []Player{}
 	g.Bombs = []Bomb{}
 	g.Powerups = []Powerup{}
 	g.PendingRespawns = []PlayerRespawn{}

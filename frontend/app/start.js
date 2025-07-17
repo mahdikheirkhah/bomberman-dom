@@ -6,7 +6,7 @@ const joinHandler = async (e) => {
 		return;
 	}
 	const name = document.getElementById('name-input').value;
-	if (!name) {
+	if (!name || name.trim().length === 0) {
 		store.setState({ error: 'Please enter a name' });
 		return;
 	}
@@ -16,23 +16,21 @@ const joinHandler = async (e) => {
         // Assuming your backend has an endpoint like /checkName that returns
         // a status indicating if the name is available or taken.
         const checkResponse = await fetch(`http://${APIUrl}/checkName?name=${encodeURIComponent(name)}`);
+		const checkResult = await checkResponse.json(); // Assuming JSON response
 
         if (!checkResponse.ok) {
-            // Handle HTTP errors (e.g., server issues)
-            const errorText = await checkResponse.text();
-            store.setState({ error: `Server error during name check: ${errorText}` });
+            const errorText = checkResult.reason
+            store.setState({ error: `${errorText}`});
             return;
         }
 
-        const checkResult = await checkResponse.json(); // Assuming JSON response
-
-        if (checkResult.isTaken) { // Assuming backend sends { isTaken: true/false }
-            store.setState({ error: `Name "${name}" is already taken. Please choose another.` });
+        if (!checkResult.uuid) { // Assuming backend sends { isTaken: true/false }
+            store.setState({ error: `Error creating player` });
             return;
         }
 
         // Step 2: If the name is available, proceed to establish WebSocket connection
-        const ws = new WebSocket(`ws://${APIUrl}/ws?name=${encodeURIComponent(name)}`);
+        const ws = new WebSocket(`ws://${APIUrl}/ws?UUID=${encodeURIComponent(checkResult.uuid)}`);
 
         ws.onclose = () => {
             console.log('WebSocket connection closed.');
