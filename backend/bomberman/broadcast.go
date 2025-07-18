@@ -29,9 +29,6 @@ type StateMsg struct {
 
 var LobbyMsg bool
 
-var lobbyCountdownTimer = 1  // 20 for production
-var startCountdownTimer = 10 // 10 for production
-
 // CheckNameHandler handles HTTP requests to check if a player name is already taken or if the game is started.
 // It expects a 'name' query parameter.
 // Responds with JSON: {"isTaken": true/false, "reason": "..."}
@@ -70,7 +67,7 @@ func (g *GameBoard) CheckNameHandler(w http.ResponseWriter, r *http.Request) {
 	response := make(map[string]interface{}) // Use interface{} to allow mixed types
 
 	if isStarted {
-		response["reason"] = "game_already_started"
+		response["reason"] = "Game already started"
 		w.WriteHeader(http.StatusConflict) // 409 Conflict
 		log.Printf("CheckNameHandler: Game already started. Name '%s' cannot join.", name)
 	} else if err != nil {
@@ -159,8 +156,18 @@ func (g *GameBoard) startCountdown() {
 		State: "LobbyCountdown",
 	}
 	g.SendMsgToChannel(stateMsg, -1)
+	g.GameState = "lobby"
 
 	for i := lobbyCountdownTimer; i > 0; i-- {
+		if g.StopCountdown {
+			stateMsg := StateMsg{
+				Type:  "GameState",
+				State: "StopCountdown",
+			}
+			g.SendMsgToChannel(stateMsg, -1)
+			g.StopCountdown = false
+			return
+		}
 		msg := map[string]interface{}{
 			"type":    "lobbyCountdown",
 			"seconds": i,
@@ -191,7 +198,7 @@ func (g *GameBoard) forceStartGame() {
 		State: "GameCountdown",
 	}
 	g.SendMsgToChannel(stateMsg, -1)
-
+	g.GameState = "gameCountdown"
 	// 10 seconds to start
 	for i := startCountdownTimer; i > 0; i-- {
 		msg := map[string]interface{}{
@@ -207,6 +214,7 @@ func (g *GameBoard) forceStartGame() {
 		State: "GameStarted",
 	}
 	g.SendMsgToChannel(stateMsg, -1)
+	g.GameState = "gameStarted"
 	msg := struct {
 		Type            string                                `json:"type"`
 		Players         []Player                              `json:"players"`
@@ -218,6 +226,6 @@ func (g *GameBoard) forceStartGame() {
 		NumberOfPlayers: g.NumberOfPlayers,
 		Panel:           g.Panel,
 	}
-
 	g.SendMsgToChannel(msg, -1)
+	g.CheckGameEnd()
 }

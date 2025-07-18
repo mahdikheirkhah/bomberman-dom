@@ -24,10 +24,20 @@ class Store {
      * @param {Object|Function} update - New state object or update function
      */
     setState(update) {
-        const newState = typeof update === 'function' 
+        const newState = typeof update === 'function'
             ? update(this.state)
             : update;
         this.state = { ...this.state, ...newState };
+        this.notify();
+    }
+
+    /**
+    * Removes a property from the state
+    * @param {string} key - Property name to remove
+    */
+    removeState(key) {
+        const { [key]: _, ...rest } = this.state;
+        this.state = rest;
         this.notify();
     }
 
@@ -52,7 +62,7 @@ class Store {
     /**
      * Notify all listeners of state change
      */
-    notify() {  
+    notify() {
         for (const listener of this.listeners) {
             listener(this.state);
         }

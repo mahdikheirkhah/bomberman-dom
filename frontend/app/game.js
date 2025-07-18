@@ -1,5 +1,6 @@
 
 import { createElement, store } from '../framework/framework.js';
+import { renderChat } from './chat.js';
 
 // WebSocket message sender
 const sendMsg = (msg) => {
@@ -203,70 +204,22 @@ function renderGameGrid(panel, players, powerups) {
     );
 }
 
-// Render the chat area
-function renderChat(messages) {
-    const { playerId } = store.getState();
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const input = e.target.elements.message;
-        if (input.value) {
-            sendMsg({ msgType: 'c', content: input.value });
-            input.value = '';
-        }
-    };
-
-    const renderMessage = (msg) => {
-        const { playerIndex } = store.getState();
-        const isSent = msg.senderIndex === playerIndex;
-        const bubbleClass = isSent ? 'message-bubble sent' : 'message-bubble received';
-        const sender = isSent ? 'You' : msg.player;
-        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-
-        return createElement('div', { class: 'chat-message' },
-            createElement('div', { class: bubbleClass },
-                createElement('div', { class: 'message-sender', style: `color: ${msg.color}` }, sender),
-                createElement('div', { class: 'message-content' }, msg.message),
-                createElement('div', { class: 'message-timestamp' }, timestamp)
-            )
-        );
-    };
-
-    return createElement('div', { class: 'game-chat' },
-        createElement('div', { class: 'resize-handle', onmousedown: onMouseDown }),
-        createElement('div', { class: 'chat-header' }, 'Game Chat'),
-        createElement('div', { class: 'chat-messages' },
-            ...messages.map(renderMessage)
-        ),
-        createElement('form', { class: 'chat-input-form', onsubmit: handleSubmit },
-            createElement('input', { type: 'text', name: 'message', placeholder: 'Type a message...' }),
-            createElement('button', { type: 'submit' }, '➤')
+export function GameOverModal() {
+    const { winner, gameData } = store.getState();
+    const { players } = gameData;
+    console.log('Winner ',players[winner].name)
+    return createElement('div', { class: 'modal' },
+        createElement('div', { class: 'modal-content' },
+            createElement('h2', {}, 'Game Over'),
+            winner >= 0 ? createElement('p', {}, `${players[winner].name} wins!`) : createElement('p', {}, 'It\'s a draw!'),
         )
     );
 }
 
-function onMouseDown(e) {
-    e.preventDefault();
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-}
-
-function onMouseMove(e) {
-    const chat = document.querySelector('.game-chat');
-    if (chat) {
-        const newWidth = window.innerWidth - e.clientX;
-        chat.style.width = `${newWidth}px`;
-    }
-}
-
-function onMouseUp() {
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-}
 
 // Main Game component
 export default function Game() {
-    const { countdown, gameStarted, gameData, chatMessages, gameListenersAttached, powerups } = store.getState();
+    const { countdown, gameStarted, gameData, chatMessages, gameListenersAttached, powerups, gameOver } = store.getState();
 
     if (gameStarted && !gameListenersAttached) {
         setupEventListeners();
@@ -275,6 +228,30 @@ export default function Game() {
 
     if (!gameStarted || !gameData) {
         const countdownNumber = countdown > 10 ? 10 : countdown;
+
+        const powerupTypes = [
+            { name: 'Extra Bomb', image: '/public/extrab.webp', description: 'Increases bomb capacity by one.' },
+            { name: 'Bomb Range', image: '/public/extrab.webp', description: 'Increases bomb explosion range.' },
+            { name: 'Extra Life', image: '/public/life.webp', description: 'Grants an extra life.' },
+            { name: 'Speed Boost', image: '/public/fast.webp', description: 'Increases movement speed.' }
+        ];
+
+        const powerupElements = powerupTypes.map(powerup => {
+            return createElement('div', { class: 'powerup-item' },
+                createElement('img', { src: powerup.image }),
+                createElement('span', {}, `${powerup.name}: ${powerup.description}`)
+            );
+        });
+
+        const modal = createElement('div', { id: 'instructions-modal', class: 'modal' },
+            createElement('div', { class: 'modal-content' },
+                createElement('h2', {}, 'How to Play'),
+                createElement('p', {}, 'Use the arrow keys to move your penguin.'),
+                createElement('p', {}, 'Press the spacebar to drop a bomb.'),
+                createElement('h2', {}, 'Power-ups'),
+                createElement('div', { id: 'powerups-container', class: 'powerups-container' }, ...powerupElements)
+            )
+        );
 
         if (!window.penguinInterval) {
             let x = 0;
@@ -302,12 +279,11 @@ export default function Game() {
 
                     penguin.style.transform = `translateX(${x}px)`;
                 }
-            }, 20); // более частые и мелкие шаги
+            }, 20);
         }
 
-
-
         return createElement('div', { class: 'game-container countdown-bg' },
+            modal,
             createElement('img', { src: '/public/ice1.png', class: 'ice-image ice1' }),
             createElement('img', { src: '/public/ice2.png', class: 'ice-image ice2' }),
             createElement('div', { class: 'ice-image ice3-container' },
@@ -320,7 +296,8 @@ export default function Game() {
             createElement('div', { class: 'ice-image ice4-container' },
                 createElement('img', { src: '/public/ice4.png', class: 'ice4-image' }),
                 createElement('div', { class: 'penguin face-r' })
-            )
+            ),
+            renderChat(chatMessages || [])
         );
     }
 
@@ -334,6 +311,7 @@ export default function Game() {
 
     const { players, panel } = gameData;
 
+
     return createElement('div', { class: 'game-layout' },
         createElement('div', { class: 'player-panels' },
             ...players.map(renderPlayerPanel)
@@ -341,6 +319,7 @@ export default function Game() {
         createElement('div', { class: 'main-game-area' },
             renderGameGrid(panel, players, powerups)
         ),
-        renderChat(chatMessages || [])
+        renderChat(chatMessages || []),
+        gameOver ? GameOverModal(gameData) : null
     );
 }
