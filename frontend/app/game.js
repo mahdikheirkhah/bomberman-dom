@@ -204,11 +204,22 @@ function renderGameGrid(panel, players, powerups) {
     );
 }
 
+export function GameOverModal() {
+    const { gameData } = store.getState();
+    const winner = gameData.players.find(p => p.index === gameData.winner);
+
+    return createElement('div', { class: 'modal' },
+        createElement('div', { class: 'modal-content' },
+            createElement('h2', {}, 'Game Over'),
+            winner ? createElement('p', {}, `${winner.name} wins!`) : createElement('p', {}, 'It\'s a draw!'),
+        )
+    );
+}
 
 
 // Main Game component
 export default function Game() {
-    const { countdown, gameStarted, gameData, chatMessages, gameListenersAttached, powerups } = store.getState();
+    const { countdown, gameStarted, gameData, chatMessages, gameListenersAttached, powerups, gameOver } = store.getState();
 
     if (gameStarted && !gameListenersAttached) {
         setupEventListeners();
@@ -216,78 +227,78 @@ export default function Game() {
     }
 
     if (!gameStarted || !gameData) {
-            const countdownNumber = countdown > 10 ? 10 : countdown;
+        const countdownNumber = countdown > 10 ? 10 : countdown;
 
-            const powerupTypes = [
-                { name: 'Extra Bomb', image: '/public/extrab.webp', description: 'Increases bomb capacity by one.' },
-                { name: 'Bomb Range', image: '/public/extrab.webp', description: 'Increases bomb explosion range.' },
-                { name: 'Extra Life', image: '/public/life.webp', description: 'Grants an extra life.' },
-                { name: 'Speed Boost', image: '/public/fast.webp', description: 'Increases movement speed.' }
-            ];
+        const powerupTypes = [
+            { name: 'Extra Bomb', image: '/public/extrab.webp', description: 'Increases bomb capacity by one.' },
+            { name: 'Bomb Range', image: '/public/extrab.webp', description: 'Increases bomb explosion range.' },
+            { name: 'Extra Life', image: '/public/life.webp', description: 'Grants an extra life.' },
+            { name: 'Speed Boost', image: '/public/fast.webp', description: 'Increases movement speed.' }
+        ];
 
-            const powerupElements = powerupTypes.map(powerup => {
-                return createElement('div', { class: 'powerup-item' },
-                    createElement('img', { src: powerup.image }),
-                    createElement('span', {}, `${powerup.name}: ${powerup.description}`)
-                );
-            });
-
-            const modal = createElement('div', { id: 'instructions-modal', class: 'modal' },
-                createElement('div', { class: 'modal-content' },
-                    createElement('h2', {}, 'How to Play'),
-                    createElement('p', {}, 'Use the arrow keys to move your penguin.'),
-                    createElement('p', {}, 'Press the spacebar to drop a bomb.'),
-                    createElement('h2', {}, 'Power-ups'),
-                    createElement('div', { id: 'powerups-container', class: 'powerups-container' }, ...powerupElements)
-                )
+        const powerupElements = powerupTypes.map(powerup => {
+            return createElement('div', { class: 'powerup-item' },
+                createElement('img', { src: powerup.image }),
+                createElement('span', {}, `${powerup.name}: ${powerup.description}`)
             );
+        });
 
-            if (!window.penguinInterval) {
-                let x = 0;
-                let direction = 'right';
-                window.penguinInterval = setInterval(() => {
-                    const penguin = document.querySelector('.penguin');
-                    if (penguin) {
-                        penguin.classList.add('moving');
+        const modal = createElement('div', { id: 'instructions-modal', class: 'modal' },
+            createElement('div', { class: 'modal-content' },
+                createElement('h2', {}, 'How to Play'),
+                createElement('p', {}, 'Use the arrow keys to move your penguin.'),
+                createElement('p', {}, 'Press the spacebar to drop a bomb.'),
+                createElement('h2', {}, 'Power-ups'),
+                createElement('div', { id: 'powerups-container', class: 'powerups-container' }, ...powerupElements)
+            )
+        );
 
-                        if (direction === 'right' && x >= 150) {
-                            direction = 'left';
-                        } else if (direction === 'left' && x <= 0) {
-                            direction = 'right';
-                        }
+        if (!window.penguinInterval) {
+            let x = 0;
+            let direction = 'right';
+            window.penguinInterval = setInterval(() => {
+                const penguin = document.querySelector('.penguin');
+                if (penguin) {
+                    penguin.classList.add('moving');
 
-                        if (direction === 'right') {
-                            x += 1;
-                            penguin.classList.remove('face-l');
-                            penguin.classList.add('face-r');
-                        } else {
-                            x -= 1;
-                            penguin.classList.remove('face-r');
-                            penguin.classList.add('face-l');
-                        }
-
-                        penguin.style.transform = `translateX(${x}px)`;
+                    if (direction === 'right' && x >= 150) {
+                        direction = 'left';
+                    } else if (direction === 'left' && x <= 0) {
+                        direction = 'right';
                     }
-                }, 20); 
-            }
 
-            return createElement('div', { class: 'game-container countdown-bg' },
-                modal,
-                createElement('img', { src: '/public/ice1.png', class: 'ice-image ice1' }),
-                createElement('img', { src: '/public/ice2.png', class: 'ice-image ice2' }),
-                createElement('div', { class: 'ice-image ice3-container' },
-                    createElement('img', { src: '/public/ice3.png', class: 'ice3-image' }),
-                    createElement('div', { class: 'screen-container' },
-                        createElement('img', { src: '/public/screen.png', class: 'screen-image' }),
-                        countdown !== null ? createElement('img', { src: `/public/${countdownNumber}.png`, class: 'countdown-number' }) : null
-                    )
-                ),
-                createElement('div', { class: 'ice-image ice4-container' },
-                    createElement('img', { src: '/public/ice4.png', class: 'ice4-image' }),
-                    createElement('div', { class: 'penguin face-r' })
-                ),
-                renderChat(chatMessages || [])
-            );
+                    if (direction === 'right') {
+                        x += 1;
+                        penguin.classList.remove('face-l');
+                        penguin.classList.add('face-r');
+                    } else {
+                        x -= 1;
+                        penguin.classList.remove('face-r');
+                        penguin.classList.add('face-l');
+                    }
+
+                    penguin.style.transform = `translateX(${x}px)`;
+                }
+            }, 20);
+        }
+
+        return createElement('div', { class: 'game-container countdown-bg' },
+            modal,
+            createElement('img', { src: '/public/ice1.png', class: 'ice-image ice1' }),
+            createElement('img', { src: '/public/ice2.png', class: 'ice-image ice2' }),
+            createElement('div', { class: 'ice-image ice3-container' },
+                createElement('img', { src: '/public/ice3.png', class: 'ice3-image' }),
+                createElement('div', { class: 'screen-container' },
+                    createElement('img', { src: '/public/screen.png', class: 'screen-image' }),
+                    countdown !== null ? createElement('img', { src: `/public/${countdownNumber}.png`, class: 'countdown-number' }) : null
+                )
+            ),
+            createElement('div', { class: 'ice-image ice4-container' },
+                createElement('img', { src: '/public/ice4.png', class: 'ice4-image' }),
+                createElement('div', { class: 'penguin face-r' })
+            ),
+            renderChat(chatMessages || [])
+        );
     }
 
     // Request animation frame to ensure the grid is rendered before resizing
@@ -300,6 +311,7 @@ export default function Game() {
 
     const { players, panel } = gameData;
 
+
     return createElement('div', { class: 'game-layout' },
         createElement('div', { class: 'player-panels' },
             ...players.map(renderPlayerPanel)
@@ -307,6 +319,7 @@ export default function Game() {
         createElement('div', { class: 'main-game-area' },
             renderGameGrid(panel, players, powerups)
         ),
-        renderChat(chatMessages || [])
+        renderChat(chatMessages || []),
+        gameOver ? GameOverModal(gameData) : null
     );
 }

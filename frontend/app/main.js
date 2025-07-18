@@ -7,36 +7,37 @@ const APIUrl = `${window.location.hostname}:8080`;
 
 // Initialize store
 store.setState({
-	currentView: 'start',
-	error: '',
-	players: [],
-	playerId: null,
-	ws: null,
-	countdown: null,
-	gameStarted: false,
-	gameData: null,
-	chatMessages: [],
-	gameListenersAttached: false, // Add this flag
-	playerAnimation: new Map(), // For client-side animation
-	powerups: [], // Add this line
+    currentView: 'start',
+    error: '',
+    players: [],
+    playerId: null,
+    ws: null,
+    countdown: null,
+    gameStarted: false,
+    gameOver: false,
+    gameData: null,
+    chatMessages: [],
+    gameListenersAttached: false, // Add this flag
+    playerAnimation: new Map(), // For client-side animation
+    powerups: [], // Add this line
 });
 
 const playerMoveTimers = new Map();
 
 export function handleWebSocket() {
-	const { ws } = store.getState();
-	if (!ws) {
-		return;
-	}
+    const { ws } = store.getState();
+    if (!ws) {
+        return;
+    }
 
-	ws.onmessage = (event) => {
-		const message = JSON.parse(event.data);
-		const { gameData, playerAnimation, chatMessages } = store.getState();
+    ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        const { gameData, playerAnimation, chatMessages } = store.getState();
 
         // The backend sends messages with either a 'type' or an 'MT' property.
         // We handle them accordingly.
 
-		if (message.type) {
+        if (message.type) {
             switch (message.type) {
                 case 'player_list':
                     store.setState({ players: message.players });
@@ -49,10 +50,17 @@ export function handleWebSocket() {
                         router.navigate("/game");
                     } else if (message.state === 'GameStarted') {
                         store.setState({ countdown: null, gameStarted: true });
+                    } else if (message.state === 'GameOver') {
+                        const oldGameData = store.getState().gameData;
+                        const newGameData = { ...oldGameData, winner: message.winner, players: message.player ? [message.player] : oldGameData.players };
+                        store.setState({ gameOver: true, gameData: newGameData });
                     }
                     break;
                 case 'PlayerAccepted':
                     store.setState({ currentView: 'lobby', playerIndex: message.index });
+                    break;
+                case 'PlayerDisconnected':
+                        store.setState({ players: store.getState().players.filter(player => player.index !== message.index) });
                     break;
                 case 'gameStart':
                     store.setState({ gameData: { players: message.players, panel: message.panel } });
@@ -133,10 +141,7 @@ export function handleWebSocket() {
                         store.setState({ gameData: { ...gameData, players: updatedPlayers }, playerAnimation: new Map(playerAnimation) });
                     }
                     break;
-                case 'gameOver':
-                    store.setState({ currentView: 'start', gameStarted: false, gameData: null, countdown: null, players: [] });
-                    router.navigate('/');
-                    break;
+
                 case 'PR': // Player Respawn
                     if (gameData && gameData.players) {
                         const updatedPlayers = gameData.players.map(p => {
@@ -177,7 +182,7 @@ export function handleWebSocket() {
                             store.setState({ playerAnimation: new Map(playerAnimation) });
                         }, 150));
 
-                        store.setState({ 
+                        store.setState({
                             gameData: { ...gameData, players: updatedPlayers },
                             playerAnimation: new Map(playerAnimation)
                         });
@@ -213,34 +218,34 @@ export function handleWebSocket() {
                     break;
             }
         }
-	};
+    };
 
-	ws.onclose = (event) => {
-		console.log('Websocket connection closed for player ')
-		if (event.code === 1008) {
-			store.setState({ error: event.reason });
-		} else {
-			store.setState({ error: 'Connection lost' });
-		}
-	};
+    ws.onclose = (event) => {
+        console.log('Websocket connection closed for player ')
+        if (event.code === 1008) {
+            store.setState({ error: event.reason });
+        } else {
+            store.setState({ error: 'Connection lost' });
+        }
+    };
 
-	ws.onerror = () => {
-		store.setState({ error: 'Connection error' });
-	};
+    ws.onerror = () => {
+        store.setState({ error: 'Connection error' });
+    };
 }
 
 function App() {
-	const { currentView } = store.getState();
-	switch (currentView) {
-		case 'start':
-			return Start();
-		case 'lobby':
-			return Lobby();
-		case 'game':
-			return Game();
-		default:
-			return Start();
-	}
+    const { currentView } = store.getState();
+    switch (currentView) {
+        case 'start':
+            return Start();
+        case 'lobby':
+            return Lobby();
+        case 'game':
+            return Game();
+        default:
+            return Start();
+    }
 }
 
 // Add routes that change the currentView

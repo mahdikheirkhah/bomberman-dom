@@ -434,7 +434,7 @@ body {
 
 .countdown-bg .game-chat {
     position: absolute;
-    bottom: 20px;
+    top: 10vh;
     right: 20px;
     width: 350px;
     height: 400px;

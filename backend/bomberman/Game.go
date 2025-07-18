@@ -270,6 +270,7 @@ func (g *GameBoard) CheckGameEnd() {
 		log.Printf("Game over! Winner is player %d\n", lastPlayer.Index)
 		go func() {
 			time.Sleep(10 * time.Second)
+			log.Println("Resetting the game")
 			g.ResetGame()
 		}()
 	}
