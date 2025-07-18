@@ -1,5 +1,5 @@
 
-import { createElement, store } from '../framework/framework.js';
+import { createElement, store, router } from '../framework/framework.js';
 import { renderChat } from './chat.js';
 
 // WebSocket message sender
@@ -207,11 +207,35 @@ function renderGameGrid(panel, players, powerups) {
 export function GameOverModal() {
     const { winner, gameData } = store.getState();
     const { players } = gameData;
-    console.log('Winner ',players[winner].name)
+
+    const playAgainHandler = () => {
+        const { ws } = store.getState();
+        if (ws) {
+            ws.close();
+        }
+        // Keep playerId to pre-fill the name input
+        store.setState({
+            currentView: 'start',
+            error: '',
+            players: [],
+            ws: null,
+            countdown: null,
+            gameStarted: false,
+            gameOver: false,
+            gameData: null,
+            chatMessages: [],
+            gameListenersAttached: false,
+            playerAnimation: new Map(),
+            powerups: [],
+        });
+        router.navigate('/');
+    };
+
     return createElement('div', { class: 'modal' },
         createElement('div', { class: 'modal-content' },
             createElement('h2', {}, 'Game Over'),
-            winner >= 0 ? createElement('p', {}, `${players[winner].name} wins!`) : createElement('p', {}, 'It\'s a draw!'),
+            (winner >= 0 && players[winner]) ? createElement('p', {}, `${players[winner].name} wins!`) : createElement('p', {}, "It's a draw!"),
+            createElement('button', { class: 'play-again-btn', onclick: playAgainHandler }, 'Play Again')
         )
     );
 }

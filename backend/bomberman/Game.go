@@ -286,7 +286,7 @@ func (g *GameBoard) CheckGameEnd() {
 			log.Printf("Game over! It's a draw.")
 		}
 		go func() {
-			time.Sleep(10 * time.Second)
+			time.Sleep(1 * time.Second)
 			log.Println("Resetting the game")
 			g.ResetGame()
 		}()
@@ -311,6 +311,7 @@ func (g *GameBoard) ResetGame() {
 	g.Panel = [NumberOfRows][NumberOfColumns]string{}
 	g.RandomStart()
 	g.powerupChosen = make(map[string]int)
+	g.GameState = "lobby"
 	LobbyMsg = false
 	g.Mu.Unlock()
 	go g.StartBombWatcher()
