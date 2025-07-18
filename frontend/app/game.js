@@ -205,13 +205,13 @@ function renderGameGrid(panel, players, powerups) {
 }
 
 export function GameOverModal() {
-    const { gameData } = store.getState();
-    const winner = gameData.players.find(p => p.index === gameData.winner);
-
+    const { winner, gameData } = store.getState();
+    const { players } = gameData;
+    console.log('Winner ',players[winner].name)
     return createElement('div', { class: 'modal' },
         createElement('div', { class: 'modal-content' },
             createElement('h2', {}, 'Game Over'),
-            winner ? createElement('p', {}, `${winner.name} wins!`) : createElement('p', {}, 'It\'s a draw!'),
+            winner >= 0 ? createElement('p', {}, `${players[winner].name} wins!`) : createElement('p', {}, 'It\'s a draw!'),
         )
     );
 }

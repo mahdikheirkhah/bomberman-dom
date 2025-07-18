@@ -64,13 +64,18 @@ func (g *GameBoard) HandlePlayerMessages(playerIndex int, conn *websocket.Conn) 
 
 	g.Mu.Lock()
 	if playerIndex < len(g.Players) {
-		if g.IsStarted {
+		switch g.GameState {
+		case "gameStarted":
 			log.Printf("Player %d lives before disconnect: %d\n", playerIndex, g.Players[playerIndex].Lives)
 			g.PlayerDeath(playerIndex)
-		} else {
+		case "lobby":
 			log.Printf("Player %d disconnect before game start\n", playerIndex)
 			g.Players = append(g.Players[:playerIndex], g.Players[playerIndex+1:]...)
 			g.NumberOfPlayers--
+			g.StopCountdown = true
+		default:
+			g.Players[playerIndex].IsDead = true
+			g.Players[playerIndex].Lives = 0
 		}
 	}
 	g.Mu.Unlock()

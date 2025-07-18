@@ -15,7 +15,8 @@ const NumberOfColumns = 13
 const MaxNumberOfPlayers = 4
 const MinNumberOfPlayers = 2
 const CellSize = 50
-var lobbyCountdownTimer = 10  // 20 for production
+
+var lobbyCountdownTimer = 10 // 20 for production
 var startCountdownTimer = 10 // 10 for production
 
 var Colors = []string{"G", "Y", "R", "B"}
@@ -34,6 +35,8 @@ type GameBoard struct {
 	CellSize           int                                   `json:"cellSize"`
 	Powerups           []Powerup                             `json:"powerups"`
 	IsStarted          bool
+	GameState          string // lobby, gameCountdown, gameStarted
+	StopCountdown      bool
 	ExplodedCells      []ExplodedCellInfo `json:"explodedCells"`
 	PlayersConnections map[int]*websocket.Conn
 	powerupChosen      map[string]int
@@ -50,7 +53,7 @@ type GameCell struct {
 }
 
 func (g *GameBoard) CanCreateNewPlayer() bool {
-	if 0 < g.NumberOfPlayers+1 && g.NumberOfPlayers+1 <= MaxNumberOfPlayers {
+	if 0 < g.NumberOfPlayers+1 && g.NumberOfPlayers+1 <= MaxNumberOfPlayers && g.GameState == "lobby" {
 		return true
 	}
 	return false
@@ -238,6 +241,8 @@ func (g *GameBoard) SendPlayerAccepted(playerIndex int) {
 func InitGame() *GameBoard {
 	g := &GameBoard{
 		IsStarted:          false,
+		GameState:          "lobby",
+		StopCountdown:      false,
 		CellSize:           CellSize,
 		NumberOfPlayers:    0,
 		PlayersConnections: make(map[int]*websocket.Conn),
@@ -257,17 +262,29 @@ func (g *GameBoard) CheckGameEnd() {
 			log.Printf("Player %s is alive with %d lives\n", player.Name, player.Lives)
 		}
 	}
+
 	if livePlayers <= 1 && g.IsStarted {
-		log.Println("Game end checker started")
-		g.IsStarted = false
-		msg := map[string]interface{}{
-			"type":   "GameState",
-			"state":  "GameOver",
-			"winner": lastPlayer.Index,
-			"player": lastPlayer,
+		switch livePlayers {
+		case 1:
+			g.IsStarted = false
+			msg := map[string]interface{}{
+				"type":   "GameState",
+				"state":  "GameOver",
+				"winner": lastPlayer.Index,
+				"player": lastPlayer,
+			}
+			g.SendMsgToChannel(msg, -1)
+			log.Printf("Game over! Winner is player %d\n", lastPlayer.Index)
+		case 0:
+			g.IsStarted = false
+			msg := map[string]interface{}{
+				"type":   "GameState",
+				"state":  "GameOver",
+				"winner": -1,
+			}
+			g.SendMsgToChannel(msg, -1)
+			log.Printf("Game over! It's a draw.")
 		}
-		g.SendMsgToChannel(msg, -1)
-		log.Printf("Game over! Winner is player %d\n", lastPlayer.Index)
 		go func() {
 			time.Sleep(10 * time.Second)
 			log.Println("Resetting the game")
@@ -275,6 +292,7 @@ func (g *GameBoard) CheckGameEnd() {
 		}()
 	}
 }
+
 func (g *GameBoard) ResetGame() {
 	g.Mu.Lock()
 	for conn := range g.PlayersConnections {

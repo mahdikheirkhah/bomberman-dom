@@ -51,16 +51,23 @@ export function handleWebSocket() {
                     } else if (message.state === 'GameStarted') {
                         store.setState({ countdown: null, gameStarted: true });
                     } else if (message.state === 'GameOver') {
-                        const oldGameData = store.getState().gameData;
-                        const newGameData = { ...oldGameData, winner: message.winner, players: message.player ? [message.player] : oldGameData.players };
-                        store.setState({ gameOver: true, gameData: newGameData });
+                        console.log('Game over received')
+                        store.setState({ gameOver: true, winner: message.winner });
                     }
                     break;
                 case 'PlayerAccepted':
                     store.setState({ currentView: 'lobby', playerIndex: message.index });
                     break;
                 case 'PlayerDisconnected':
-                        store.setState({ players: store.getState().players.filter(player => player.index !== message.index) });
+                    const playersList = store.getState().players;
+                    store.setState({ players: playersList.filter(player => player.index !== message.index) });
+                    if (playersList.length - 1 < 2) {
+                        //store.removeState('countdown');
+                        store.setState({ countdown: null });
+                    }
+                    break;
+                case 'StopCountdown':
+                    store.setState({ countdown: null });
                     break;
                 case 'gameStart':
                     store.setState({ gameData: { players: message.players, panel: message.panel } });
