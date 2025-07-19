@@ -1,5 +1,5 @@
 
-import { createElement, store, router } from '../framework/framework.js';
+import { createElement, store, router, patch, patchChildren } from '../framework/framework.js';
 import { renderChat } from './chat.js';
 
 // WebSocket message sender
@@ -241,6 +241,24 @@ export function GameOverModal() {
 }
 
 
+function gameLoop() {
+    const { gameStarted, gameData, powerups } = store.getState();
+    if (!gameStarted || !gameData) {
+        return;
+    }
+
+    const { players, panel } = gameData;
+    const mainGameArea = document.querySelector('.main-game-area');
+
+    if (mainGameArea && mainGameArea.__vnode) {
+        const newGrid = renderGameGrid(panel, players, powerups);
+        patch(mainGameArea.__vnode, newGrid);
+        mainGameArea.__vnode = newGrid;
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
 // Main Game component
 export default function Game() {
     const { countdown, gameStarted, gameData, chatMessages, gameListenersAttached, powerups, gameOver } = store.getState();
@@ -248,6 +266,7 @@ export default function Game() {
     if (gameStarted && !gameListenersAttached) {
         setupEventListeners();
         store.setState({ gameListenersAttached: true });
+        requestAnimationFrame(gameLoop);
     }
 
     if (!gameStarted || !gameData) {
@@ -335,14 +354,23 @@ export default function Game() {
 
     const { players, panel } = gameData;
 
+    let gameGridVnode;
+
+    const mainGameArea = createElement('div', {
+        class: 'main-game-area',
+        ref: (element) => {
+            if (element) {
+                element.__vnode = gameGridVnode;
+            }
+        }
+    }, (gameGridVnode = renderGameGrid(panel, players, powerups)));
+
 
     return createElement('div', { class: 'game-layout' },
         createElement('div', { class: 'player-panels' },
             ...players.map(renderPlayerPanel)
         ),
-        createElement('div', { class: 'main-game-area' },
-            renderGameGrid(panel, players, powerups)
-        ),
+        mainGameArea,
         renderChat(chatMessages || []),
         gameOver ? GameOverModal(gameData) : null
     );

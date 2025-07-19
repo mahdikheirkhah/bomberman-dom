@@ -14,9 +14,13 @@ class AppRenderer {
         this.vnode = null;
         this.unsubscribe = null;
     }
-    
 
-    render = () => { 
+    render = (force = false) => {
+        if (!force && store.getState().preventRender) {
+            store.setState({ preventRender: false }, true);
+            return;
+        }
+
         const newVnodeOrVnodes = this.rootComponent();
         const oldVnodeOrVnodes = this.vnode;
 
@@ -31,12 +35,12 @@ class AppRenderer {
 
         this.vnode = newVnodeOrVnodes;
     }
-    
+
     start() {
         this.unsubscribe = store.subscribe(this.render);
-        this.render();
+        this.render(true);
     }
-    
+
     destroy() {
         if (this.unsubscribe) {
             this.unsubscribe();
