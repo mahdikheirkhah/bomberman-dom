@@ -78,7 +78,7 @@ export default function Start() {
 			createElement('div', { class: 'start-container', style: '' },
 				createElement('div', { class: 'start-form' },
 					createElement('p', { class: error==='' ? 'hidden' : 'error-message' }, error),
-					createElement('input', inputProps),
+					createElement('input', { class: 'font-supercell', ...inputProps }),
 					createElement('button', { class: 'join-button', onclick: joinHandler}, 'Join Game')
 				)
 			)

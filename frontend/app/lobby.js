@@ -12,13 +12,13 @@ export default function Lobby() {
     const playersJoined = players.length;
 
     return createElement('div', { class: 'countdown-bg' },
-        createElement('img', { src: '/public/ice1.png', class: 'ice-image ice1' }),
-        createElement('img', { src: '/public/ice2.png', class: 'ice-image ice2' }),
+        createElement('img', { src: '/public/images/ice1.png', class: 'ice-image ice1' }),
+        createElement('img', { src: '/public/images/ice2.png', class: 'ice-image ice2' }),
         createElement('div', { class: 'ice3-container' },
-            createElement('img', { src: '/public/ice3.png', class: 'ice3-image' }),
+            createElement('img', { src: '/public/images/ice3.png', class: 'ice3-image' }),
         ),
         createElement('div', { class: 'ice4-container' },
-            createElement('img', { src: '/public/ice4.png', class: 'ice4-image' })
+            createElement('img', { src: '/public/images/ice4.png', class: 'ice4-image' })
         ),
         createElement('div', { id: 'lobby-modal', class: 'modal' },
             createElement('div', { class: 'modal-content' },
