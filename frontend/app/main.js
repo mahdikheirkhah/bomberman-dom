@@ -231,9 +231,7 @@ export function handleWebSocket() {
         console.log('Websocket connection closed for player ')
         if (event.code === 1008) {
             store.setState({ error: event.reason });
-        } else {
-            store.setState({ error: 'Connection lost' });
-        }
+        } 
     };
 
     ws.onerror = () => {
