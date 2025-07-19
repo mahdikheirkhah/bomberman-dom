@@ -195,6 +195,7 @@ body {
     background: radial-gradient(circle, #199a9ed1 0%, #004878 100%);
     align-self: flex-start;
     transform-origin: top;
+    will-change: transform;
 }
 
 .game-grid.explosion {
@@ -218,6 +219,7 @@ body {
     height: 48px;
     /* Smooth movement is handled here */
     transition: transform 0.1s linear;
+    will-change: transform;
 }
 
 @keyframes hurt-animation {
@@ -237,6 +239,7 @@ body {
     height: 100%;
     background-size: 192px 96px;
     background-repeat: no-repeat;
+    will-change: transform;
 }
 
 /* When moving, apply the stepped animation to the sprite */
