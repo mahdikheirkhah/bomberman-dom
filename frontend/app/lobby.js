@@ -41,10 +41,10 @@ export default function Lobby() {
                 createElement('h2', {}, 'Waiting for more players'),
                 createElement('h3', {}, `Current amount of players: ${playersJoined}`),
                 countdown !== null ? createElement('h3', {}, `Waiting for more players ${countdown}s`) : null,
-                createElement('div', { id: 'player-list' }, ...playerList)
+                createElement('div', { id: 'player-list' }, ...playerList),
+                renderChat(chatMessages || [])
             )
-        ),
-        renderChat(chatMessages || [])
+        )
     );
 
     // return createElement('div', { class: 'countdown-bg' },

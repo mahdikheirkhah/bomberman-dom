@@ -292,7 +292,8 @@ export default function Game() {
                 createElement('p', {}, 'Use the arrow keys to move your penguin.'),
                 createElement('p', {}, 'Press the spacebar to drop a bomb.'),
                 createElement('h2', {}, 'Power-ups'),
-                createElement('div', { id: 'powerups-container', class: 'powerups-container' }, ...powerupElements)
+                createElement('div', { id: 'powerups-container', class: 'powerups-container' }, ...powerupElements),
+                renderChat(chatMessages || [])
             )
         );
 
@@ -339,8 +340,7 @@ export default function Game() {
             createElement('div', { class: 'ice-image ice4-container' },
                 createElement('img', { src: '/public/images/ice4.png', class: 'ice4-image' }),
                 createElement('div', { class: 'penguin face-r' })
-            ),
-            renderChat(chatMessages || [])
+            )
         );
     }
 

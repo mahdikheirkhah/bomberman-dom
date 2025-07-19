@@ -41,7 +41,14 @@ export function renderChat(messages) {
     return createElement('div', { class: 'game-chat' },
         createElement('div', { class: 'resize-handle', onmousedown: onMouseDown }),
         createElement('div', { class: 'chat-header' }, 'Game Chat'),
-        createElement('div', { class: 'chat-messages' },
+                createElement('div', {
+            class: 'chat-messages',
+            ref: (el) => {
+                if (el) {
+                    el.scrollTop = el.scrollHeight;
+                }
+            }
+        },
             ...messages.map(renderMessage)
         ),
         createElement('form', { class: 'chat-input-form', onsubmit: handleSubmit },
