@@ -1,50 +1,40 @@
-/* Inspired by Clash Royale - A more dynamic and game-like modal design */
-
-@import url('https://fonts.googleapis.com/css2?family=Supercell-Magic:wght@400;700&display=swap');
-
 :root {
-    --clash-blue: #1c77e6;
-    --clash-yellow: #f7ca18;
-    --clash-red: #e74c3c;
-    --clash-green: #2ecc71;
-    --clash-light-wood: #e6d5a8;
-    --clash-dark-wood: #8c6f44;
-    --clash-gold: #ffd700;
-    --clash-border-color: #4e342e;
-}
-
-body {
-    font-family: 'Supercell-Magic', sans-serif;
+    --blue: #1c77e6;
+    --yellow: #f7ca18;
+    --red: #e74c3c;
+    --green: #2ecc71;
+    --light-wood: #e6d5a8;
+    --dark-wood: #8c6f44;
+    --gold: #ffd700;
+    --border-color: #4e342e;
 }
 
 .modal {
     position: fixed;
-    z-index: 1000;
+    top: 10vh;
     left: 0;
-    top: 0;
+    z-index: 1000;
     width: 100%;
-    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(8px);
+    /* backdrop-filter: blur(8px); */
 }
 
 .modal-content {
-    background-image: url('/public/cover.jpg');
     background-size: cover;
     background-position: center;
     padding: 20px;
-    border: 8px solid var(--clash-border-color);
+    border: 8px solid var(--border-color);
     border-radius: 18px;
     width: 90%;
     max-width: 550px;
     color: #fff;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 0, 0, 0.5);
     text-align: center;
     position: relative;
     transform: scale(0.95);
+    background-color: rgba(0, 0, 0, 0.6);
     animation: modal-enter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
@@ -53,6 +43,7 @@ body {
         opacity: 0;
         transform: scale(0.8);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -60,12 +51,12 @@ body {
 }
 
 .modal-content h2 {
-    color: var(--clash-gold);
+    color: var(--gold);
     font-size: 2.5em;
     margin: 0;
     padding: 10px 0;
-    text-shadow: 3px 3px 0px var(--clash-border-color);
-    border-bottom: 4px solid var(--clash-border-color);
+    text-shadow: 3px 3px 0px var(--border-color);
+    border-bottom: 4px solid var(--border-color);
     margin-bottom: 20px;
 }
 
@@ -74,14 +65,14 @@ body {
     padding: 15px;
     background-color: rgba(0, 0, 0, 0.4);
     border-radius: 12px;
-    border: 4px solid var(--clash-dark-wood);
+    border: 4px solid var(--dark-wood);
 }
 
 #player-list div {
     padding: 12px;
     font-size: 1.2em;
-    color: var(--clash-light-wood);
-    border-bottom: 2px solid var(--clash-dark-wood);
+    color: var(--light-wood);
+    border-bottom: 2px solid var(--dark-wood);
     transition: background-color 0.2s;
 }
 
@@ -91,14 +82,34 @@ body {
 
 #player-list .you {
     font-weight: 700;
-    color: var(--clash-yellow);
+    color: var(--yellow);
     text-shadow: 1px 1px 0px #000;
 }
 
 .countdown-timer {
     font-size: 1.8em;
-    color: var(--clash-red);
+    color: var(--red);
     margin-top: 15px;
     font-weight: 700;
     text-shadow: 2px 2px 0px #000;
+}
+
+
+.play-again-btn {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+}
+
+.play-again-btn:hover {
+    background-color: #45a049;
 }

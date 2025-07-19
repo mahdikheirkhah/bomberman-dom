@@ -1,11 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Supercell-Magic:wght@400;700&display=swap');
-
-body {
-    font-family: 'Supercell-Magic', sans-serif;
-}
-
 .countdown-bg {
-    background-image: url('/public/countdownBG.jpg');
+    background-image: url('/public/images/countdownBG.jpg');
     background-size: cover;
     background-position: center;
     width: 100vw;
@@ -17,7 +11,6 @@ body {
 .ice-image {
     position: absolute;
     max-width: 70%;
-    /* Adjust as needed */
     height: auto;
     width: 70%;
 }
@@ -42,19 +35,14 @@ body {
     bottom: 0px;
     right: 0px;
     position: absolute;
-    /* width: 30%; */
     width: auto;
-    /* Можно указать конкретно, если хочешь */
     height: auto;
 }
 
 .ice4-image {
     width: 400px;
-    /* фиксированная ширина */
     height: auto;
-    /* фиксированная высота */
     object-fit: contain;
-    /* или cover, если хочешь контролировать поведение */
 }
 
 
@@ -82,8 +70,6 @@ body {
 
 .countdown-number {
     position: absolute;
-    /* top: 50%;
-    left: 50%; */
     transform: translate(-110%, 43%);
     width: 20%;
     height: auto;
@@ -93,7 +79,7 @@ body {
     position: absolute;
     width: 48px;
     height: 48px;
-    background-image: url('/public/G.png');
+    background-image: url('/public/images/G.png');
     background-size: 192px 96px;
     background-repeat: no-repeat;
     bottom: 100px;
