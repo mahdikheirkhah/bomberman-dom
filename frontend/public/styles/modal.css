@@ -6,7 +6,7 @@
     --light-wood: #e6d5a8;
     --dark-wood: #8c6f44;
     --gold: #ffd700;
-    --border-color: #4e342e;
+    --border-color: #003430;
 }
 
 .modal {
@@ -25,16 +25,18 @@
     background-size: cover;
     background-position: center;
     padding: 20px;
-    border: 8px solid var(--border-color);
+    border: 0px solid var(--border-color);
     border-radius: 18px;
     width: 90%;
     max-width: 550px;
     color: #fff;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    /* background blur effect */
     text-align: center;
     position: relative;
     transform: scale(0.95);
-    background-color: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.4);
     animation: modal-enter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
@@ -62,22 +64,18 @@
 
 #player-list {
     margin-top: 20px;
-    padding: 15px;
-    background-color: rgba(0, 0, 0, 0.4);
-    border-radius: 12px;
-    border: 4px solid var(--dark-wood);
+
 }
 
 #player-list div {
     padding: 12px;
     font-size: 1.2em;
     color: var(--light-wood);
-    border-bottom: 2px solid var(--dark-wood);
+    border-bottom: 2px solid var(--border-color);
     transition: background-color 0.2s;
-}
-
-#player-list div:last-child {
-    border-bottom: none;
+    border-radius: 12px;
+    border: 2px solid white;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 #player-list .you {
@@ -96,7 +94,8 @@
 
 
 .play-again-btn {
-    background-color: #4CAF50; /* Green */
+    background-color: #4CAF50;
+    /* Green */
     border: none;
     color: white;
     padding: 15px 32px;
