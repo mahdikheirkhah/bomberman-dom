@@ -163,11 +163,10 @@ function renderGameGrid(panel, players, powerups) {
         let additionalElement = null;
         switch (powerup.type) {
             case 'ExtraBomb':
-                powerUpImage = '/public/images/extrab.webp';
+                powerUpImage = '/public/images/whiteegg.png';
                 break;
             case 'BombRange':
-                powerUpImage = '/public/images/extrab.webp';
-                additionalElement = createElement('div', { class: 'power-up-plus' }, '+');
+                powerUpImage = '/public/images/greenegg.png';
                 break;
             case 'ExtraLife':
                 powerUpImage = '/public/images/life.webp';
@@ -189,7 +188,7 @@ function renderGameGrid(panel, players, powerups) {
                 ...row.map(cell => {
                     if (cell === 'B') {
                         return createElement('div', { class: 'grid-cell' },
-                            createElement('img', { src: '/public/images/bomb.svg', class: 'bomb-image' })
+                            createElement('img', { src: '/public/images/redegg.png', class: 'bomb-image' })
                         );
                     } else if (cell === 'E') {
                         return createElement('div', { class: 'grid-cell E' });

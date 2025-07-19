@@ -522,11 +522,25 @@ body {
     /* top: 10vh;
     right: 20px; */
     width: 100%;
-    height: 250px;
+    height: 200px;
 
 }
 
 .bomb-image {
-    width: 98%;
-    height: 98%;
+    width: 90%;
+    height: 90%;
+    animation: bomb-pulse 1s ease-in-out infinite;
+    will-change: transform;
+}
+
+@keyframes bomb-pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1); 
+    }
+    100% {
+        transform: scale(1);
+    }
 }
