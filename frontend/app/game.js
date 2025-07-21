@@ -12,6 +12,13 @@ const sendMsg = (msg) => {
 
 const cellSize = 50
 
+const powerupTypes = [
+    { name: 'Extra Bomb', type: 'ExtraBomb', image: '/public/images/whiteegg.png', description: 'Increases bomb capacity by one.' },
+    { name: 'Bomb Range', type: 'BombRange', image: '/public/images/greenegg.png', description: 'Increases bomb explosion range.' },
+    { name: 'Extra Life', type: 'ExtraLife', image: '/public/images/life.webp', description: 'Grants an extra life.' },
+    { name: 'Speed Boost', type: 'SpeedBoost', image: '/public/images/fast.webp', description: 'Increases movement speed.' }
+];
+
 // Set to track currently pressed movement keys
 const pressedKeys = new Set();
 
@@ -161,21 +168,10 @@ function renderGameGrid(panel, players, powerups) {
         const y = powerup.row * cellSize + cellSize;  // Adjust for border
         let powerUpImage;
         let additionalElement = null;
-        switch (powerup.type) {
-            case 'ExtraBomb':
-                powerUpImage = '/public/images/extrab.webp';
-                break;
-            case 'BombRange':
-                powerUpImage = '/public/images/extrab.webp';
-                additionalElement = createElement('div', { class: 'power-up-plus' }, '+');
-                break;
-            case 'ExtraLife':
-                powerUpImage = '/public/images/life.webp';
-                break;
-            case 'SpeedBoost':
-                powerUpImage = '/public/images/fast.webp';
-                break;
-        }
+
+        const powerupType = powerupTypes.find(pt => pt.type === powerup.type);
+        powerUpImage = powerupType ? powerupType.image : '';
+
 
         return createElement('div', { class: 'power-up', style: `transform: translate(${x}px, ${y}px);` },
             createElement('img', { src: powerUpImage, class: 'power-up-image' }),
@@ -189,7 +185,7 @@ function renderGameGrid(panel, players, powerups) {
                 ...row.map(cell => {
                     if (cell === 'B') {
                         return createElement('div', { class: 'grid-cell' },
-                            createElement('img', { src: '/public/images/bomb.svg', class: 'bomb-image' })
+                            createElement('img', { src: '/public/images/redegg.png', class: 'bomb-image' })
                         );
                     } else if (cell === 'E') {
                         return createElement('div', { class: 'grid-cell E' });
@@ -272,16 +268,9 @@ export default function Game() {
     if (!gameStarted || !gameData) {
         const countdownNumber = countdown > 10 ? 10 : countdown;
 
-        const powerupTypes = [
-            { name: 'Extra Bomb', image: '/public/images/extrab.webp', description: 'Increases bomb capacity by one.' },
-            { name: 'Bomb Range', image: '/public/images/extrab.webp', description: 'Increases bomb explosion range.' },
-            { name: 'Extra Life', image: '/public/images/life.webp', description: 'Grants an extra life.' },
-            { name: 'Speed Boost', image: '/public/images/fast.webp', description: 'Increases movement speed.' }
-        ];
-
         const powerupElements = powerupTypes.map(powerup => {
             return createElement('div', { class: 'powerup-item' },
-                createElement('img', { src: powerup.image }),
+                createElement('img', { src: powerup.image, class: 'powerup-img' }),
                 createElement('span', {}, `${powerup.name}: ${powerup.description}`)
             );
         });
@@ -292,7 +281,8 @@ export default function Game() {
                 createElement('p', {}, 'Use the arrow keys to move your penguin.'),
                 createElement('p', {}, 'Press the spacebar to drop a bomb.'),
                 createElement('h2', {}, 'Power-ups'),
-                createElement('div', { id: 'powerups-container', class: 'powerups-container' }, ...powerupElements)
+                createElement('div', { id: 'powerups-container', class: 'powerups-container' }, ...powerupElements),
+                renderChat(chatMessages || [])
             )
         );
 
@@ -339,8 +329,7 @@ export default function Game() {
             createElement('div', { class: 'ice-image ice4-container' },
                 createElement('img', { src: '/public/images/ice4.png', class: 'ice4-image' }),
                 createElement('div', { class: 'penguin face-r' })
-            ),
-            renderChat(chatMessages || [])
+            )
         );
     }
 
