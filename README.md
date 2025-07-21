@@ -74,3 +74,11 @@ This is a multiplayer real-time Bomberman game built with a Go backend and a van
 4.  **Play the game:**
 
     Open your web browser and navigate to `http://localhost:8000`. You can open multiple tabs to simulate multiple players.
+
+## Contributors
+
+- [Oleg Balandin](https://github.com/olegamobile)
+- [Mohammad Mahdi Kheirkhah](https://github.com/mahdikheirkhah)
+- [Inka Säävuori](https://github.com/Inkasaa)
+- [Kateryna Ovsiienko](https://github.com/mavka1207)
+- [Fatemeh Kheirkhah](https://github.com/fatemekh78)
