@@ -5,10 +5,10 @@ export default function Lobby() {
     const { players, countdown, playerId, chatMessages } = store.getState();
 
     const colorToImage = {
-        "R": "/public/images/R.gif",
-        "Y": "/public/images/Y.gif",
-        "G": "/public/images/G.gif",
-        "B": "/public/images/B.gif",
+        "R": "/public/images/R_avatar.png",
+        "Y": "/public/images/Y_avatar.png",
+        "G": "/public/images/G_avatar.png",
+        "B": "/public/images/B_avatar.png",
     };
 
     const playerList = players.map(player => {
@@ -35,7 +35,7 @@ export default function Lobby() {
 
     const playersJoined = players.length;
 
-    return createElement('div', { class: 'countdown-bg' },
+    return createElement('div', { class: 'lobby-countdown-bg' },
         createElement('div', { id: 'lobby-modal', class: 'modal' },
             createElement('div', { class: 'modal-content' },
                 createElement('h2', {}, 'Waiting for more players'),

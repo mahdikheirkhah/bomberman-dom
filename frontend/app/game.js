@@ -14,7 +14,7 @@ const cellSize = 50
 
 const powerupTypes = [
     { name: 'Extra Bomb', type: 'ExtraBomb', image: '/public/images/whiteegg.png', description: 'Increases bomb capacity by one.' },
-    { name: 'Bomb Range', type: 'BombRange', image: '/public/images/greenegg.png', description: 'Increases bomb explosion range.' },
+    { name: 'Bomb Range', type: 'BombRange', image: '/public/images/extrab.webp', description: 'Increases bomb explosion range.' },
     { name: 'Extra Life', type: 'ExtraLife', image: '/public/images/life.webp', description: 'Grants an extra life.' },
     { name: 'Speed Boost', type: 'SpeedBoost', image: '/public/images/fast.webp', description: 'Increases movement speed.' }
 ];
@@ -97,7 +97,7 @@ function renderPlayerPanel(player) {
         createElement('div', { class: avatarClass }),
         createElement('div', { class: 'player-info' },
             createElement('h3', {}, player.name),
-            createElement('p', {}, player.lives > 0 ? '❤️'.repeat(player.lives) : 'Dead 💀')
+            createElement('p', {}, player.lives > 0 ? '🩵'.repeat(player.lives) : 'Dead 💀')
         )
     );
 }
@@ -138,8 +138,8 @@ function renderGameGrid(panel, players, powerups) {
                 const explosionX = x + playerSize / 2;
                 const explosionY = y + playerSize / 2;
 
-                const defaultBackground = 'radial-gradient(circle, #199a9ed1 0%, #004878 100%)';
-                const explosionBackground = `radial-gradient(circle at ${explosionX}px ${explosionY}px, #8e0404 0%, #199a9ed1 50%, #004878 100%)`;
+                const defaultBackground = '#0098b8d1';
+                const explosionBackground = `radial-gradient(circle at ${explosionX}px ${explosionY}px, #8e0404 0%, #0098b8d1 15%)`;
 
                 gameGrid.style.background = explosionBackground;
                 gameGrid.classList.add('explosion');
@@ -315,7 +315,7 @@ export default function Game() {
             }, 20);
         }
 
-        return createElement('div', { class: 'game-container countdown-bg' },
+        return createElement('div', { class: 'game-container game-starting-countdown-bg' },
             modal,
             createElement('img', { src: '/public/images/ice1.png', class: 'ice-image ice1' }),
             createElement('img', { src: '/public/images/ice2.png', class: 'ice-image ice2' }),

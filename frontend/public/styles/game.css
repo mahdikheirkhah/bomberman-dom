@@ -21,26 +21,26 @@ body {
     padding-bottom: 5vh;
     box-sizing: border-box;
 }
-
+/*
 .bg-blur {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: url('/public/images/cover.jpg') center/cover no-repeat;
+    background: url('/public/images/lobby1.gif') center/cover no-repeat;
     filter: blur(8px);
     z-index: -1;
     overflow: hidden;
 }
-
+*/
 .bg-main {
     margin: 0 auto;
     height: 100vh;
     width: calc(100vh * 16 / 9);
     /* Assuming 16:9 aspect ratio for cover.jpg */
     max-width: 100vw;
-    background: url('/public/images/cover.jpg') center/contain no-repeat;
+    background: url('/public/images/lobby1.gif') center/contain no-repeat;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -125,9 +125,10 @@ body {
     padding: 20px;
     height: 100vh;
     box-sizing: border-box;
-    background: url('/public/images/bg.webp') repeat center center fixed;
+    /* background: url('/public/images/bg.webp') repeat center center fixed; */
     background-size: 60px;
-    background-color: teal;
+    background-color: rgb(1, 80, 101)
+
 }
 
 .player-panels {
@@ -143,11 +144,11 @@ body {
 .player-card {
     display: flex;
     align-items: center;
-    background-color: #f0f0f0;
     border-radius: 8px;
     padding: 10px 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    width: 200px;
+     background-color: rgba(178, 255, 247, 0.1); /* 0.5 = 50% opacity */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    width: 150px;
     /* Fixed width */
 }
 
@@ -156,28 +157,28 @@ body {
 }
 
 .player-avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
+    width: 55px;
+    height: 55px;
     margin-right: 10px;
-    border: 2px solid #333;
+    /* border-radius: 50%;
+    border: 2px solid #333;*/
     background-size: cover;
 }
 
 .player-avatar.Y {
-    background-image: url('/public/images/Y.gif');
+    background-image: url('/public/images/Y_avatar.png');
 }
 
 .player-avatar.R {
-    background-image: url('/public/images/R.gif');
+    background-image: url('/public/images/R_avatar.png');
 }
 
 .player-avatar.B {
-    background-image: url('/public/images/B.gif');
+    background-image: url('/public/images/B_avatar.png');
 }
 
 .player-avatar.G {
-    background-image: url('/public/images/G.gif');
+    background-image: url('/public/images/G_avatar.png');
 }
 
 .player-info h3 {
@@ -205,7 +206,8 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
-    background: radial-gradient(circle, #199a9ed1 0%, #004878 100%);
+    background: #0098b8d1;
+    box-shadow: inset 0px 0px 100px 40px #435666;
     align-self: flex-start;
     transform-origin: top;
     will-change: transform;
@@ -296,11 +298,11 @@ body {
 
 /* Player color is now on the sprite */
 .player-sprite.Y {
-    background-image: url('/public/images/Y.png');
+    background-image: url('/public/images/sprite_yellow.png');
 }
 
 .player-sprite.R {
-    background-image: url('/public/images/R.png');
+    background-image: url('/public/images/sprite_red.png');
 }
 
 .player-sprite.B {

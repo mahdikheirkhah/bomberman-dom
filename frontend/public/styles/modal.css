@@ -31,7 +31,7 @@
     width: 90%;
     max-width: 550px;
     color: #fff;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 40px rgba(25, 37, 50, 0.5), inset 0 0 15px rgba(25, 37, 50, 0.5);
     backdrop-filter: blur(8px);
     /* background blur effect */
     text-align: center;
@@ -95,7 +95,7 @@
 
 
 .play-again-btn {
-    background-color: #4CAF50;
+    background-color: #008cc3;
     /* Green */
     border: none;
     color: white;
@@ -111,5 +111,5 @@
 }
 
 .play-again-btn:hover {
-    background-color: #45a049;
+    background-color: #2fd2ff;
 }
