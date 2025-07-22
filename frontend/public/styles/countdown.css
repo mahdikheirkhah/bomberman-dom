@@ -1,5 +1,5 @@
 .game-starting-countdown-bg {
-    background-image: url('/public/images/countdown.gif');
+    background-image: url('/public/images/countdownBG.jpg');
     background-size: cover;
     background-position: center;
     width: 100vw;
@@ -23,7 +23,7 @@
     position: absolute;
     max-width: 70%;
     height: auto;
-    width: 70%;
+    width: 40%;
 }
 
 .ice1 {
@@ -91,10 +91,10 @@
 
 .penguin {
     position: absolute;
-    width: 48px;
-    height: 48px;
+    width: 96px;
+    height: 96px;
     background-image: url('/public/images/G.png');
-    background-size: 192px 96px;
+    background-size: 384px 192px;
     background-repeat: no-repeat;
     bottom: 100px;
     left: 40px;
@@ -103,15 +103,25 @@
 }
 
 .penguin.face-r {
-    background-position-x: -96px;
+    background-position-x: -192px;
 }
 
 .penguin.face-l {
-    background-position-x: -48px;
+    background-position-x: -96px;
 }
 
 .penguin.moving {
-    animation: walk-animation 0.2s steps(2) infinite;
+    animation: walk-animation-start 0.2s steps(2) infinite;
+}
+
+@keyframes walk-animation-start {
+    from {
+        background-position-y: 0;
+    }
+
+    to {
+        background-position-y: -192px;
+    }
 }
 
 .powerups-container {
