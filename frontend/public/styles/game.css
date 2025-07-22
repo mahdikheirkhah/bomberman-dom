@@ -184,7 +184,7 @@ body {
 
 .player-info h3 {
     margin: 0 0 5px 0;
-    color: #333;
+    color: #ffffff;
 }
 
 .player-info p {
@@ -526,7 +526,7 @@ body {
 }
 
 
-.countdown-bg .game-chat {
+.game-starting-countdown-bg .game-chat, .lobby-countdown-bg .game-chat {
     position: relative;
     /* top: 10vh;
     right: 20px; */
@@ -536,8 +536,8 @@ body {
 }
 
 .bomb-image {
-    width: 90%;
-    height: 90%;
+    width: 80%;
+    height: 80%;
     animation: bomb-pulse 1s ease-in-out infinite;
     will-change: transform;
 }
