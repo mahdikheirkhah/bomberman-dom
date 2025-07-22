@@ -5,15 +5,7 @@ import (
 	"time"
 )
 
-const movementTolerance = 20
 
-type MovePlayerMsg struct {
-	MsgType     string `json:"MT"`
-	XLocation   int    `json:"XL"`
-	YLocation   int    `json:"YL"`
-	Direction   string `json:"D"`
-	PlayerIndex int    `json:"PI"`
-}
 
 // HandleMoveStartMessage initiates continuous movement for a player.
 func (g *GameBoard) HandleMoveStartMessage(playerIndex int, direction string) {

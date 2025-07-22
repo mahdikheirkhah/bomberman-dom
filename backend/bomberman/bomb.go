@@ -6,61 +6,7 @@ import (
 	"time"
 )
 
-const BombExplosionDuration = 1 * time.Second
-const PlayerInvulnerabilityDuration = 1 * time.Second // How long player is invulnerable after respawn
 
-// Player struct (add these fields if they're not there)
-
-// Position represents a row and column in the game grid.
-type Position struct {
-	Row        int  `json:"row"`
-	Col        int  `json:"col"`
-	CellOnFire bool `json:"CellOnFire"`
-}
-
-// Bomb represents a bomb placed on the game board.
-type Bomb struct {
-	Row                 int       `json:"row"`
-	Column              int       `json:"column"`
-	XLocation           int       `json:"xlocation"`
-	YLocation           int       `json:"yLocation"`
-	ExplosionTime       time.Time `json:"explosionTime"`
-	OwnPlayerIndex      int       `json:"playerIndex"`
-	InitialIntersection bool      `json:"initialIntersection"`
-}
-
-// ExplodedCellInfo tracks a cell that has been exploded and its scheduled clear time.
-type ExplodedCellInfo struct {
-	Position  Position
-	ClearTime time.Time // When this cell should revert from "Ex" to ""
-}
-
-type ExploadeCellsMsg struct {
-	MsgType   string     `json:"MT"`
-	Positions []Position `json:"positions"`
-	BombRow   int        `json:"bombRow"`
-	BombCol   int        `json:"bombCol"`
-}
-
-type PlayerExplosionMsg struct {
-	Type        string `json:"type"`
-	Lives       int    `json:"lives"`
-	Color       string `json:"color"`
-	PlayerIndex int    `json:"playerIndex"`
-}
-type PLayerDeath struct {
-	Type   string `json:"type"`
-	Player Player `json:"player"`
-}
-
-type PlantBomb struct {
-	MsgType     string `json:"MT"`
-	XLocation   int    `json:"XL"`
-	YLocation   int    `json:"YL"`
-	Row         int    `json:"R"`
-	Column      int    `json:"C"`
-	PlayerIndex int    `json:"PI"`
-}
 
 func (g *GameBoard) HandleBombMessage(msgMap map[string]interface{}) {
 	playerIndex, ok := msgMap["fromPlayer"].(int)

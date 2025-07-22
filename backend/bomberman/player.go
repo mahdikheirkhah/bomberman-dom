@@ -7,38 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const StepSize = 5
-const BombDelay = 3
-const BombRange = 2
 
-type Player struct {
-	Index             int           `json:"index"`
-	Name              string        `json:"name"`
-	Lives             int           `json:"lives"`
-	Score             int           `json:"score"`
-	Color             string        `json:"color"`
-	Row               int           `json:"row"`
-	Column            int           `json:"column"`
-	InitialRow        int           `json:"initialRow"`
-	InitialColumn     int           `json:"initialColumn"`
-	XLocation         int           `json:"xlocation"`
-	YLocation         int           `json:"yLocation"`
-	IsDead            bool          `json:"isDead"`
-	IsHurt            bool          `json:"isHurt"`
-	NumberOfBombs     int           `json:"numberOfBombs"`
-	NumberOfUsedBombs int           `json:"numberOfUsedBombs"`
-	BombDelay         time.Duration `json:"-"`
-	BombRange         int           `json:"bombRange"`
-	StepSize          int           `json:"stepSize"`
-	DirectionFace     string        `json:"DirectionFace"`
-	IsMoving          bool          `json:"isMoving"`
-	JustRespawned     bool          `json:"justRespawned"`
-	LastDamageTime    time.Time     `json:"lastDamageTime"`
-	UUID              string        `json:"uuid"`
-	StopMoveChan      chan struct{} `json:"-"` // Channel to signal the player's movement goroutine to stop
-}
-
-const PlayerSize = 48
 
 func (g *GameBoard) CreatePlayer(name string) (string, error) {
 	var player Player

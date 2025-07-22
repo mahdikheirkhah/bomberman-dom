@@ -12,22 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var Upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all connections
-	},
-}
 
-type JoinRequest struct {
-	Name string `json:"name"`
-}
-
-type StateMsg struct {
-	Type  string `json:"type"`
-	State string `json:"state"`
-}
-
-var LobbyMsg bool
 
 // CheckNameHandler handles HTTP requests to check if a player name is already taken or if the game is started.
 // It expects a 'name' query parameter.

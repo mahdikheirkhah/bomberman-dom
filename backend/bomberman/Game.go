@@ -4,53 +4,12 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-const NumberOfRows = 11
-const NumberOfColumns = 13
-const MaxNumberOfPlayers = 4
-const MinNumberOfPlayers = 2
-const CellSize = 50
 
-var lobbyCountdownTimer = 20 // 20 for production
-var startCountdownTimer = 10 // 10 for production
-
-var Colors = []string{"G", "Y", "R", "B"}
-
-type PlayerRespawn struct {
-	PlayerIndex int
-	RespawnTime time.Time
-}
-
-type GameBoard struct {
-	Players            []Player                              `json:"players"`
-	Bombs              []Bomb                                `json:"bombs"`
-	PendingRespawns    []PlayerRespawn                       `json:"-"`
-	NumberOfPlayers    int                                   `json:"numberOfPlayers"`
-	Panel              [NumberOfRows][NumberOfColumns]string `json:"panel"` // Ex -> Exploade , W -> Wall, D -> Destructible, ""(empty) -> empty cell, B -> Bomb
-	CellSize           int                                   `json:"cellSize"`
-	Powerups           []Powerup                             `json:"powerups"`
-	IsStarted          bool
-	GameState          string // lobby, gameCountdown, gameStarted
-	StopCountdown      bool
-	ExplodedCells      []ExplodedCellInfo `json:"explodedCells"`
-	PlayersConnections map[int]*websocket.Conn
-	powerupChosen      map[string]int
-	BroadcastChannel   chan interface{}
-
-	Mu sync.Mutex
-}
-
-type GameCell struct {
-	IsOccupied     bool `json:"isOccupied"`
-	IsWall         bool `json:"isWall"`
-	IsDestructible bool `json:"isDestructible"`
-	IsExploaded    bool `json:"isExploaded"`
-}
 
 func (g *GameBoard) CanCreateNewPlayer() bool {
 	if 0 < g.NumberOfPlayers+1 && g.NumberOfPlayers+1 <= MaxNumberOfPlayers && g.GameState == "lobby" {

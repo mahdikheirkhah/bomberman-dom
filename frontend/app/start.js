@@ -75,6 +75,8 @@ export default function Start() {
 	return createElement('div', { class: 'start-wrapper' },
 		createElement('div', { class: 'bg-blur' }),
 		createElement('div', { class: 'bg-main' },
+			createElement('div', { class: 'game-title-container' }, 
+				createElement('div', { class: 'game-title' }, 'BOMBERGUIN')),
 			createElement('div', { class: 'start-container', style: '' },
 				createElement('div', { class: 'start-form' },
 					createElement('p', { class: error==='' ? 'hidden' : 'error-message' }, error),

@@ -5,20 +5,7 @@ import (
 	"math/rand"
 )
 
-// Powerup represents an item that can be collected by players.
-type Powerup struct {
-	Type     string `json:"type"`
-	Value    int    `json:"value"`
-	Row      int    `json:"row"`
-	Column   int    `json:"column"`
-	IsHidden bool   `json:"isHidden"`
-}
 
-const MaxBombsPowerup = 5
-const MaxBombRangePowerup = 5
-const MaxSpeedPowerup = 20
-
-var PowerupTypes = []string{"ExtraBomb", "BombRange", "ExtraLife", "SpeedBoost"}
 
 func (g *GameBoard) ShowPowerup(PowerUpIndex int) {
 	if PowerUpIndex < 0 || PowerUpIndex >= len(g.Powerups) {

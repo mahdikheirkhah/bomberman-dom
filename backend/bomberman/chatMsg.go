@@ -3,16 +3,7 @@ import (
 	"log"
 	"time"
 )
-type Chat struct {
-	Type  string `json:"type"` 
-	Name string `json:"name"`
-	Content string `json:"content"`
-	Date time.Time `json:"date"`
-	Filter bool `json:"filter"`
-	SenderIndex int `json:"senderIndex"`
-	Color string `json:"color"`
 
-}
 func (g *GameBoard) HandleChatMessage(msgMap map[string]interface{}) {
 	var msg Chat
 	playerIndex, ok := msgMap["fromPlayer"].(int)
