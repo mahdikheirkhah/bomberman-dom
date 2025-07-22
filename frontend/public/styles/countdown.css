@@ -1,4 +1,4 @@
-.countdown-bg {
+.game-starting-countdown-bg {
     background-image: url('/public/images/countdown.gif');
     background-size: cover;
     background-position: center;
@@ -7,6 +7,17 @@
     position: relative;
     overflow: hidden;
 }
+
+.lobby-countdown-bg {
+    background-image: url('/public/images/countdown.gif');
+    background-size: cover;
+    background-position: center;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
 
 .ice-image {
     position: absolute;
@@ -23,10 +34,12 @@
 .ice2 {
     top: 35%;
     right: 1%;
+        width: 560px;
+    height: 151px;
 }
 
 .ice3-image {
-    width: 100%;
+    width: 560px;
     z-index: 100;
     position: relative;
 }
@@ -50,7 +63,8 @@
     bottom: 100px;
     left: 0px;
     position: absolute;
-    width: 60%;
+    width: 560px;
+    height: 151px;
 }
 
 
