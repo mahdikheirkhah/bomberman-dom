@@ -131,7 +131,7 @@ function renderGameGrid(panel, players, powerups) {
                 const explosionX = x + playerSize / 2;
                 const explosionY = y + playerSize / 2;
 
-                const defaultBackground = 'radial-gradient(circle, #199a9ed1 0%, #004878 100%)';
+                const defaultBackground = 'radial-gradient(circle, rgba(42, 152, 147, 0.82) 0%, #144558 100%)';
                 const explosionBackground = `radial-gradient(circle at ${explosionX}px ${explosionY}px, #8e0404 0%, #199a9ed1 50%, #004878 100%)`;
 
                 gameGrid.style.background = explosionBackground;
