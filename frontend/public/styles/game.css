@@ -197,7 +197,7 @@ body {
 .player-info p {
     margin: 0;
     font-size: 0.9em;
-    color: #666;
+    color: #aaa8a8;
 }
 
 .main-game-area {
@@ -401,7 +401,7 @@ body {
 }
 
 .chat-header {
-    background-color: #075e54;
+    background-color: #245471;
     color: white;
     padding: 10px 15px;
     font-size: 1.1em;
@@ -487,7 +487,7 @@ body {
 }
 
 .chat-input-form button {
-    background-color: #128c7e;
+    background-color: #245471;
     color: white;
     border: none;
     border-radius: 50%;
@@ -501,7 +501,7 @@ body {
 }
 
 .chat-input-form button:hover {
-    background-color: #075e54;
+    background-color: #306d93;
 }
 
 .power-up {
