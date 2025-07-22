@@ -333,11 +333,40 @@ func (g *GameBoard) MovePlayer(playerIndex int, direction string) bool {
 
 		// After potential snap, re-check for collision with impassable objects
 		if newCollision := g.FindCollision(playerIndex); newCollision != "" && newCollision != "Ex" {
-			// Still colliding with an impassable object even after snapping.
-			// Revert to original position.
+			// Still colliding. Try 1px move from original position.
 			player.XLocation = originalX
 			player.YLocation = originalY
-			return false
+
+			step = 1
+			switch direction {
+			case "u":
+				player.YLocation -= step
+			case "d":
+				player.YLocation += step
+			case "l":
+				player.XLocation -= step
+			case "r":
+				player.XLocation += step
+			}
+
+			// Clamp for 1px move
+			if player.YLocation < 0 {
+				player.YLocation = 0
+			} else if player.YLocation+PlayerSize > NumberOfRows*cellSize {
+				player.YLocation = NumberOfRows*cellSize - PlayerSize
+			}
+			if player.XLocation < 0 {
+				player.XLocation = 0
+			} else if player.XLocation+PlayerSize > NumberOfColumns*cellSize {
+				player.XLocation = NumberOfColumns*cellSize - PlayerSize
+			}
+
+			// Final collision check for 1px move
+			if finalCollision := g.FindCollision(playerIndex); finalCollision != "" && finalCollision != "Ex" {
+				player.XLocation = originalX
+				player.YLocation = originalY
+				return false
+			}
 		} else if !movedBySnap && (collision == "W" || collision == "B" || collision == "D" || collision == "P") {
 			// If not snapped and collided with a wall/bomb/destructible/player, revert.
 			// This handles cases where player is directly hitting a wall without being "off-center".
